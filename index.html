@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>樂活影音館 LOHAS Wellness TV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .large-text { font-size: 1.25rem !important; line-height: 1.8 !important; }
+    .large-text h1 { font-size: 2.25rem !important; }
+    .large-text h2 { font-size: 1.75rem !important; }
+    .large-text p, .large-text button, .large-text input { font-size: 1.35rem !important; }
+  </style>
+</head>
+<body class="bg-emerald-50 text-slate-800 min-h-screen transition-all duration-300">
+
+  <!-- 頂部導覽列 -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Logo 區 -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xl font-bold">🌱</div>
+        <div>
+          <h1 class="text-xl font-bold text-emerald-800 leading-tight">樂活影音館</h1>
+          <p class="text-xs text-slate-500 font-medium">LOHAS WELLNESS & COMMUNITY</p>
+        </div>
+      </div>
+
+      <!-- AI 搜尋列 -->
+      <div class="flex-1 max-w-md min-w-[280px]">
+        <div class="flex gap-2">
+          <input type="text" id="searchInput" placeholder="輸入長者健康問題（例：經常嗆咳、座椅伸展）" 
+                 class="w-full px-4 py-2 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm">
+          <button onclick="handleAISearch()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors flex items-center gap-1">
+            🔍 AI 搜尋
+          </button>
+        </div>
+      </div>
+
+      <!-- 功能控制鈕 -->
+      <div class="flex items-center gap-2">
+        <button onclick="toggleFontSize()" class="bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-emerald-200 transition-colors">
+          Tt 大字體
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- 左側：主要播放器與 AI 顧問區 (佔 2 欄) -->
+      <div class="lg:col-span-2 space-y-6">
+        
+        <!-- 主影片播放器 -->
+        <div class="bg-black rounded-2xl overflow-hidden shadow-lg aspect-video relative">
+          <iframe id="mainPlayer" class="w-full h-full" 
+                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0" 
+                  title="YouTube video player" frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen></iframe>
+        </div>
+
+        <!-- 影片標題與資訊 -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm space-y-3">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <span id="currentCategory" class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-semibold">座椅伸展操</span>
+            <div class="flex items-center gap-3">
+              <button onclick="speakDescription()" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1">
+                🔊 語音朗讀
+              </button>
+            </div>
+          </div>
+          <h2 id="currentTitle" class="text-xl font-bold text-slate-900">銀髮族 10 分鐘溫和座椅伸展操</h2>
+          <p id="currentDescription" class="text-slate-600 text-sm leading-relaxed">專為關節僵硬長者設計，坐著也能安全運動、促進血液循環。</p>
+        </div>
+
+        <!-- AI 顧問建議卡片 -->
+        <div id="aiCard" class="bg-emerald-50 border-2 border-emerald-200 p-5 rounded-2xl shadow-sm space-y-2">
+          <div class="flex items-center gap-2 text-emerald-800 font-bold text-base">
+            🤖 樂活 AI 顧問建議：
+          </div>
+          <div id="aiContent" class="text-slate-700 text-sm leading-relaxed whitespace-pre-line">
+            歡迎使用樂活影音館！請在上方輸入您想了解的健康主題（例如：「經常嗆咳」、「關節保健」），AI 顧問將為您解析並推薦相應影片。
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 右側：影片推薦清單 (佔 1 欄) -->
+      <div class="space-y-4">
+        
+        <!-- 分類切換鈕 -->
+        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none" id="categoryTabs">
+          <button onclick="filterCategory('全部')" class="cat-btn bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">全部</button>
+          <button onclick="filterCategory('座椅伸展操')" class="cat-btn bg-white text-slate-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">🪑 座椅伸展操</button>
+          <button onclick="filterCategory('養生飲食')" class="cat-btn bg-white text-slate-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">🥗 養生飲食</button>
+          <button onclick="filterCategory('溫和太極')" class="cat-btn bg-white text-slate-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">☯️ 溫和太極</button>
+          <button onclick="filterCategory('自然音效')" class="cat-btn bg-white text-slate-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">🍃 自然音效</button>
+        </div>
+
+        <!-- 影片列表容器 -->
+        <div id="videoList" class="space-y-3">
+          <div class="text-center py-8 text-slate-400 text-sm">影片載入中...</div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 前端邏輯 JS -->
+  <script>
+    // 🌐 請確認此網址為你的 Render 後端服務網址
+    const API_BASE_URL = 'https://lohascare-wellnesstv.onrender.com';
+
+    let allVideos = [];
+
+    // 初始化：抓取影片資料
+    async function loadVideos() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/videos`);
+        const data = await res.json();
+        if (data.success && data.videos.length > 0) {
+          allVideos = data.videos;
+          renderVideoList(allVideos);
+          playVideo(allVideos[0]); // 預設播放第一部
+        } else {
+          document.getElementById('videoList').innerHTML = '<div class="text-slate-400 text-center py-4">尚無影片資料</div>';
+        }
+      } catch (err) {
+        console.error('抓取影片列表失敗:', err);
+        document.getElementById('videoList').innerHTML = '<div class="text-red-400 text-center py-4">無法載入影片，請稍後再試</div>';
+      }
+    }
+
+    // 渲染影片清單
+    function renderVideoList(videos) {
+      const container = document.getElementById('videoList');
+      if (videos.length === 0) {
+        container.innerHTML = '<div class="text-slate-400 text-center py-4">該分類無影片</div>';
+        return;
+      }
+
+      container.innerHTML = videos.map(video => `
+        <div onclick='playVideo(${JSON.stringify(video).replace(/'/g, "&apos;")})' 
+             class="bg-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer flex gap-3 border border-slate-100">
+          <img src="${video.thumbnail}" class="w-28 h-20 object-cover rounded-lg flex-shrink-0 bg-slate-200" alt="縮圖">
+          <div class="flex flex-col justify-between overflow-hidden">
+            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded w-max">${video.category || '健康資訊'}</span>
+            <h3 class="text-xs font-bold text-slate-800 line-clamp-2 leading-tight">${video.title}</h3>
+            <p class="text-[11px] text-slate-400 truncate">${video.description}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 切換播放影片
+    function playVideo(video) {
+      let youtubeId = '';
+      if (video.videoUrl.includes('v=')) {
+        youtubeId = video.videoUrl.split('v=')[1].split('&')[0];
+      } else if (video.videoUrl.includes('youtu.be/')) {
+        youtubeId = video.videoUrl.split('youtu.be/')[1].split('?')[0];
+      }
+
+      if (youtubeId) {
+        document.getElementById('mainPlayer').src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1`;
+      }
+      
+      document.getElementById('currentTitle').innerText = video.title;
+      document.getElementById('currentCategory').innerText = video.category || '健康資訊';
+      document.getElementById('currentDescription').innerText = video.description;
+    }
+
+    // 分類篩選
+    function filterCategory(cat) {
+      if (cat === '全部') {
+        renderVideoList(allVideos);
+      } else {
+        const filtered = allVideos.filter(v => v.category === cat);
+        renderVideoList(filtered);
+      }
+    }
+
+    // AI 搜尋與回應處理
+    async function handleAISearch() {
+      const query = document.getElementById('searchInput').value.trim();
+      const aiContent = document.getElementById('aiContent');
+
+      if (!query) return;
+
+      aiContent.innerHTML = `🤖 樂活 AI 顧問正在為您分析：「<strong>${query}</strong>」...`;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/dify/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          aiContent.innerText = data.answer;
+        } else {
+          aiContent.innerText = '⚠️ 顧問暫時無法處理您的請求，請稍後再試。';
+        }
+      } catch (err) {
+        console.error('AI 查詢失敗:', err);
+        aiContent.innerText = '⚠️ 網路連線異常，請確認後端伺服器運作狀態。';
+      }
+    }
+
+    // 語音朗讀功能
+    function speakDescription() {
+      const text = document.getElementById('currentDescription').innerText;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // 停止先前的聲音
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-TW';
+        utterance.rate = 0.9; // 稍微放慢語速適合長者
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert('您的瀏覽器不支援語音朗讀功能');
+      }
+    }
+
+    // 大字體切換
+    function toggleFontSize() {
+      document.body.classList.toggle('large-text');
+    }
+
+    // 頁面載入完成後執行
+    window.onload = loadVideos;
+  </script>
+</body>
+</html>
