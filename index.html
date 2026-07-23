@@ -32,6 +32,7 @@
       <div class="flex-1 max-w-md min-w-[280px]">
         <div class="flex gap-2">
           <input type="text" id="searchInput" placeholder="輸入長者健康問題（例：經常嗆咳、座椅伸展）" 
+                 onkeydown="if(event.key === 'Enter') handleAISearch()"
                  class="w-full px-4 py-2 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm">
           <button onclick="handleAISearch()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors flex items-center gap-1">
             🔍 AI 搜尋
@@ -59,7 +60,7 @@
         <!-- 主影片播放器 -->
         <div class="bg-black rounded-2xl overflow-hidden shadow-lg aspect-video relative">
           <iframe id="mainPlayer" class="w-full h-full" 
-                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0" 
+                  src="about:blank" 
                   title="YouTube video player" frameborder="0" 
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowfullscreen></iframe>
@@ -68,15 +69,15 @@
         <!-- 影片標題與資訊 -->
         <div class="bg-white p-5 rounded-2xl shadow-sm space-y-3">
           <div class="flex items-center justify-between flex-wrap gap-2">
-            <span id="currentCategory" class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-semibold">座椅伸展操</span>
+            <span id="currentCategory" class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-semibold">載入中...</span>
             <div class="flex items-center gap-3">
               <button onclick="speakDescription()" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1">
                 🔊 語音朗讀
               </button>
             </div>
           </div>
-          <h2 id="currentTitle" class="text-xl font-bold text-slate-900">銀髮族 10 分鐘溫和座椅伸展操</h2>
-          <p id="currentDescription" class="text-slate-600 text-sm leading-relaxed">專為關節僵硬長者設計，坐著也能安全運動、促進血液循環。</p>
+          <h2 id="currentTitle" class="text-xl font-bold text-slate-900">影片標題</h2>
+          <p id="currentDescription" class="text-slate-600 text-sm leading-relaxed">影片簡介載入中...</p>
         </div>
 
         <!-- AI 顧問建議卡片 -->
@@ -84,9 +85,7 @@
           <div class="flex items-center gap-2 text-emerald-800 font-bold text-base">
             🤖 樂活 AI 顧問建議：
           </div>
-          <div id="aiContent" class="text-slate-700 text-sm leading-relaxed whitespace-pre-line">
-            歡迎使用樂活影音館！請在上方輸入您想了解的健康主題（例如：「經常嗆咳」、「關節保健」），AI 顧問將為您解析並推薦相應影片。
-          </div>
+          <div id="aiContent" class="text-slate-700 text-sm leading-relaxed whitespace-pre-line">歡迎使用樂活影音館！請在上方輸入您想了解的健康主題（例如：「經常嗆咳」、「關節保健」），AI 顧問將為您解析並推薦相應影片。</div>
         </div>
 
       </div>
@@ -115,10 +114,10 @@
 
   <!-- 前端邏輯 JS -->
   <script>
-    // 🌐 請確認此網址為你的 Render 後端服務網址
     const API_BASE_URL = 'https://lohascare-wellnesstv.onrender.com';
 
     let allVideos = [];
+    let currentDisplayedVideos = [];
 
     // 初始化：抓取影片資料
     async function loadVideos() {
@@ -127,8 +126,9 @@
         const data = await res.json();
         if (data.success && data.videos.length > 0) {
           allVideos = data.videos;
+          currentDisplayedVideos = allVideos;
           renderVideoList(allVideos);
-          playVideo(allVideos[0]); // 預設播放第一部
+          playVideoByIndex(0); // 預設播放第一部
         } else {
           document.getElementById('videoList').innerHTML = '<div class="text-slate-400 text-center py-4">尚無影片資料</div>';
         }
@@ -138,16 +138,17 @@
       }
     }
 
-    // 渲染影片清單
+    // 渲染影片清單 (傳入 Index 避免 JSON 解析錯誤)
     function renderVideoList(videos) {
+      currentDisplayedVideos = videos;
       const container = document.getElementById('videoList');
       if (videos.length === 0) {
         container.innerHTML = '<div class="text-slate-400 text-center py-4">該分類無影片</div>';
         return;
       }
 
-      container.innerHTML = videos.map(video => `
-        <div onclick='playVideo(${JSON.stringify(video).replace(/'/g, "&apos;")})' 
+      container.innerHTML = videos.map((video, index) => `
+        <div onclick="playVideoByIndex(${index})" 
              class="bg-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer flex gap-3 border border-slate-100">
           <img src="${video.thumbnail}" class="w-28 h-20 object-cover rounded-lg flex-shrink-0 bg-slate-200" alt="縮圖">
           <div class="flex flex-col justify-between overflow-hidden">
@@ -159,10 +160,15 @@
       `).join('');
     }
 
-    // 切換播放影片
-    function playVideo(video) {
+    // 透過 Index 播放影片
+    function playVideoByIndex(index) {
+      const video = currentDisplayedVideos[index];
+      if (!video) return;
+
       let youtubeId = '';
-      if (video.videoUrl.includes('v=')) {
+      if (video.videoUrl.includes('/embed/')) {
+        youtubeId = video.videoUrl.split('/embed/')[1].split('?')[0];
+      } else if (video.videoUrl.includes('v=')) {
         youtubeId = video.videoUrl.split('v=')[1].split('&')[0];
       } else if (video.videoUrl.includes('youtu.be/')) {
         youtubeId = video.videoUrl.split('youtu.be/')[1].split('?')[0];
@@ -170,6 +176,8 @@
 
       if (youtubeId) {
         document.getElementById('mainPlayer').src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1`;
+      } else {
+        document.getElementById('mainPlayer').src = video.videoUrl;
       }
       
       document.getElementById('currentTitle').innerText = video.title;
