@@ -1,76 +1,101 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+const PORT = process.env.PORT || 10000;
+
+// 中間件 (Middleware)
 app.use(cors());
 app.use(express.json());
 
-// 請將下方 Lohas2026Pass 替換為你在 MongoDB Atlas 設定的新密碼
-const mongoUri = process.env.MONGO_URI || "mongodb+srv://ironijkl_db_user:Lohas2026Pass@cluster0.z2o8iiv.mongodb.net/?appName=Cluster0";
-const client = new MongoClient(mongoUri);
-
-let db;
-
-// 連接 MongoDB 資料庫
-client.connect()
-  .then(() => {
-    db = client.db('lohas_db');
-    console.log('✅ 成功連接至 MongoDB Atlas！');
-  })
+// 🍃 MongoDB 連線設定
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ 成功連接至 MongoDB Atlas！'))
   .catch(err => console.error('❌ MongoDB 連接失敗:', err));
 
-// 健康檢查 API
-app.get('/', (req, res) => {
-  res.send('🌿 樂活影音館 API 服務正常運作中！');
+// 📹 定義 Video 資料模型
+const videoSchema = new mongoose.Schema({
+  title: String,
+  category: String,
+  thumbnail: String,
+  videoUrl: String,
+  description: String,
+  createdAt: { type: Date, default: Date.now }
 });
 
-// 1. 獲取影片清單 API
+const Video = mongoose.models.Video || mongoose.model('Video', videoSchema);
+
+// ------------------- 路由設定 (Routes) ------------------- //
+
+// 1. 測試根目錄 (防止 404)
+app.get('/', (req, res) => {
+  res.send('🌐 樂活 API 伺服器正在正常運作中！');
+});
+
+// 2. 取得所有影片 API
 app.get('/api/videos', async (req, res) => {
   try {
-    const { category } = req.query;
-    const query = category && category !== '全部' ? { category } : {};
-    const videos = await db.collection('videos').find(query).toArray();
-    res.json({ success: true, data: videos });
+    const videos = await Video.find().sort({ createdAt: -1 });
+    res.json({ success: true, videos });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('❌ 抓取影片失敗:', err);
+    res.status(500).json({ success: false, message: '無法讀取影片資料' });
   }
 });
 
-// 2. 初始化測試資料 API
-app.post('/api/seed', async (req, res) => {
+// 3. Dify AI 顧問 API (專為 Chatflow / Workflow 設計)
+app.post('/api/dify/chat', async (req, res) => {
   try {
-    const sampleVideos = [
-      {
-        id: 1,
-        title: "10分鐘晨間森林呼吸與全舒展操",
-        category: "身心放鬆",
-        duration: "10:00",
-        thumb: "https://picsum.photos/id/106/400/225",
-        src: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-        desc: "歡迎來到樂活影音館。這套運動專為希望維持關節靈活、釋放壓力的人士設計。"
-      },
-      {
-        id: 2,
-        title: "座椅太極：適合久坐與銀髮族的溫和動態",
-        category: "座椅伸展操",
-        duration: "12:30",
-        thumb: "https://picsum.photos/id/292/400/225",
-        src: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-        desc: "不需要站立，坐在椅子上即可跟隨老師練習太極基本招式，保護膝蓋同時活絡全身氣血。"
-      }
-    ];
+    const { query } = req.body;
 
-    await db.collection('videos').deleteMany({}); 
-    await db.collection('videos').insertMany(sampleVideos); 
-    res.json({ success: true, message: '範例資料初始化成功！' });
+    if (!query) {
+      return res.status(400).json({ success: false, message: '請提供查詢內容' });
+    }
+
+    console.log(`🤖 收到 AI 查詢: "${query}"，正在呼叫 Dify API...`);
+
+    const response = await fetch(process.env.DIFY_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.DIFY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        inputs: {},                // Chatflow / Workflow 必需欄位
+        query: query,
+        response_mode: 'blocking', // 阻塞式一次返回
+        user: 'lohas-user-client'
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // 相容 Chatflow 與一般 ChatApp 的回答結構
+      let aiAnswer = data.answer;
+      if (!aiAnswer && data.data && data.data.outputs) {
+        aiAnswer = data.data.outputs.text || data.data.outputs.result || data.data.outputs.answer;
+      }
+
+      if (!aiAnswer) {
+        aiAnswer = 'AI 顧問分析完成，請參考相關建議。';
+      }
+
+      console.log('✅ Dify 回應成功！');
+      return res.json({ success: true, answer: aiAnswer });
+    } else {
+      console.error('❌ Dify API 報錯詳情:', data);
+      return res.status(500).json({ success: false, message: data.message || 'Dify API 回應異常' });
+    }
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('❌ 伺服器處理 Dify 請求失敗:', err);
+    return res.status(500).json({ success: false, message: '後端連線異常' });
   }
 });
 
-const PORT = process.env.PORT || 3000;
+// 🚀 啟動 Express 伺服器
 app.listen(PORT, () => {
-  console.log(`🚀 API 伺服器已啟動：http://localhost:${PORT}`);
+  console.log(`🌐 樂活後端 API 已在埠 ${PORT} 啟動`);
 });
