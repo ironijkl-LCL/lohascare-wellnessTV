@@ -31,7 +31,7 @@
       <!-- AI 搜尋列 -->
       <div class="flex-1 max-w-md min-w-[280px]">
         <div class="flex gap-2">
-          <input type="text" id="searchInput" placeholder="輸入長者健康問題（例：經常嗆咳、座椅伸展）" 
+          <input type="text" id="searchInput" placeholder="輸入長者健康問題（例：經常嗆咳、膝頭痛）" 
                  onkeydown="if(event.key === 'Enter') handleAISearch()"
                  class="w-full px-4 py-2 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm">
           <button onclick="handleAISearch()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors flex items-center gap-1">
@@ -99,11 +99,10 @@
           <button onclick="filterCategory('座椅伸展操')" class="cat-btn bg-white text-slate-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">🪑 座椅伸展操</button>
           <button onclick="filterCategory('養生飲食')" class="cat-btn bg-white text-slate-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">🥗 養生飲食</button>
           <button onclick="filterCategory('溫和太極')" class="cat-btn bg-white text-slate-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">☯️ 溫和太極</button>
-          <button onclick="filterCategory('自然音效')" class="cat-btn bg-white text-slate-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">🍃 自然音效</button>
         </div>
 
         <!-- 影片列表容器 -->
-        <div id="videoList" class="space-y-3">
+        <div id="videoList" class="space-y-3 max-h-[700px] overflow-y-auto pr-1">
           <div class="text-center py-8 text-slate-400 text-sm">影片載入中...</div>
         </div>
 
@@ -114,7 +113,10 @@
 
   <!-- 前端邏輯 JS -->
   <script>
-    const API_BASE_URL = 'https://lohascare-wellnesstv.onrender.com';
+    // 智慧判斷 API 網址：本地優先，否則使用遠端
+    const API_BASE_URL = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+      ? window.location.origin
+      : 'https://lohascare-wellnesstv.onrender.com';
 
     let allVideos = [];
     let currentDisplayedVideos = [];
@@ -138,7 +140,7 @@
       }
     }
 
-    // 渲染影片清單 (傳入 Index 避免 JSON 解析錯誤)
+    // 渲染影片清單
     function renderVideoList(videos) {
       currentDisplayedVideos = videos;
       const container = document.getElementById('videoList');
@@ -154,7 +156,7 @@
           <div class="flex flex-col justify-between overflow-hidden">
             <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded w-max">${video.category || '健康資訊'}</span>
             <h3 class="text-xs font-bold text-slate-800 line-clamp-2 leading-tight">${video.title}</h3>
-            <p class="text-[11px] text-slate-400 truncate">${video.description}</p>
+            <p class="text-[11px] text-slate-400 truncate">${video.description || ''}</p>
           </div>
         </div>
       `).join('');
@@ -165,28 +167,38 @@
       const video = currentDisplayedVideos[index];
       if (!video) return;
 
-      let youtubeId = '';
-      if (video.videoUrl.includes('/embed/')) {
-        youtubeId = video.videoUrl.split('/embed/')[1].split('?')[0];
-      } else if (video.videoUrl.includes('v=')) {
-        youtubeId = video.videoUrl.split('v=')[1].split('&')[0];
-      } else if (video.videoUrl.includes('youtu.be/')) {
-        youtubeId = video.videoUrl.split('youtu.be/')[1].split('?')[0];
+      let youtubeId = video.videoId || '';
+      if (!youtubeId && video.videoUrl) {
+        if (video.videoUrl.includes('/embed/')) {
+          youtubeId = video.videoUrl.split('/embed/')[1].split('?')[0];
+        } else if (video.videoUrl.includes('v=')) {
+          youtubeId = video.videoUrl.split('v=')[1].split('&')[0];
+        } else if (video.videoUrl.includes('youtu.be/')) {
+          youtubeId = video.videoUrl.split('youtu.be/')[1].split('?')[0];
+        }
       }
 
       if (youtubeId) {
         document.getElementById('mainPlayer').src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1`;
-      } else {
+      } else if (video.videoUrl) {
         document.getElementById('mainPlayer').src = video.videoUrl;
       }
       
       document.getElementById('currentTitle').innerText = video.title;
       document.getElementById('currentCategory').innerText = video.category || '健康資訊';
-      document.getElementById('currentDescription').innerText = video.description;
+      document.getElementById('currentDescription').innerText = video.description || '暫無簡介';
     }
 
     // 分類篩選
     function filterCategory(cat) {
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if (btn.innerText.includes(cat)) {
+          btn.className = 'cat-btn bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap';
+        } else {
+          btn.className = 'cat-btn bg-white text-slate-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap';
+        }
+      });
+
       if (cat === '全部') {
         renderVideoList(allVideos);
       } else {
@@ -213,7 +225,32 @@
 
         const data = await res.json();
         if (data.success) {
-          aiContent.innerText = data.answer;
+          try {
+            // 嘗試解析結構化長者處方
+            const plan = JSON.parse(data.answer);
+            aiContent.innerHTML = `
+              <div class="space-y-2">
+                <p class="font-bold text-emerald-900 text-base">📌 ${plan.action_title || '運動處方建議'}</p>
+                <p class="text-slate-800">${plan.voice_summary}</p>
+                ${plan.quick_steps && plan.quick_steps.length > 0 ? `
+                  <div class="mt-2 text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-emerald-100">
+                    <p class="font-bold mb-1">動作要點：</p>
+                    <ol class="list-decimal list-inside space-y-1">
+                      ${plan.quick_steps.map(s => `<li>${s}</li>`).join('')}
+                    </ol>
+                  </div>
+                ` : ''}
+                ${plan.safety_tip ? `<p class="text-xs text-amber-700 mt-1">⚠️ 提醒：${plan.safety_tip}</p>` : ''}
+              </div>
+            `;
+            // 若處方有建議影片，自動切換播放
+            if (plan.recommended_video_id) {
+              document.getElementById('mainPlayer').src = `https://www.youtube.com/embed/${plan.recommended_video_id}?autoplay=1`;
+            }
+          } catch (e) {
+            // 若為純文字則直接輸出
+            aiContent.innerText = data.answer;
+          }
         } else {
           aiContent.innerText = '⚠️ 顧問暫時無法處理您的請求，請稍後再試。';
         }
@@ -227,10 +264,10 @@
     function speakDescription() {
       const text = document.getElementById('currentDescription').innerText;
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // 停止先前的聲音
+        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'zh-TW';
-        utterance.rate = 0.9; // 稍微放慢語速適合長者
+        utterance.lang = 'zh-HK';
+        utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
       } else {
         alert('您的瀏覽器不支援語音朗讀功能');
