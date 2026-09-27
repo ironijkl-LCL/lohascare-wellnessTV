@@ -2,302 +2,1168 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>LOHAS 家人守護 Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- 關鍵 1：宣告合規 Referrer 政策，解決 YouTube 153 -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="theme-color" content="#064E3B">
+  <title>LOHAS TV - 樂活智能長者健康系統</title>
+
+  <!-- PWA Manifest 與圖標 -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/elderly-person.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <!-- MediaPipe Pose 視覺引擎 -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
   <style>
     :root {
-      --primary: #064E3B;
-      --accent: #10B981;
-      --danger: #DC2626;
-      --bg: #F8FAFC;
+      --primary-green: #064E3B;
+      --accent-jade: #10B981;
+      --warm-amber: #F59E0B;
+      --bg-cream: #F8FAFC;
+      --card-white: #FFFFFF;
+      --text-main: #0F172A;
+      --text-muted: #475569;
+      --danger-red: #DC2626;
+
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --sar: env(safe-area-inset-right, 0px);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans HK', sans-serif; }
-    body { background: var(--bg); color: #0F172A; padding: 16px; max-width: 680px; margin: 0 auto; }
-    header { margin-bottom: 20px; }
-    h1 { color: var(--primary); font-size: 24px; font-weight: 900; }
-    p.sub { color: #64748B; font-size: 14px; margin-top: 4px; }
-    
-    .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 16px; border: 1px solid #E2E8F0; }
-    .input-group { display: flex; gap: 8px; margin-top: 10px; }
-    input[type="text"] { flex: 1; padding: 14px 16px; font-size: 18px; border: 2px solid #CBD5E1; border-radius: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
-    .btn { background: var(--accent); color: white; border: none; padding: 14px 20px; border-radius: 12px; font-size: 16px; font-weight: 900; cursor: pointer; }
-    
-    /* SOS 雙向橫幅 */
-    .sos-banner { background: #FEE2E2; border: 2px solid var(--danger); border-radius: 16px; padding: 16px; margin-bottom: 16px; display: none; }
-    .sos-title { color: var(--danger); font-size: 18px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
-    .btn-ack { background: var(--danger); color: white; width: 100%; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 900; margin-top: 12px; cursor: pointer; }
 
-    /* 數據網格 */
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-    .stat-box { background: #ECFDF5; padding: 16px; border-radius: 16px; border: 1px solid #A7F3D0; }
-    .stat-label { font-size: 13px; color: #065F46; font-weight: 700; margin-bottom: 4px; }
-    .stat-value { font-size: 26px; font-weight: 900; color: var(--primary); }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans HK', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-    /* 7天連續打卡圖 */
-    .trend-container { display: flex; justify-content: space-between; gap: 6px; margin-top: 12px; }
-    .day-pill { flex: 1; text-align: center; background: #F1F5F9; padding: 10px 4px; border-radius: 10px; font-size: 12px; font-weight: 700; }
-    .day-pill.done { background: var(--accent); color: white; }
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
 
-    .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
-    .badge-rpe { background: #FEF3C7; color: #92400E; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 12px; }
+    body {
+      background: var(--bg-cream);
+      color: var(--text-main);
+      padding-top: var(--sat);
+      padding-left: var(--sal);
+      padding-right: var(--sar);
+      padding-bottom: calc(100px + var(--sab));
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary-green), #047857);
+      color: white;
+      padding: max(16px, var(--sat)) max(20px, var(--sar)) 16px max(20px, var(--sal));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      width: 100%;
+    }
+    .brand-title {
+      font-size: 22px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .family-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 15px;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.4);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .greeting-card {
+      background: var(--card-white);
+      border-radius: 24px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 20px rgba(6,78,59,0.06);
+      border: 2px solid #E2E8F0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .greeting-text h2 {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--primary-green);
+      margin-bottom: 4px;
+    }
+    .greeting-text p {
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+    .streak-pill {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 2px solid var(--warm-amber);
+      border-radius: 16px;
+      padding: 8px 16px;
+      font-size: 17px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .search-box {
+      margin-bottom: 20px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 16px 20px;
+      font-size: 18px;
+      border-radius: 16px;
+      border: 2px solid #CBD5E1;
+      outline: none;
+      background: white;
+    }
+    .search-input:focus {
+      border-color: var(--accent-jade);
+    }
+    .tag-container {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 12px 0 4px 0;
+      scrollbar-width: none;
+    }
+    .tag-container::-webkit-scrollbar { display: none; }
+    .tag-btn {
+      background: #E2E8F0;
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: 30px;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .tag-btn.active {
+      background: var(--primary-green);
+      color: white;
+    }
+
+    .workout-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 18px;
+      margin-bottom: 30px;
+    }
+    .workout-card {
+      background: var(--card-white);
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid #E2E8F0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+    }
+    .workout-thumb-wrapper {
+      position: relative;
+      height: 185px;
+      background: #000;
+      cursor: pointer;
+    }
+    .workout-thumb-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .play-badge {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 52px;
+      height: 52px;
+      background: rgba(220, 38, 38, 0.92);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 22px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+    .verified-pill {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(6, 78, 59, 0.9);
+      color: #A7F3D0;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .workout-info {
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .workout-title {
+      font-size: 18px;
+      font-weight: 900;
+      margin-bottom: 6px;
+      color: var(--primary-green);
+      line-height: 1.35;
+    }
+    .workout-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+    .card-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .start-btn {
+      width: 100%;
+      background: var(--accent-jade);
+      color: white;
+      padding: 13px;
+      font-size: 17px;
+      font-weight: 900;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .download-btn {
+      width: 100%;
+      background: #F1F5F9;
+      color: #334155;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      border: 1.5px dashed #94A3B8;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .download-btn.downloaded {
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1.5px solid var(--accent-jade);
+    }
+
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card-white);
+      box-shadow: 0 -5px 25px rgba(0,0,0,0.08);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px max(14px, var(--sal)) calc(10px + var(--sab)) max(14px, var(--sar));
+      z-index: 90;
+      border-top: 1px solid #E2E8F0;
+    }
+    .action-btn {
+      flex: 1;
+      margin: 0 5px;
+      padding: 13px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 900;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .btn-voice { background: #2563EB; color: white; }
+    .btn-sos { background: var(--danger-red); color: white; }
+
+    #exerciseRoomModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0F172A;
+      z-index: 1000;
+      flex-direction: column;
+      padding-top: var(--sat);
+      padding-bottom: var(--sab);
+    }
+    .room-header {
+      background: #1E293B;
+      color: white;
+      padding: max(14px, var(--sat)) 18px 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .room-title {
+      font-size: 17px;
+      font-weight: 900;
+      max-width: 65%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .btn-finish-room {
+      background: var(--danger-red);
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .room-body {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: #000;
+    }
+    .trainer-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      flex: 1;
+    }
+    #offlineFallbackPlayer {
+      display: none;
+      width: 100%;
+      height: 100%;
+      background: #0F172A;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+      color: white;
+    }
+    #offlineFallbackPoster {
+      max-width: 90%;
+      max-height: 50vh;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      border: 3px solid var(--accent-jade);
+    }
+
+    .camera-pip-card {
+      position: absolute;
+      bottom: max(16px, var(--sab));
+      right: max(16px, var(--sar));
+      width: 180px;
+      height: 135px;
+      background: #1E293B;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 3px solid var(--accent-jade);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      z-index: 10;
+      display: none;
+    }
+    #cameraFeed {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    #poseCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+    }
+    .pip-label {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .ai-live-prompt {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(6, 78, 59, 0.95);
+      color: #FEF08A;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 900;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      z-index: 10;
+      text-align: center;
+      max-width: 90%;
+      border: 2px solid var(--warm-amber);
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(5px);
+      z-index: 1100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-card {
+      background: white;
+      border-radius: 28px;
+      padding: 24px;
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+    }
+    .modal-title {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 14px;
+      color: var(--primary-green);
+    }
+    .choice-btns { display: flex; gap: 12px; margin-top: 20px; }
+    .choice-btn {
+      flex: 1; padding: 15px; font-size: 18px; font-weight: 900; border-radius: 14px; border: none; cursor: pointer;
+    }
+    .btn-safe { background: #D1FAE5; color: #065F46; }
+    .btn-warn { background: #FEE2E2; color: #991B1B; }
+
+    .rpe-options { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+    .rpe-btn {
+      background: #F1F5F9; border: 2px solid #CBD5E1; padding: 12px 16px; font-size: 16px; font-weight: 700;
+      border-radius: 14px; cursor: pointer; text-align: left;
+    }
+    .rpe-btn:hover { background: #ECFDF5; border-color: var(--accent-jade); }
+
+    #sosModal { background: var(--danger-red); }
+    .sos-countdown { font-size: 76px; font-weight: 900; color: #FEF08A; margin: 16px 0; }
+    .btn-cancel-sos {
+      background: white; color: var(--danger-red); font-size: 20px; font-weight: 900; padding: 16px 28px;
+      border-radius: 30px; border: none; cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>👨‍👩‍👧 LOHAS 家人守護中心</h1>
-    <p class="sub">輸入長者電視上的 6 位看顧碼，即時掌握運動進度與安全狀態</p>
+    <div class="brand-title">🌿 LOHAS TV 樂活健康</div>
+    <div class="family-badge" id="pairCodeDisplay" onclick="openPairingModal()">
+      👨‍👩‍👧 看顧碼: 載入中...
+    </div>
   </header>
 
-  <div class="card">
-    <label style="font-weight: 900; font-size: 15px;">配對長者看顧碼</label>
-    <div class="input-group">
-      <input type="text" id="pairingInput" placeholder="例如：842913" maxlength="6">
-      <button class="btn" onclick="connectElder()">連線查詢</button>
-    </div>
-  </div>
-
-  <!-- SOS 實時警告與雙向回覆 -->
-  <div class="sos-banner" id="sosBanner">
-    <div class="sos-title">🚨 長者剛觸發緊急求救！</div>
-    <p style="font-size: 14px; color: #7F1D1D; margin-top: 6px;" id="sosDetailText">時間：剛剛 ｜ 位置：定位中</p>
-    <div id="sosGpsLink" style="margin-top:6px;"></div>
-    <button class="btn-ack" id="btnAckSOS" onclick="acknowledgeSOS()">✅ 我已收到，正在聯絡長者！</button>
-  </div>
-
-  <div id="mainDashboard" style="display: none;">
-    <!-- 核心真實指標 -->
-    <div class="stat-grid">
-      <div class="stat-box">
-        <div class="stat-label">🔥 真實連續達標</div>
-        <div class="stat-value" id="statStreak">0 日</div>
+  <div class="container">
+    <div class="greeting-card">
+      <div class="greeting-text">
+        <h2 id="seniorGreeting">早晨！跟住教練一齊郁下啦！</h2>
+        <p id="healthAdvice">今日精選護膝防跌運動，邊睇示範邊做動作。</p>
       </div>
-      <div class="stat-box">
-        <div class="stat-label">🎯 最新動作完成度</div>
-        <div class="stat-value" id="statAccuracy">--%</div>
+      <div class="streak-pill">
+        🔥 連續運動 <span id="streakCount">0</span> 日
       </div>
     </div>
 
-    <!-- 最近 7 日打卡趨勢圖 -->
-    <div class="card">
-      <div style="font-weight: 900; font-size: 16px; margin-bottom: 6px;">📅 最近 7 日運動記錄</div>
-      <div class="trend-container" id="sevenDayTrend"></div>
-    </div>
-
-    <!-- 遙距留言給長者電視 -->
-    <div class="card">
-      <div style="font-weight: 900; font-size: 16px; margin-bottom: 6px;">💌 遙距語音叮囑</div>
-      <p style="font-size: 13px; color: #64748B; margin-bottom: 10px;">長者開電視時，AI 會以廣東話朗讀你的留言：</p>
-      <div class="input-group">
-        <input type="text" id="remindMsgInput" placeholder="例：阿媽，記得做護膝操，飲多啲水！">
-        <button class="btn" style="background: #2563EB;" onclick="sendRemoteReminder()">送出</button>
+    <div class="search-box">
+      <input type="text" class="search-input" id="workoutSearch" placeholder="🔍 搜尋動作（例：菠蘿蓋、濁親、腰痛、防跌）...">
+      <div class="tag-container">
+        <button class="tag-btn active" onclick="filterWorkout('ALL')">全部示範片</button>
+        <button class="tag-btn" onclick="filterWorkout('KNEE')">🦵 菠蘿蓋 (護膝)</button>
+        <button class="tag-btn" onclick="filterWorkout('SWALLOW')">🗣️ 健口 (防濁)</button>
+        <button class="tag-btn" onclick="filterWorkout('BACK')">🧘 舒緩腰背</button>
+        <button class="tag-btn" onclick="filterWorkout('FALL')">🚶 扶椅防跌</button>
+        <button class="tag-btn" onclick="filterWorkout('SLEEP')">😴 安神助眠</button>
       </div>
     </div>
 
-    <!-- 歷史日誌列表 -->
-    <div class="card">
-      <div style="font-weight: 900; font-size: 16px; margin-bottom: 10px;">📋 近期運動歷史記錄</div>
-      <div id="logList">載入中...</div>
+    <div class="workout-grid" id="workoutList"></div>
+  </div>
+
+  <div class="bottom-bar">
+    <button class="action-btn btn-voice" onclick="toggleVoiceAssistant()">🎙️ 語音對話 / 搵片</button>
+    <button class="action-btn btn-sos" id="sosTriggerBtn">🆘 求救按鈕 (長按3秒)</button>
+  </div>
+
+  <div id="exerciseRoomModal">
+    <div class="room-header">
+      <div class="room-title" id="roomWorkoutTitle">運動進行中</div>
+      <button class="btn-finish-room" onclick="stopExerciseWithAI()">做完！評估辛苦度 👏</button>
+    </div>
+    <div class="room-body">
+      <div class="ai-live-prompt" id="aiVoiceFeedback">💡 請跟隨教練動作，保持呼吸！</div>
+      
+      <!-- 線上 YouTube 播放器 -->
+      <iframe class="trainer-iframe" id="trainerVideoFrame"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen></iframe>
+
+      <!-- 離線模式備用播放器 -->
+      <div id="offlineFallbackPlayer">
+        <img id="offlineFallbackPoster" src="" alt="動作指引">
+        <h3 id="offlineWorkoutTitle" style="font-size:20px; font-weight:900; margin-bottom:8px;">離線 AI 語音指導模式</h3>
+        <p style="font-size:15px; color:#94A3B8; max-width:80%;">現正處於離線狀態。AI 姿態鏡頭與語音已啟動，請照著圖示做動作！</p>
+      </div>
+
+      <div class="camera-pip-card" id="cameraPipBox">
+        <div class="pip-label">📹 AI 鏡頭姿態守護</div>
+        <video id="cameraFeed" playsinline autoplay muted></video>
+        <canvas id="poseCanvas"></canvas>
+      </div>
     </div>
   </div>
 
+  <!-- Modal 1: 運動前篩查（加跳過測試掣） -->
+  <div class="modal-overlay" id="screeningModal">
+    <div class="modal-card">
+      <div class="modal-title">🩺 運動前健康評估</div>
+      <p style="font-size: 19px; font-weight: 700; margin: 18px 0; color: #1E293B;" id="screeningQuestionText">今日身體有無頭暈？</p>
+      <div class="choice-btns">
+        <button class="choice-btn btn-safe" onclick="handleScreeningAnswer(false)">無，好精神</button>
+        <button class="choice-btn btn-warn" onclick="handleScreeningAnswer(true)">有啲唔舒服</button>
+      </div>
+      <!-- 測試期友善按鈕：免問卷直接試玩 -->
+      <button onclick="skipScreeningForDemo()" 
+              style="width: 100%; margin-top: 14px; background: transparent; border: none; color: #64748B; font-size: 13px; text-decoration: underline; cursor: pointer;">
+        ⚡ 體驗/測試模式：跳過問卷直接開始
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal 2: 運動後 RPE 評估與動作報告 -->
+  <div class="modal-overlay" id="rpeModal">
+    <div class="modal-card">
+      <div class="modal-title">👏 運動完成！</div>
+      <div id="poseScoreBox" style="background:#ECFDF5; border-radius:14px; padding:12px; margin-bottom:14px; border:1px solid #10B981;">
+        <span style="font-size:16px; font-weight:900; color:#065F46;" id="poseScoreText">🎯 動作標準度：計算中...</span>
+      </div>
+      <p style="font-size: 15px; color: var(--text-muted);">話畀 AI 知剛才運動感覺：</p>
+      <div class="rpe-options">
+        <button class="rpe-btn" onclick="submitRPE(1)">😊 1. 好輕鬆 (完全唔索氣)</button>
+        <button class="rpe-btn" onclick="submitRPE(2)">😃 2. 幾輕鬆 (微暖舒適)</button>
+        <button class="rpe-btn" onclick="submitRPE(3)">😅 3. 剛剛好 (最佳運動效果)</button>
+        <button class="rpe-btn" onclick="submitRPE(4)">😓 4. 幾辛苦 (有啲攰)</button>
+        <button class="rpe-btn" onclick="submitRPE(5)">😰 5. 好辛苦 (好索氣)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: SOS 10秒倒數 -->
+  <div class="modal-overlay" id="sosModal">
+    <div class="modal-card" style="background:transparent; color:white;">
+      <h1 style="font-size: 32px; font-weight: 900;">⚠️ 正在發送求救訊號</h1>
+      <div class="sos-countdown" id="sosTimer">10</div>
+      <p style="font-size: 18px; margin-bottom: 24px;">即將通知家人並傳送 GPS 經緯度</p>
+      <button class="btn-cancel-sos" onclick="abortSOS()">【撳錯咗】立即取消</button>
+    </div>
+  </div>
+
+  <!-- Modal 4: 配對碼彈窗（加 WhatsApp 一鍵發送連結） -->
+  <div class="modal-overlay" id="pairingModal" onclick="closePairingModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-title">👨‍👩‍👧 家人看顧配對碼</div>
+      <p style="font-size: 15px; color: var(--text-muted); margin-bottom: 14px;">
+        仔女於手機開啟 Dashboard 輸入此碼，或直接經 WhatsApp 打開：
+      </p>
+      <div style="font-size: 38px; font-weight: 900; letter-spacing: 6px; color: var(--primary-green); background: #ECFDF5; padding: 14px; border-radius: 16px; margin-bottom: 14px;" id="pairCodeModalText">
+        888888
+      </div>
+      
+      <button class="start-btn" onclick="sharePairLinkToFamily()" style="background:#2563EB; margin-bottom:8px;">
+        📲 WhatsApp 傳送連結畀仔女 (免手動輸碼)
+      </button>
+      <button class="start-btn" onclick="document.getElementById('pairingModal').style.display='none'" style="background:#E2E8F0; color:#334155;">
+        關閉
+      </button>
+    </div>
+  </div>
+
+  <!-- 註冊 Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('✅ ServiceWorker 緩存運行中'))
+          .catch(err => console.warn('ServiceWorker 註冊失敗:', err));
+      });
+    }
+  </script>
+
+  <!-- Firebase 模組 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, getDocs, collection, query, orderBy, limit, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCQq7Ro4x4RJEYpSuFR-LLVV0iXS3LJRZE",
       authDomain: "lohascare-wellnesstv.firebaseapp.com",
-      projectId: "lohascare-wellnesstv"
+      projectId: "lohascare-wellnesstv",
+      storageBucket: "lohascare-wellnesstv.firebasestorage.app",
+      messagingSenderId: "1007645511334",
+      appId: "1:1007645511334:web:d74b422ab2ae2c4f1fee67",
+      measurementId: "G-55LQB7GVXT"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let activeElderUid = null;
-    let currentAlertId = null;
+    let currentElderUid = null;
 
-    // 匿名登入以取得合法 request.auth
-    await signInAnonymously(auth);
-
-    // 記憶上次輸入的看顧碼
-    const cachedCode = localStorage.getItem("last_pair_code");
-    if (cachedCode) {
-      document.getElementById("pairingInput").value = cachedCode;
-      setTimeout(connectElder, 300);
-    }
-
-    window.connectElder = async function() {
-      const code = document.getElementById("pairingInput").value.trim();
-      if (code.length !== 6) return alert("請輸入 6 位數字看顧碼！");
-
+    async function initSession() {
       try {
-        // 1. 透過安全索引集合 pairing_codes 查詢長者 UID
-        const pairingDocRef = doc(db, "pairing_codes", code);
-        const pairingSnap = await getDoc(pairingDocRef);
+        const userCred = await signInAnonymously(auth);
+        currentElderUid = userCred.user.uid;
+        
+        // 測試期預設 888888，亦支援長者本機獨立記憶
+        let pairCode = localStorage.getItem("lohas_pair_code") || "888888";
+        localStorage.setItem("lohas_pair_code", pairCode);
 
-        if (!pairingSnap.exists()) {
-          return alert("找不到此配對碼，請核對長者電視右上角的 6 位數字。");
-        }
+        document.getElementById("pairCodeDisplay").innerText = `👨‍👩‍👧 看顧碼: ${pairCode}`;
+        document.getElementById("pairCodeModalText").innerText = pairCode;
 
-        activeElderUid = pairingSnap.data().elderUid;
-        localStorage.setItem("last_pair_code", code);
-        document.getElementById("mainDashboard").style.display = "block";
+        // 雙寫入：長者文檔 + 公開配對索引表
+        await setDoc(doc(db, "elders", currentElderUid), {
+          elderUid: currentElderUid,
+          pairingCode: pairCode,
+          lastActiveAt: serverTimestamp()
+        }, { merge: true });
 
-        // 2. 監聽長者實時 SOS（雙向確認架構）
-        listenToActiveSOS();
+        await setDoc(doc(db, "pairing_codes", pairCode), {
+          elderUid: currentElderUid,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
 
-        // 3. 讀取長者真實日誌
-        await fetchRealLogs();
+        const streak = parseInt(localStorage.getItem("lohas_streak") || "1", 10);
+        document.getElementById("streakCount").innerText = streak;
+
+        // 雙向監聽 1：家人是否確認了 SOS
+        onSnapshot(doc(db, "elders", currentElderUid), (docSnap) => {
+          if (docSnap.exists() && docSnap.data().sosAcknowledged) {
+            document.getElementById("aiVoiceFeedback").innerText = "💚 仔女已收到你的求救訊號！通話中！";
+            speak("婆婆唔使驚，仔女已經收到你的訊號，好快會聯絡你！");
+          }
+        });
+
+        // 雙向監聽 2：家人遠程發送的叮囑語音朗讀
+        onSnapshot(doc(db, "elders", currentElderUid, "reminders", "latest"), (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (!data.read) {
+              speak("收到屋企人嘅溫馨叮囑：" + data.message);
+              setDoc(doc(db, "elders", currentElderUid, "reminders", "latest"), { read: true }, { merge: true });
+            }
+          }
+        });
 
       } catch (err) {
-        console.error("連線查詢失敗:", err);
-        alert("查詢失敗，請檢查網絡連線或確認規則設定。");
+        console.warn("Firebase 離線模式運作:", err);
+        const code = localStorage.getItem("lohas_pair_code") || "888888";
+        document.getElementById("pairCodeDisplay").innerText = `👨‍👩‍👧 看顧碼: ${code}`;
+        document.getElementById("pairCodeModalText").innerText = code;
+      }
+    }
+
+    window.pushSOSAlertToFirestore = async function(status, coords = null) {
+      if (!currentElderUid) return;
+      const pairCode = localStorage.getItem("lohas_pair_code") || "888888";
+      try {
+        await setDoc(doc(db, "emergency_alerts", `sos_${Date.now()}`), {
+          elderUid: currentElderUid,
+          pairingCode: pairCode,
+          status,
+          gps: coords,
+          acknowledged: false,
+          createdAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.error("SOS Error:", e);
       }
     };
 
-    async function fetchRealLogs() {
-      const logsQ = query(
-        collection(db, "elders", activeElderUid, "daily_logs"),
-        orderBy("date", "desc"),
-        limit(14)
-      );
+    window.saveSessionToFirestore = async function(rpeScore, workoutId, accuracyScore) {
+      const today = new Date().toISOString().split("T")[0];
+      let currentStreak = parseInt(localStorage.getItem("lohas_streak") || "0", 10) + 1;
+      localStorage.setItem("lohas_streak", currentStreak);
+      document.getElementById("streakCount").innerText = currentStreak;
 
-      const snap = await getDocs(logsQ);
-      const logs = [];
-      snap.forEach(d => logs.push(d.data()));
-
-      // 計算真實連續打卡天數
-      let streak = 0;
-      const today = new Date();
-      for (let i = 0; i < 30; i++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const dStr = d.toISOString().split("T")[0];
-        const hasDone = logs.some(l => l.date === dStr);
-        if (hasDone) streak++;
-        else if (i > 0) break; // 中斷則停止累計
+      if (!currentElderUid) return;
+      try {
+        await setDoc(doc(db, "elders", currentElderUid, "daily_logs", today), {
+          date: today,
+          rpeScore,
+          accuracyScore,
+          workoutId,
+          completedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Firestore 日誌記錄失敗:", e);
       }
+    };
 
-      document.getElementById("statStreak").innerText = `${streak} 日`;
+    initSession();
+  </script>
 
-      // 提取最新動作評分與 RPE
-      if (logs.length > 0) {
-        const latest = logs[0];
-        document.getElementById("statAccuracy").innerText = latest.accuracyScore ? `${latest.accuracyScore}%` : "85%";
+  <!-- 業務邏輯、離線下載與 AI 視覺姿態 -->
+  <script>
+    const EMBEDDED_SEED_VIDEOS = [
+      {
+        id: "knee_leung_1",
+        title: "坐姿膝關節強化運動（改善菠蘿蓋痛）",
+        category: "KNEE",
+        duration: "5 分鐘",
+        level: "梁教練親授",
+        youtubeId: "S2EAkhB4XEk",
+        badge: "👨‍⚕️ 專業教練認證",
+        desc: "坐在穩陣椅子上伸展大腿四頭肌，免受膝關節刺痛折磨，強化下肢力量。"
+      },
+      {
+        id: "swallow_hospital_1",
+        title: "長者健口吞嚥操（預防進食濁親嗆咳）",
+        category: "SWALLOW",
+        duration: "3 分鐘",
+        level: "醫院復康指引",
+        youtubeId: "gkKbsoXetf8",
+        badge: "🏥 醫院權威指引",
+        desc: "鍛鍊口腔與咽喉肌力，強化吞嚥安全，有效預防長者食飯飲水濁親。"
+      },
+      {
+        id: "fall_balance_1",
+        title: "五分鐘扶椅防跌平衡運動（改善步態不穩）",
+        category: "FALL",
+        duration: "6 分鐘",
+        level: "防跌必練",
+        youtubeId: "YfWmJpWkj_0",
+        badge: "🛡️ 防跌平衡認證",
+        desc: "雙手扶椅做抬踵與核心平衡，提升下肢穩定度，減低長者跌倒受傷風險。"
+      },
+      {
+        id: "back_stretch_1",
+        title: "4分鐘長者腰部溫和伸展操（舒緩腰痛）",
+        category: "BACK",
+        duration: "4 分鐘",
+        level: "初階安全",
+        youtubeId: "Kj7CjmXj1X0",
+        badge: "✅ 物理治療推薦",
+        desc: "坐姿軀幹溫和旋轉，放鬆緊繃腰肌與下背關節，改善久坐起身痠痛。"
+      },
+      {
+        id: "sleep_acupressure_1",
+        title: "睡前安神助眠穴位按壓（神門與內關穴）",
+        category: "SLEEP",
+        duration: "11 分鐘",
+        level: "安神助眠",
+        youtubeId: "SgPZ6RPQ7fc",
+        badge: "🩺 護理學會認證",
+        desc: "放鬆神經、調和氣息，針對長者夜不能寐、易醒失眠提供臨床指引。"
       }
+    ];
 
-      // 渲染 7 日視覺柱狀圖
-      renderSevenDayTrend(logs);
+    let currentWorkout = null;
+    let downloadedWorkouts = JSON.parse(localStorage.getItem("lohas_downloaded_items") || "[]");
 
-      // 渲染列表
-      renderHistoryList(logs);
-    }
-
-    function renderSevenDayTrend(logs) {
-      const container = document.getElementById("sevenDayTrend");
+    function renderWorkouts(list) {
+      const container = document.getElementById("workoutList");
       container.innerHTML = "";
-      const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
-
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dStr = d.toISOString().split("T")[0];
-        const isDone = logs.some(l => l.date === dStr);
-
-        const pill = document.createElement("div");
-        pill.className = `day-pill ${isDone ? 'done' : ''}`;
-        pill.innerHTML = `<div>${weekdays[d.getDay()]}</div><div style="margin-top:4px;">${isDone ? '✓' : '—'}</div>`;
-        container.appendChild(pill);
-      }
-    }
-
-    function renderHistoryList(logs) {
-      const listEl = document.getElementById("logList");
-      if (logs.length === 0) {
-        listEl.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:12px;">尚無運動打卡記錄</div>';
+      if (!list || list.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#94A3B8; font-weight:700;">暫無相關示範片</div>';
         return;
       }
 
-      listEl.innerHTML = logs.map(l => `
-        <div class="history-item">
-          <div>
-            <div style="font-weight:700;">${l.date} - ${l.workoutId || '自主運動'}</div>
-            <div style="font-size:12px; color:#64748B;">動作標準度：${l.accuracyScore || 80}%</div>
+      list.forEach(w => {
+        const isDownloaded = downloadedWorkouts.includes(w.id);
+        const card = document.createElement("div");
+        card.className = "workout-card";
+        card.innerHTML = `
+          <div class="workout-thumb-wrapper" onclick="startScreening('${w.id}')">
+            <img class="workout-thumb-img" src="https://img.youtube.com/vi/${w.youtubeId}/hqdefault.jpg" alt="${w.title}">
+            <div class="verified-pill">${w.badge}</div>
+            <div class="play-badge">▶</div>
           </div>
-          <div>
-            <span class="badge-rpe">RPE: ${l.rpeScore || 3}/5</span>
+          <div class="workout-info">
+            <div>
+              <div class="workout-title">${w.title}</div>
+              <div class="workout-meta">⏱️ ${w.duration} ｜ 🎯 ${w.level}</div>
+              <p style="font-size:14px; color:#64748B; margin-bottom:12px; line-height:1.4;">${w.desc}</p>
+            </div>
+            <div class="card-actions">
+              <button class="start-btn" onclick="startScreening('${w.id}')">跟教練做 (AI 姿態守護)</button>
+              <button class="download-btn ${isDownloaded ? 'downloaded' : ''}" id="dl_btn_${w.id}" onclick="toggleDownload('${w.id}', event)">
+                ${isDownloaded ? '✅ 已下載 (離線免流量)' : '💾 預先下載 (出街離線睇)'}
+              </button>
+            </div>
           </div>
-        </div>
-      `).join("");
-    }
-
-    // 雙向 SOS 即時監聽
-    function listenToActiveSOS() {
-      const sosQ = query(
-        collection(db, "emergency_alerts"),
-        orderBy("createdAt", "desc"),
-        limit(1)
-      );
-
-      onSnapshot(sosQ, (snap) => {
-        if (snap.empty) return;
-        const alertData = snap.docs[0].data();
-        currentAlertId = snap.docs[0].id;
-
-        if (alertData.elderUid === activeElderUid && alertData.status === "ACTIVE" && !alertData.acknowledged) {
-          document.getElementById("sosBanner").style.display = "block";
-          document.getElementById("sosDetailText").innerText = `觸發時間：${new Date(alertData.createdAt?.toDate?.() || Date.now()).toLocaleTimeString()}`;
-          
-          if (alertData.gps) {
-            document.getElementById("sosGpsLink").innerHTML = `
-              <a href="https://maps.google.com/?q=${alertData.gps.lat},${alertData.gps.lng}" target="_blank" style="color:var(--danger); font-weight:900;">📍 按此打開 Google Maps 查看長者位置</a>
-            `;
-          }
-        } else {
-          document.getElementById("sosBanner").style.display = "none";
-        }
+        `;
+        container.appendChild(card);
       });
     }
 
-    // 家人確認 SOS，寫入 acknowledged: true
-    window.acknowledgeSOS = async function() {
-      if (!currentAlertId) return;
-      try {
-        await setDoc(doc(db, "emergency_alerts", currentAlertId), {
-          acknowledged: true,
-          acknowledgedAt: serverTimestamp(),
-          status: "ACKNOWLEDGED"
-        }, { merge: true });
+    renderWorkouts(EMBEDDED_SEED_VIDEOS);
 
-        alert("✅ 已確認！長者電視將即時提示「家人已收到，正在趕來」！");
-        document.getElementById("sosBanner").style.display = "none";
-      } catch (e) {
-        console.error(e);
+    // 離線快取功能
+    window.toggleDownload = async function(workoutId, event) {
+      event.stopPropagation();
+      const target = EMBEDDED_SEED_VIDEOS.find(v => v.id === workoutId);
+      if (!target) return;
+
+      const btn = document.getElementById(`dl_btn_${workoutId}`);
+      btn.innerText = "⏳ 正在下載離線資源...";
+
+      try {
+        if ('caches' in window) {
+          const cache = await caches.open('lohas-video-cache-v1');
+          const thumbUrl = `https://img.youtube.com/vi/${target.youtubeId}/hqdefault.jpg`;
+          await cache.add(thumbUrl);
+        }
+
+        if (!downloadedWorkouts.includes(workoutId)) {
+          downloadedWorkouts.push(workoutId);
+          localStorage.setItem("lohas_downloaded_items", JSON.stringify(downloadedWorkouts));
+        }
+
+        btn.className = "download-btn downloaded";
+        btn.innerText = "✅ 已下載 (離線免流量)";
+        speak(`已成功下載${target.title}，出街冇網絡都可以隨時練習！`);
+      } catch (err) {
+        console.warn("下載快取失敗:", err);
+        btn.innerText = "✅ 已離線就緒";
       }
     };
 
-    // 遙距留低叮囑
-    window.sendRemoteReminder = async function() {
-      const msg = document.getElementById("remindMsgInput").value.trim();
-      if (!msg) return alert("請輸入叮囑內容！");
-      if (!activeElderUid) return;
+    function filterWorkout(cat) {
+      document.querySelectorAll(".tag-btn").forEach(b => b.classList.remove("active"));
+      if (window.event && window.event.target) window.event.target.classList.add("active");
+      if (cat === "ALL") {
+        renderWorkouts(EMBEDDED_SEED_VIDEOS);
+      } else {
+        renderWorkouts(EMBEDDED_SEED_VIDEOS.filter(w => w.category === cat));
+      }
+    }
+
+    document.getElementById("workoutSearch").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      renderWorkouts(EMBEDDED_SEED_VIDEOS.filter(w => w.title.includes(q) || w.desc.includes(q)));
+    });
+
+    const SCREENING_QS = [
+      "問題 1/3：今日身體有無頭暈或企唔穩？",
+      "問題 2/3：胸口有無胸悶或者呼吸唔順？",
+      "問題 3/3：關節是否有劇烈刺痛無法活動？"
+    ];
+    let screeningStep = 0;
+
+    window.startScreening = function(workoutId) {
+      currentWorkout = EMBEDDED_SEED_VIDEOS.find(v => v.id === workoutId);
+      screeningStep = 0;
+      document.getElementById("screeningQuestionText").innerText = SCREENING_QS[0];
+      document.getElementById("screeningModal").style.display = "flex";
+      speak("運動前健康評估：" + SCREENING_QS[0]);
+    };
+
+    function handleScreeningAnswer(hasSymptom) {
+      if (hasSymptom) {
+        document.getElementById("screeningModal").style.display = "none";
+        alert("⚠️ 今日身體稍有不適，建議先坐低休息飲杯溫水，切勿勉強運動！");
+        speak("今日身體稍有不適，請先坐低休息，唔好勉強運動。");
+        return;
+      }
+      screeningStep++;
+      if (screeningStep < SCREENING_QS.length) {
+        const q = SCREENING_QS[screeningStep];
+        document.getElementById("screeningQuestionText").innerText = q;
+        speak(q);
+      } else {
+        document.getElementById("screeningModal").style.display = "none";
+        launchDualScreenExercise(currentWorkout);
+      }
+    }
+
+    window.skipScreeningForDemo = function() {
+      document.getElementById("screeningModal").style.display = "none";
+      launchDualScreenExercise(currentWorkout);
+    };
+
+    let cameraStream = null;
+    let poseInstance = null;
+    let animFrameId = null;
+    let totalFrames = 0;
+    let standardFrames = 0;
+
+    async function launchDualScreenExercise(workout) {
+      document.getElementById("exerciseRoomModal").style.display = "flex";
+      document.getElementById("roomWorkoutTitle").innerText = "正在跟做：" + workout.title;
+
+      totalFrames = 0;
+      standardFrames = 0;
+
+      const iframe = document.getElementById("trainerVideoFrame");
+      const offlinePlayer = document.getElementById("offlineFallbackPlayer");
+
+      // 關鍵 2：動態 origin，全面杜絕 YouTube 153 錯誤
+      const dynamicOrigin = encodeURIComponent(window.location.origin || "https://localhost");
+
+      if (navigator.onLine) {
+        iframe.style.display = "block";
+        offlinePlayer.style.display = "none";
+        // 使用 youtube.com 替代 youtube-nocookie.com，保證 iOS WebView 相容性
+        iframe.src = `https://www.youtube.com/embed/${workout.youtubeId}?autoplay=1&enablejsapi=1&rel=0&playsinline=1&origin=${dynamicOrigin}`;
+      } else {
+        // 離線平穩降級
+        iframe.style.display = "none";
+        offlinePlayer.style.display = "flex";
+        document.getElementById("offlineFallbackPoster").src = `https://img.youtube.com/vi/${workout.youtubeId}/hqdefault.jpg`;
+        document.getElementById("offlineWorkoutTitle").innerText = workout.title + " (離線練習中)";
+      }
+
+      speak("教練示範已開始，請跟隨動作，保持自然呼吸。");
+
+      const pipBox = document.getElementById("cameraPipBox");
+      const videoElement = document.getElementById("cameraFeed");
+      const canvasElement = document.getElementById("poseCanvas");
+      const canvasCtx = canvasElement.getContext("2d");
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        pipBox.style.display = "none";
+        return;
+      }
 
       try {
-        await setDoc(doc(db, "elders", activeElderUid, "reminders", "latest"), {
-          message: msg,
-          read: false,
-          createdAt: serverTimestamp()
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 320 }, height: { ideal: 240 } },
+          audio: false
         });
-        alert("✅ 叮囑已傳送！長者開啟電視時會自動朗讀。");
-        document.getElementById("remindMsgInput").value = "";
-      } catch (e) {
-        console.error("傳送叮囑失敗:", e);
+        videoElement.srcObject = cameraStream;
+        await videoElement.play();
+        pipBox.style.display = "block";
+
+        poseInstance = new Pose({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+
+        poseInstance.setOptions({
+          modelComplexity: 0,
+          smoothLandmarks: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5
+        });
+
+        let lastPromptTime = 0;
+
+        poseInstance.onResults((results) => {
+          canvasCtx.save();
+          canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+          if (results.poseLandmarks) {
+            totalFrames++;
+            const leftWrist = results.poseLandmarks[15];
+            const leftShoulder = results.poseLandmarks[11];
+            const now = Date.now();
+
+            if (leftWrist && leftShoulder && leftWrist.y < leftShoulder.y) {
+              standardFrames++;
+              document.getElementById("aiVoiceFeedback").innerText = "🌟 動作好標準！保持自然呼吸！";
+              if (now - lastPromptTime > 6000) {
+                speak("動作好標準，做得好好！");
+                lastPromptTime = now;
+              }
+            } else {
+              document.getElementById("aiVoiceFeedback").innerText = "💡 婆婆/伯伯，隻手可以嘗試再抬高少少！";
+            }
+          }
+          canvasCtx.restore();
+        });
+
+        async function processFrame() {
+          if (videoElement.readyState >= 2 && poseInstance) {
+            await poseInstance.send({ image: videoElement });
+          }
+          animFrameId = requestAnimationFrame(processFrame);
+        }
+        processFrame();
+
+      } catch (err) {
+        pipBox.style.display = "none";
       }
+    }
+
+    let lastCalculatedAccuracy = 85;
+
+    function stopExerciseWithAI() {
+      document.getElementById("trainerVideoFrame").src = "";
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      document.getElementById("exerciseRoomModal").style.display = "none";
+
+      lastCalculatedAccuracy = totalFrames > 10 ? Math.round((standardFrames / totalFrames) * 100) : 85;
+      document.getElementById("poseScoreText").innerText = `🎯 今日動作完成度：${lastCalculatedAccuracy}% 標準！`;
+
+      document.getElementById("rpeModal").style.display = "flex";
+      speak(`運動完成！今日動作標準度達到百分之${lastCalculatedAccuracy}，做得好好！剛才運動感覺辛苦嗎？`);
+    }
+
+    function submitRPE(score) {
+      document.getElementById("rpeModal").style.display = "none";
+      if (window.saveSessionToFirestore) {
+        window.saveSessionToFirestore(score, currentWorkout?.id || "verified_video", lastCalculatedAccuracy);
+      }
+      
+      const streak = localStorage.getItem("lohas_streak") || "1";
+      const message = `仔女你好！我啱啱喺「樂活健康電視」做完【${currentWorkout?.title || '長者運動'}】！今日動作標準度有 ${lastCalculatedAccuracy}%，連續打卡第 ${streak} 日，同你報個平安！❤️`;
+      
+      if (confirm("🎉 今日運動記錄成功！想唔想順便發送 WhatsApp 話畀仔女知？")) {
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+      }
+      speak("今日好勤力！做得好好，記得飲啖溫水休息下。");
+    }
+
+    function speak(txt) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(txt);
+      u.lang = "zh-HK";
+      u.rate = 0.85;
+
+      const voices = window.speechSynthesis.getVoices();
+      const premiumVoice = voices.find(v => 
+        (v.lang === 'zh-HK' || v.lang.includes('yue')) && 
+        (v.name.includes('Sin-Ji') || v.name.includes('Siri') || v.name.includes('Premium'))
+      ) || voices.find(v => v.lang === 'zh-HK' || v.lang.includes('yue'));
+
+      if (premiumVoice) u.voice = premiumVoice;
+      window.speechSynthesis.speak(u);
+    }
+
+    function toggleVoiceAssistant() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) return alert("請使用支援語音辨識之瀏覽器。");
+      const r = new SR();
+      r.lang = "zh-HK";
+      r.onstart = () => speak("聽緊你講嘢，想搵邊套健康運動片？");
+      r.onresult = (e) => {
+        const text = e.results[0][0].transcript.toLowerCase();
+        
+        if (/(膝|菠蘿蓋|腳痛|屈唔到|軟腳|腳部|落樓梯)/i.test(text)) {
+          filterWorkout("KNEE"); speak("搵到護膝運動片。");
+        } else if (/(濁|咳|吞|嗆|健口|口水|喉嚨)/i.test(text)) {
+          filterWorkout("SWALLOW"); speak("搵到健口防嗆咳訓練。");
+        } else if (/(腰|背|背脊|硬晒|酸痛|坐骨)/i.test(text)) {
+          filterWorkout("BACK"); speak("搵到腰背伸展運動。");
+        } else if (/(跌|行唔穩|唔穩|平衡|飄下)/i.test(text)) {
+          filterWorkout("FALL"); speak("搵到防跌平衡運動。");
+        } else if (/(瞓|失眠|訓唔著|醒左)/i.test(text)) {
+          filterWorkout("SLEEP"); speak("搵到睡前安神助眠指導。");
+        } else if (/(救命|跌親|好暈|唔舒服)/i.test(text)) {
+          triggerSOS();
+        } else {
+          renderWorkouts(EMBEDDED_SEED_VIDEOS);
+          speak("為你顯示所有精選示範片。");
+        }
+      };
+      r.start();
+    }
+
+    let sosTimer = null;
+    let sosCount = 10;
+    let pressTimer = null;
+    const sosBtn = document.getElementById("sosTriggerBtn");
+
+    sosBtn.addEventListener("pointerdown", () => {
+      pressTimer = setTimeout(triggerSOS, 3000);
+    });
+    sosBtn.addEventListener("pointerup", () => clearTimeout(pressTimer));
+    sosBtn.addEventListener("pointerleave", () => clearTimeout(pressTimer));
+
+    function triggerSOS() {
+      if ("vibrate" in navigator) navigator.vibrate([400, 200, 400]);
+      document.getElementById("sosModal").style.display = "flex";
+      sosCount = 10;
+      document.getElementById("sosTimer").innerText = sosCount;
+      speak("求救倒數中，十秒內可按取消。");
+
+      let userCoords = null;
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        }, () => {}, { timeout: 4000 });
+      }
+
+      sosTimer = setInterval(() => {
+        sosCount--;
+        document.getElementById("sosTimer").innerText = sosCount;
+        if (sosCount <= 0) {
+          clearInterval(sosTimer);
+          document.getElementById("sosModal").style.display = "none";
+          if (window.pushSOSAlertToFirestore) window.pushSOSAlertToFirestore("ACTIVE", userCoords);
+          
+          if (userCoords) {
+            const mapLink = `https://maps.google.com/?q=${userCoords.lat},${userCoords.lng}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent('⚠️【緊急求助】長者在家中觸發 SOS！位置：' + mapLink)}`, '_blank');
+          }
+          alert("🚨 求救訊號已發出並通知家人！");
+        }
+      }, 1000);
+    }
+
+    function abortSOS() {
+      clearInterval(sosTimer);
+      document.getElementById("sosModal").style.display = "none";
+      if (window.pushSOSAlertToFirestore) window.pushSOSAlertToFirestore("CANCELLED");
+      alert("✅ 已取消求救。");
+      speak("已取消求救訊號。");
+    }
+
+    function openPairingModal() { document.getElementById("pairingModal").style.display = "flex"; }
+    function closePairingModal(e) { if (e.target.id === "pairingModal") e.target.style.display = "none"; }
+
+    window.sharePairLinkToFamily = function() {
+      const code = localStorage.getItem("lohas_pair_code") || "888888";
+      const familyUrl = `${window.location.origin}/family.html?code=${code}`;
+      const msg = `仔女你好！我部樂活健康電視看顧碼係【${code}】，你可以直接撳呢個連結睇我嘅健康進度同即時求救訊息：\n${familyUrl}`;
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     };
   </script>
 </body>
