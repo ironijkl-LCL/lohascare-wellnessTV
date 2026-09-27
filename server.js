@@ -1,101 +1,122 @@
+cat << 'EOF' > ~/lohas-backend/server.js
+require('dotenv').config({ override: true });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
+const path = require('path');
+const Video = require('./models/Video');
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5000;
 
-// 中間件 (Middleware)
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname));
 
-// 🍃 MongoDB 連線設定
+// 連線 MongoDB
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ 成功連接至 MongoDB Atlas！'))
-  .catch(err => console.error('❌ MongoDB 連接失敗:', err));
+  .then(() => console.log('📦 Express 已連線至 MongoDB'))
+  .catch(err => console.error('MongoDB 連線錯誤:', err));
 
-// 📹 定義 Video 資料模型
-const videoSchema = new mongoose.Schema({
-  title: String,
-  category: String,
-  thumbnail: String,
-  videoUrl: String,
-  description: String,
-  createdAt: { type: Date, default: Date.now }
-});
+// 長者口語 ➔ 專業醫護影音標籤辭典 (精準匹配核心)
+const SYMPTOM_MAPPING = {
+  '濁親': ['健口', '吞嚥', '口映', '口腔', '唾液'],
+  '嗆咳': ['健口', '吞嚥', '口映', '口腔', '喉嚨'],
+  '吞唔順': ['健口', '吞嚥', '進食'],
+  '膝蓋': ['膝', '菠蘿蓋', '關節', '座椅', '下肢'],
+  '膝頭': ['膝', '菠蘿蓋', '關節', '座椅', '下肢'],
+  '菠蘿蓋': ['膝', '關節', '座椅', '下肢'],
+  '行路唔穩': ['防跌', '平衡', '下肢肌力', '步態'],
+  '跌倒': ['防跌', '平衡', '輪椅', '下肢'],
+  '腰痛': ['腰', '背', '伸展', '八段錦', '椅子操'],
+  '瞓唔著': ['太極', '放鬆', '助眠', '經絡', '八段錦'],
+  '失眠': ['太極', '放鬆', '助眠', '經絡']
+};
 
-const Video = mongoose.models.Video || mongoose.model('Video', videoSchema);
-
-// ------------------- 路由設定 (Routes) ------------------- //
-
-// 1. 測試根目錄 (防止 404)
 app.get('/', (req, res) => {
-  res.send('🌐 樂活 API 伺服器正在正常運作中！');
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 2. 取得所有影片 API
+// 1. 取得影片列表 API
 app.get('/api/videos', async (req, res) => {
   try {
-    const videos = await Video.find().sort({ createdAt: -1 });
-    res.json({ success: true, videos });
-  } catch (err) {
-    console.error('❌ 抓取影片失敗:', err);
-    res.status(500).json({ success: false, message: '無法讀取影片資料' });
+    const { category } = req.query;
+    const filter = category && category !== '全部' ? { category } : {};
+    
+    const videos = await Video.find(filter)
+      .sort({ isVerified: -1, createdAt: -1 })
+      .limit(60);
+
+    res.json({ success: true, count: videos.length, videos });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '伺服器內部錯誤' });
   }
 });
 
-// 3. Dify AI 顧問 API (專為 Chatflow / Workflow 設計)
+// 2. 智慧精準匹配 AI 處方端點
 app.post('/api/dify/chat', async (req, res) => {
-  try {
-    const { query } = req.body;
+  const { query } = req.body;
+  if (!query) return res.status(400).json({ success: false, message: '請提供症狀' });
 
-    if (!query) {
-      return res.status(400).json({ success: false, message: '請提供查詢內容' });
+  try {
+    // 智慧擴展關鍵字
+    let searchKeywords = [query];
+    for (const [symptom, tags] of Object.entries(SYMPTOM_MAPPING)) {
+      if (query.includes(symptom)) {
+        searchKeywords = searchKeywords.concat(tags);
+      }
     }
 
-    console.log(`🤖 收到 AI 查詢: "${query}"，正在呼叫 Dify API...`);
-
-    const response = await fetch(process.env.DIFY_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.DIFY_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        inputs: {},                // Chatflow / Workflow 必需欄位
-        query: query,
-        response_mode: 'blocking', // 阻塞式一次返回
-        user: 'lohas-user-client'
-      })
+    // 動態構建高精準 MongoDB 搜尋條件
+    const regexQueries = searchKeywords.map(k => new RegExp(k, 'i'));
+    const matchedVideo = await Video.findOne({
+      $or: [
+        { title: { $in: regexQueries } },
+        { description: { $in: regexQueries } },
+        { tags: { $in: regexQueries } },
+        { category: { $in: regexQueries } }
+      ]
     });
 
-    const data = await response.json();
+    // 若依然未配對到，按分類兜底提供最穩陣的長者影片
+    const fallbackVideo = await Video.findOne({ category: '座椅伸展操' }) || await Video.findOne();
+    const finalVideo = matchedVideo || fallbackVideo;
 
-    if (response.ok) {
-      // 相容 Chatflow 與一般 ChatApp 的回答結構
-      let aiAnswer = data.answer;
-      if (!aiAnswer && data.data && data.data.outputs) {
-        aiAnswer = data.data.outputs.text || data.data.outputs.result || data.data.outputs.answer;
-      }
+    // 依症狀生成大字結構化處方
+    let actionTitle = "長者專屬運動處方";
+    let summary = `為你搵到最啱嘅「${finalVideo.title.substring(0, 16)}...」，每日跟做 3-5 分鐘。`;
+    let steps = ["保持坐姿端正，呼吸平穩", "跟隨影片動作慢慢活動", "量力而為，感到放鬆即可"];
+    let safety = "如動作進行時感到劇烈痛楚或頭暈，請即停低休息。";
 
-      if (!aiAnswer) {
-        aiAnswer = 'AI 顧問分析完成，請參考相關建議。';
-      }
-
-      console.log('✅ Dify 回應成功！');
-      return res.json({ success: true, answer: aiAnswer });
-    } else {
-      console.error('❌ Dify API 報錯詳情:', data);
-      return res.status(500).json({ success: false, message: data.message || 'Dify API 回應異常' });
+    if (query.includes('濁') || query.includes('咳') || query.includes('吞')) {
+      actionTitle = "🗣️ 長者健口操・預防嗆咳";
+      summary = "食嘢容易濁親多數因為喉部肌肉退化，跟住做吞嚥健口操，可以加強吞嚥力量！";
+      steps = ["頭部慢慢向左右轉動放鬆頸肌", "鼓起兩腮含氣 3 秒，再慢慢吹氣", "伸出舌頭向前、向上伸展各 3 次"];
+      safety = "練習前可先飲一啖溫水濕潤喉嚨。";
+    } else if (query.includes('膝') || query.includes('關節') || query.includes('菠蘿蓋')) {
+      actionTitle = "🦵 坐姿膝關節強化運動";
+      summary = "菠蘿蓋痛唔好勉強企喺度行，坐喺穩陣椅子上伸展大腿肌肉最安全！";
+      steps = ["坐穩椅子，單腳慢慢向前伸直抬平", "腳尖向上勾起，維持 5 秒感受大腿用力", "慢慢放低，左右腳輪流做 8 次"];
+      safety = "切忌腳踢得太猛，關節有刺痛即停。";
     }
-  } catch (err) {
-    console.error('❌ 伺服器處理 Dify 請求失敗:', err);
-    return res.status(500).json({ success: false, message: '後端連線異常' });
+
+    res.json({
+      success: true,
+      answer: JSON.stringify({
+        action_title: actionTitle,
+        voice_summary: summary,
+        recommended_video_id: finalVideo.videoId,
+        quick_steps: steps,
+        safety_tip: safety
+      })
+    });
+  } catch (error) {
+    console.error('AI 處理失敗:', error);
+    res.status(500).json({ success: false, message: '伺服器錯誤' });
   }
 });
 
-// 🚀 啟動 Express 伺服器
 app.listen(PORT, () => {
-  console.log(`🌐 樂活後端 API 已在埠 ${PORT} 啟動`);
+  console.log(`🚀 樂活伺服器已在本地啟動：http://localhost:${PORT}`);
 });
+EOF
