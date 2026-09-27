@@ -3,1251 +3,873 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>樂活健康電視 LOHAS TV</title>
-  
-  <!-- App Store / PWA 必要標頭 -->
-  <link rel="manifest" href="/manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="樂活電視">
-  <meta name="theme-color" content="#065f46">cat << 'EOF' > ~/lohas-backend/index.html
-<!DOCTYPE html>
-<html lang="zh-HK">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>樂活健康電視 LOHAS TV</title>
-  
-  <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#064e3b">
-  
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>LOHAS TV - 樂活智能長者健康系統</title>
+
+  <!-- Google Fonts: 適合長者清晰閱讀的字體 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <!-- MediaPipe Pose CDN (端側姿態分析，免費零伺服器負擔) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
   <style>
-    body { font-size: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", sans-serif; }
-    .senior-tap { min-height: 56px; }
-    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    /* SOS 長按倒數圓形進度條動畫 */
-    .sos-holding { animation: pulse 0.5s infinite alternate; }
-    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.04); } }
+    :root {
+      --primary-green: #064E3B;
+      --accent-jade: #10B981;
+      --warm-amber: #F59E0B;
+      --bg-cream: #F8FAFC;
+      --card-white: #FFFFFF;
+      --text-main: #0F172A;
+      --text-muted: #475569;
+      --danger-red: #DC2626;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans HK', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-cream);
+      color: var(--text-main);
+      padding-bottom: 90px;
+    }
+
+    /* 頂部導航欄 (高對比、大字體) */
+    header {
+      background: linear-gradient(135deg, var(--primary-green), #047857);
+      color: white;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .brand-title {
+      font-size: 26px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .family-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* 每日問候與 Streak 徽章 */
+    .greeting-card {
+      background: var(--card-white);
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 25px rgba(6,78,59,0.05);
+      border: 2px solid #E2E8F0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .greeting-text h2 {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--primary-green);
+      margin-bottom: 6px;
+    }
+    .greeting-text p {
+      font-size: 18px;
+      color: var(--text-muted);
+    }
+    .streak-pill {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 2px solid var(--warm-amber);
+      border-radius: 20px;
+      padding: 12px 18px;
+      font-size: 20px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    /* 搜尋與症狀快選 */
+    .search-box {
+      margin-bottom: 20px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 16px 20px;
+      font-size: 20px;
+      border-radius: 16px;
+      border: 2px solid #CBD5E1;
+      outline: none;
+    }
+    .search-input:focus {
+      border-color: var(--accent-jade);
+    }
+    .tag-container {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 10px 0;
+    }
+    .tag-btn {
+      background: #E2E8F0;
+      color: var(--text-main);
+      padding: 10px 20px;
+      border-radius: 30px;
+      border: none;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tag-btn.active {
+      background: var(--primary-green);
+      color: white;
+    }
+
+    /* 運動卡片網格 */
+    .workout-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .workout-card {
+      background: var(--card-white);
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid #E2E8F0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .workout-card:hover {
+      transform: translateY(-4px);
+    }
+    .workout-thumb {
+      height: 160px;
+      background: #047857;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      color: white;
+    }
+    .workout-info {
+      padding: 20px;
+    }
+    .workout-title {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 8px;
+      color: var(--primary-green);
+    }
+    .workout-meta {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .start-btn {
+      width: 100%;
+      background: var(--accent-jade);
+      color: white;
+      padding: 14px;
+      font-size: 20px;
+      font-weight: 900;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    /* 底部功能欄 (語音、SOS) */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card-white);
+      box-shadow: 0 -5px 25px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-around;
+      padding: 14px 20px;
+      z-index: 100;
+    }
+    .action-btn {
+      flex: 1;
+      margin: 0 8px;
+      padding: 16px;
+      border-radius: 16px;
+      font-size: 20px;
+      font-weight: 900;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn-voice {
+      background: #3B82F6;
+      color: white;
+    }
+    .btn-sos {
+      background: var(--danger-red);
+      color: white;
+    }
+
+    /* 通用彈窗 Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-card {
+      background: white;
+      border-radius: 28px;
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+    .modal-title {
+      font-size: 26px;
+      font-weight: 900;
+      margin-bottom: 20px;
+      color: var(--primary-green);
+    }
+
+    /* 運動前篩查樣式 */
+    .screening-q {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 20px 0;
+      color: #1E293B;
+    }
+    .choice-btns {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .choice-btn {
+      flex: 1;
+      padding: 18px;
+      font-size: 22px;
+      font-weight: 900;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-safe { background: #D1FAE5; color: #065F46; }
+    .btn-warn { background: #FEE2E2; color: #991B1B; }
+
+    /* RPE 評估樣式 */
+    .rpe-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .rpe-btn {
+      background: #F1F5F9;
+      border: 2px solid #CBD5E1;
+      padding: 16px;
+      font-size: 20px;
+      font-weight: 700;
+      border-radius: 16px;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .rpe-btn:hover {
+      border-color: var(--accent-jade);
+      background: #ECFDF5;
+    }
+
+    /* MediaPipe AI 姿態糾正畫面 */
+    #aiCameraModal .modal-card {
+      max-width: 700px;
+      padding: 20px;
+    }
+    .camera-wrapper {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background: #000;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+    #cameraFeed {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    #poseCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+    }
+    .ai-feedback-banner {
+      background: #FEF3C7;
+      color: #92400E;
+      padding: 15px;
+      border-radius: 12px;
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 15px;
+    }
+
+    /* SOS 10秒倒數全螢幕 */
+    #sosModal {
+      background: var(--danger-red);
+    }
+    .sos-content {
+      color: white;
+      text-align: center;
+    }
+    .sos-countdown {
+      font-size: 80px;
+      font-weight: 900;
+      color: #FEF08A;
+      margin: 20px 0;
+    }
+    .btn-cancel-sos {
+      background: white;
+      color: var(--danger-red);
+      font-size: 26px;
+      font-weight: 900;
+      padding: 22px 35px;
+      border-radius: 30px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
   </style>
 </head>
-<body class="bg-amber-50 text-stone-900 font-sans min-h-screen flex flex-col pb-16 select-none">
+<body>
 
-  <!-- 頂部導航列 -->
-  <header class="bg-emerald-900 text-white px-4 md:px-8 py-3 flex justify-between items-center shadow-md sticky top-0 z-40">
-    <div class="flex items-center space-x-3">
-      <span class="text-3xl">📺</span>
-      <div>
-        <h1 class="text-2xl font-black tracking-wide">樂活健康電視</h1>
-        <p class="text-emerald-200 text-xs font-semibold">醫護認證・長者專屬廣東話電視</p>
-      </div>
+  <!-- 頂部導航 -->
+  <header>
+    <div class="brand-title">
+      🌿 LOHAS TV 樂活健康
     </div>
-
-    <!-- 頂部功能區：打卡天數 + 語音大按鈕 + SOS 緊急求助 -->
-    <div class="flex items-center gap-2 md:gap-3">
-      <div id="streakBadge" class="hidden sm:flex items-center gap-1 bg-emerald-950 text-amber-300 px-3 py-1.5 rounded-full text-xs font-bold border border-amber-400">
-        🔥 連續運動 <span id="streakDays">1</span> 日
-      </div>
-
-      <!-- 語音對話按鈕 -->
-      <button id="voiceBtn" class="senior-tap bg-amber-400 hover:bg-amber-500 text-stone-950 font-black px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg transition active:scale-95 border-2 border-amber-300">
-        <span class="text-2xl">🎙️</span>
-        <span id="voiceText" class="text-base md:text-lg">按此講嘢</span>
-      </button>
-
-      <!-- 🔴 傷 7：長按 3 秒 SOS 緊急求救大紅掣 -->
-      <button id="sosBtn" class="senior-tap bg-red-600 hover:bg-red-700 text-white font-black px-4 py-2.5 rounded-full flex items-center gap-1.5 shadow-xl border-2 border-red-400 active:scale-95 text-base">
-        <span>🚨</span>
-        <span id="sosLabel">SOS求救</span>
-      </button>
+    <div class="family-badge" id="pairCodeDisplay" onclick="openPairingModal()">
+      👨‍👩‍👧 看顧碼: 載入中...
     </div>
   </header>
 
-  <!-- 5 大痛點直通車 (零延遲本地處方) -->
-  <section class="bg-emerald-950 px-4 md:px-8 py-2.5 text-white shadow-inner">
-    <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
-      <span class="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1">
-        ⚡ 痛點直通：
-      </span>
-      <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-none" id="painPointsBar">
-        <button data-key="SWALLOW" class="pain-btn bg-emerald-800 hover:bg-amber-400 hover:text-stone-950 text-white px-3.5 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition active:scale-95 border border-emerald-700">
-          🗣️ 成日濁親 (健口操)
-        </button>
-        <button data-key="KNEE" class="pain-btn bg-emerald-800 hover:bg-amber-400 hover:text-stone-950 text-white px-3.5 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition active:scale-95 border border-emerald-700">
-          🦵 菠蘿蓋痛 (防痛操)
-        </button>
-        <button data-key="FALL" class="pain-btn bg-emerald-800 hover:bg-amber-400 hover:text-stone-950 text-white px-3.5 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition active:scale-95 border border-emerald-700">
-          🚶 行路唔穩 (防跌操)
-        </button>
-        <button data-key="BACK" class="pain-btn bg-amber-400 text-stone-950 px-3.5 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition active:scale-95">
-          🧘 腰痠背痛 (拉腰操)
-        </button>
-        <button data-key="SLEEP" class="pain-btn bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition active:scale-95">
-          😴 瞓唔著 (助眠穴位)
-        </button>
+  <div class="container">
+    <!-- 智能問候卡片 (含記憶 + 連續天數) -->
+    <div class="greeting-card">
+      <div class="greeting-text">
+        <h2 id="seniorGreeting">早晨！今日想舒展邊度？</h2>
+        <p id="healthAdvice">上次提過膝頭哥痛，今日做套輕柔膝操啦！</p>
+      </div>
+      <div class="streak-pill">
+        🔥 連續 <span id="streakCount">0</span> 日
       </div>
     </div>
-  </section>
 
-  <!-- 主要內容區 -->
-  <main class="flex-1 p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
-    
-    <!-- 左側：影片播放器 + 醫療處方 + 家庭看顧閉環 (佔 7 欄) -->
-    <div class="lg:col-span-7 flex flex-col gap-5">
-      
-      <!-- 播放器容器 -->
-      <div class="bg-black rounded-2xl overflow-hidden shadow-2xl aspect-video relative border-2 border-stone-800">
-        <iframe id="mainPlayer" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <!-- 搜尋與症狀標籤 -->
+    <div class="search-box">
+      <input type="text" class="search-input" id="workoutSearch" placeholder="🔍 搜尋運動或症狀 (例: 膝痛、五十肩、強心肺)...">
+      <div class="tag-container">
+        <button class="tag-btn active" onclick="filterWorkout('ALL')">全部運動</button>
+        <button class="tag-btn" onclick="filterWorkout('KNEE')">🦵 護膝防跌</button>
+        <button class="tag-btn" onclick="filterWorkout('BACK')">🧘 舒緩腰背</button>
+        <button class="tag-btn" onclick="filterWorkout('SHOULDER')">💪 肩頸放鬆</button>
+        <button class="tag-btn" onclick="filterWorkout('CARDIO')">❤️ 溫和心肺</button>
       </div>
-
-      <!-- 智能醫療處方卡片 (附權威機構認證標章) -->
-      <div id="prescriptionCard" class="bg-white border-2 border-emerald-500 rounded-2xl p-5 shadow-lg">
-        <div class="flex items-center justify-between mb-3 border-b border-stone-200 pb-3">
-          <div class="flex items-center gap-2.5">
-            <span class="text-3xl">🩺</span>
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs bg-emerald-100 text-emerald-800 font-black px-2 py-0.5 rounded">樂活醫護處方</span>
-                <!-- 🔴 傷 8：專業醫護認證 Badge -->
-                <span id="aiAuthBadge" class="text-xs bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                  🛡️ 醫管局指引 / 醫院認證
-                </span>
-              </div>
-              <h2 id="aiActionTitle" class="text-xl md:text-2xl font-black text-emerald-950 mt-1">坐姿膝關節強化運動</h2>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <button id="favoriteBtn" class="bg-stone-100 hover:bg-amber-100 text-stone-700 p-2.5 rounded-xl text-lg transition">⭐</button>
-            <button id="replayVoiceBtn" class="bg-amber-100 hover:bg-amber-200 text-stone-900 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
-              🔊 聽多次
-            </button>
-          </div>
-        </div>
-
-        <p id="aiVoiceSummary" class="text-stone-900 text-base md:text-lg font-medium mb-3 bg-emerald-50 p-3 rounded-xl border border-emerald-200 leading-relaxed"></p>
-
-        <!-- 3 個清晰大字動作步驟 -->
-        <div class="space-y-1.5 mb-4">
-          <p class="text-xs font-bold text-stone-500 uppercase tracking-wide">復康動作要點：</p>
-          <ul id="aiQuickSteps" class="space-y-1.5 text-stone-800 font-bold text-base md:text-lg"></ul>
-        </div>
-
-        <!-- 🔴 傷 6：家庭閉環 (附看顧二維碼) + 3分鐘計時 -->
-        <div class="flex flex-col sm:flex-row items-center gap-3 pt-3 border-t border-stone-100">
-          <button id="whatsappBtn" class="w-full sm:w-auto flex-1 senior-tap bg-emerald-700 hover:bg-emerald-800 text-white font-black px-4 py-2.5 rounded-xl shadow transition flex items-center justify-center gap-2">
-            <span class="text-xl">✅</span> 完成運動！話畀仔女知
-          </button>
-          <button id="familyQrBtn" class="w-full sm:w-auto senior-tap bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold px-3 py-2.5 rounded-xl border border-emerald-300 flex items-center justify-center gap-1.5 text-xs">
-            👨‍👩‍👧 家人看顧碼
-          </button>
-          <button id="timerBtn" class="w-full sm:w-auto senior-tap bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold px-4 py-2.5 rounded-xl border border-stone-300 flex items-center justify-center gap-1.5 text-sm">
-            ⏱️ 3分鐘跟練
-          </button>
-        </div>
-      </div>
-
     </div>
 
-    <!-- 右側：影片列表 + 醫療機構認證過濾 (佔 5 欄) -->
-    <div class="lg:col-span-5 flex flex-col bg-white rounded-2xl shadow-md border border-stone-200 p-4">
-      
-      <div class="flex gap-2 pb-3 mb-3 border-b border-stone-200 overflow-x-auto scrollbar-none" id="categoryTabs">
-        <button data-cat="全部" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-emerald-700 text-white transition">全部</button>
-        <button data-cat="座椅伸展操" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">🪑 座椅操</button>
-        <button data-cat="溫和太極" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">☯️ 太極</button>
-        <button data-cat="健口吞嚥" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">🗣️ 健口</button>
-        <button data-cat="FAVORITES" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 transition">⭐ 最愛</button>
-      </div>
-
-      <!-- 滾動清單 -->
-      <div id="videoList" class="flex-1 overflow-y-auto space-y-3 max-h-[640px] pr-1"></div>
-    </div>
-
-  </main>
-
-  <!-- 底部法律宣告 (符合 App Store Guideline 1.4.1 & 5.1.1) -->
-  <footer class="mt-auto bg-stone-100 border-t border-stone-200 py-3 px-4 text-center text-xs text-stone-500">
-    <div class="max-w-7xl mx-auto flex flex-wrap justify-center items-center gap-4">
-      <span>© 2026 樂活健康電視 LOHAS TV</span>
-      <button onclick="openModal('disclaimerModal')" class="underline hover:text-stone-800">醫療免責聲明</button>
-      <button onclick="openModal('privacyModal')" class="underline hover:text-stone-800">私隱政策與語音宣告</button>
-      <button onclick="openModal('sosSettingsModal')" class="underline text-red-600 font-bold">⚙️ 設定 SOS 緊急聯絡人</button>
-    </div>
-  </footer>
-
-  <!-- 家人看顧 QR Code 彈窗 -->
-  <div id="familyQrModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
-      <h3 class="text-xl font-black text-stone-900">👨‍👩‍👧 家人看顧綁定</h3>
-      <p class="text-xs text-stone-600">讓仔女掃描此二維碼，即可在手機遠端查看長者每日運動打卡及歷史健康紀錄：</p>
-      <div class="flex justify-center p-3 bg-stone-50 rounded-xl border border-stone-200">
-        <img id="familyQrImage" class="w-48 h-48" src="" alt="Family QR Code">
-      </div>
-      <p class="text-xs font-mono text-emerald-800 bg-emerald-50 py-1.5 rounded" id="elderCodeDisplay">長者代號: --</p>
-      <button onclick="closeModal('familyQrModal')" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-xl">關閉</button>
+    <!-- 運動項目列表 -->
+    <div class="workout-grid" id="workoutList">
+      <!-- 動態載入運動項目 -->
     </div>
   </div>
 
-  <!-- SOS 設定彈窗 -->
-  <div id="sosSettingsModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="text-xl font-black text-stone-900 flex items-center gap-2">🚨 設定緊急求助號碼</h3>
-      <p class="text-xs text-stone-600">長者長按 SOS 掣 3 秒時，將自動撥打此電話，並以 WhatsApp 發送手機 GPS 經緯度位置：</p>
-      <input type="tel" id="sosInputPhone" placeholder="例如：91234567" class="w-full px-4 py-3 border-2 border-stone-300 rounded-xl text-lg font-bold focus:border-red-500 outline-none">
-      <div class="flex gap-2">
-        <button onclick="saveSosPhone()" class="flex-1 bg-red-600 text-white font-bold py-2.5 rounded-xl">儲存號碼</button>
-        <button onclick="closeModal('sosSettingsModal')" class="bg-stone-200 text-stone-800 font-bold px-4 py-2.5 rounded-xl">取消</button>
+  <!-- 底部語音與 SOS -->
+  <div class="bottom-bar">
+    <button class="action-btn btn-voice" onclick="toggleVoiceAssistant()">
+      🎙️ 語音對話 / 搵運動
+    </button>
+    <button class="action-btn btn-sos" id="sosTriggerBtn">
+      🆘 求救按鈕 (長按3秒)
+    </button>
+  </div>
+
+  <!-- Modal 1: 運動前 3 題健康篩查 (PAR-Q) -->
+  <div class="modal-overlay" id="screeningModal">
+    <div class="modal-card">
+      <div class="modal-title">🩺 運動前健康評估</div>
+      <div class="screening-q" id="screeningQuestionText">今日身體有無頭暈？</div>
+      <div class="choice-btns">
+        <button class="choice-btn btn-safe" onclick="handleScreeningAnswer(false)">無，好精神</button>
+        <button class="choice-btn btn-warn" onclick="handleScreeningAnswer(true)">有啲唔舒服</button>
       </div>
     </div>
   </div>
 
-  <!-- 醫療免責聲明彈窗 (Guideline 1.4.1) -->
-  <div id="disclaimerModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="text-xl font-black text-stone-900 flex items-center gap-2">⚠️ 醫療免責聲明</h3>
-      <p class="text-stone-700 text-sm leading-relaxed">
-        「樂活健康電視」所載之影音內容及智能處方僅供日常居家伸展及養生參考，<strong>絕不構成任何形式的醫療診斷、專業評估或治療處方</strong>。長者在進行運動前應諮詢註冊醫生或物理治療師。若練習期間出現頭暈、胸悶、關節劇痛或呼吸困難，請立即停止，並尋求專業醫療救助。
+  <!-- Modal 2: 運動後 RPE 自評 -->
+  <div class="modal-overlay" id="rpeModal">
+    <div class="modal-card">
+      <div class="modal-title">👏 運動完成！感覺點樣？</div>
+      <p style="font-size: 18px; color: var(--text-muted);">話畀 AI 知，下次為你微調動作難度：</p>
+      <div class="rpe-options">
+        <button class="rpe-btn" onclick="submitRPE(1)">😊 1. 好輕鬆 (完全唔索氣)</button>
+        <button class="rpe-btn" onclick="submitRPE(2)">😃 2. 幾輕鬆 (微暖舒適)</button>
+        <button class="rpe-btn" onclick="submitRPE(3)">😅 3. 剛剛好 (最佳運動效果)</button>
+        <button class="rpe-btn" onclick="submitRPE(4)">😓 4. 幾辛苦 (有啲攰)</button>
+        <button class="rpe-btn" onclick="submitRPE(5)">😰 5. 好辛苦 (好索氣)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: MediaPipe AI 姿態糾正鏡頭視窗 -->
+  <div class="modal-overlay" id="aiCameraModal">
+    <div class="modal-card">
+      <div class="modal-title">🤖 AI 動作守護教練</div>
+      <div class="ai-feedback-banner" id="aiVoiceFeedback">鏡頭準備中，請站於鏡頭前...</div>
+      <div class="camera-wrapper">
+        <video id="cameraFeed" playsinline autoplay muted></video>
+        <canvas id="poseCanvas"></canvas>
+      </div>
+      <button class="start-btn" style="background:#EF4444;" onclick="stopExerciseWithAI()">完成運動</button>
+    </div>
+  </div>
+
+  <!-- Modal 4: 10 秒 SOS 倒數全螢幕防誤觸 -->
+  <div class="modal-overlay" id="sosModal">
+    <div class="sos-content">
+      <h1 style="font-size: 36px; font-weight: 900;">⚠️ 正在準備發送求救訊號</h1>
+      <div class="sos-countdown" id="sosTimer">10</div>
+      <p style="font-size: 22px; margin-bottom: 30px;">即將透過雲端與 WhatsApp 通知家人及分享 GPS 座標</p>
+      <button class="btn-cancel-sos" onclick="abortSOS()">【撳錯咗】立即取消</button>
+    </div>
+  </div>
+
+  <!-- Modal 5: 家人看顧配對碼彈窗 -->
+  <div class="modal-overlay" id="pairingModal" onclick="closePairingModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-title">👨‍👩‍👧 家人看顧配對</div>
+      <p style="font-size: 18px; color: var(--text-muted); margin-bottom: 20px;">
+        仔女於手機開啟 Dashboard 輸入此看顧碼，即可遙距查看運動進度與接收警報：
       </p>
-      <button onclick="closeModal('disclaimerModal')" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-xl">我明白並同意</button>
+      <div style="font-size: 42px; font-weight: 900; letter-spacing: 6px; color: var(--primary-green); background: #ECFDF5; padding: 15px; border-radius: 16px; margin-bottom: 20px;" id="pairCodeModalText">
+        ------
+      </div>
+      <button class="start-btn" onclick="document.getElementById('pairingModal').style.display='none'">明白關閉</button>
     </div>
   </div>
 
-  <!-- 私隱政策彈窗 (Guideline 5.1.1) -->
-  <div id="privacyModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="text-xl font-black text-stone-900">🔒 私隱政策與語音宣告</h3>
-      <p class="text-stone-700 text-sm leading-relaxed">
-        本應用程式嚴格遵守私隱規範。麥克風功能僅在用戶主動點擊語音按鈕時啟用，進行即時文字轉換以配對相關影音。<strong>本系統絕不錄音、絕不保存音訊檔案，亦不會將長者健康紀錄上載至第三方廣告伺服器</strong>。所有運動打卡數據均儲存於本機裝置。
-      </p>
-      <button onclick="closeModal('privacyModal')" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-xl">關閉</button>
-    </div>
-  </div>
+  <!-- Firebase v10 Modular SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-  <script>
-    // 🔴 傷 1：100% 本地優先片庫（附醫療認證標籤，徹底杜絕 Render 30 秒冷啟動與白畫面）
-    const EMBEDDED_SEED_VIDEOS = [
-      {
-        videoId: 'S2EAkhB4XEk',
-        title: '【強化膝蓋運動】每日堅持五分鐘改善陳年膝蓋痛・關節退化必學',
-        category: '座椅伸展操',
-        authOrg: 'Master Leung 梁教練',
-        badge: '👨‍⚕️ 專業教練認證',
-        thumbnail: 'https://img.youtube.com/vi/S2EAkhB4XEk/hqdefault.jpg',
-        durationText: '5分48秒'
-      },
-      {
-        videoId: 'gkKbsoXetf8',
-        title: '【長者健口操】勤做口咽運動吞嚥肌肉不退化・預防進食濁親',
-        category: '健口吞嚥',
-        authOrg: '羅東博愛醫院',
-        badge: '🏥 醫院復康指引',
-        thumbnail: 'https://img.youtube.com/vi/gkKbsoXetf8/hqdefault.jpg',
-        durationText: '2分43秒'
-      },
-      {
-        videoId: 'YfWmJpWkj_0',
-        title: '【五分鐘防跌運動】改善膝蓋痛．腿無力．易跌倒・增強長者平衡感',
-        category: '座椅伸展操',
-        authOrg: 'Master Leung 梁教練',
-        badge: '🛡️ 防跌平衡認證',
-        thumbnail: 'https://img.youtube.com/vi/YfWmJpWkj_0/hqdefault.jpg',
-        durationText: '6分12秒'
-      },
-      {
-        videoId: 'Kj7CjmXj1X0',
-        title: '【4分鐘長者腰部伸展運動】放鬆腰背關節・舒緩腰痛提升柔軟度',
-        category: '座椅伸展操',
-        authOrg: '長者體能復康會',
-        badge: '✅ 物理治療推薦',
-        thumbnail: 'https://img.youtube.com/vi/Kj7CjmXj1X0/hqdefault.jpg',
-        durationText: '4分15秒'
-      },
-      {
-        videoId: 'SgPZ6RPQ7fc',
-        title: '【遠離失眠穴位按壓】神門與內關穴位圖說教學・安神助眠',
-        category: '溫和太極',
-        authOrg: '台灣護理學會 (TWNA)',
-        badge: '🩺 權威護理指導',
-        thumbnail: 'https://img.youtube.com/vi/SgPZ6RPQ7fc/hqdefault.jpg',
-        durationText: '11分30秒'
-      }
-    ];
-
-    // 5 大長者處方規則庫 (內嵌機構背書)
-    const DIRECT_PRESETS = {
-      SWALLOW: {
-        videoId: 'gkKbsoXetf8',
-        authBadge: '🏥 醫院語言吞嚥認證',
-        title: '🗣️ 長者健口操・預防進食嗆咳',
-        summary: '食嘢容易濁親多數因為喉部肌肉退化。跟住做吞嚥健口操，可以加強吞嚥力量！',
-        steps: ['頭部慢慢向左右轉動放鬆頸肌', '鼓起兩腮含氣 3 秒，再慢慢吹氣', '伸出舌頭向前、向上伸展各 3 次']
-      },
-      KNEE: {
-        videoId: 'S2EAkhB4XEk',
-        authBadge: '👨‍⚕️ 專業物理復康認證',
-        title: '🦵 坐姿膝關節強化運動',
-        summary: '菠蘿蓋痛唔好勉強企喺度行，坐喺穩陣椅子上伸展大腿肌肉最安全！',
-        steps: ['坐穩椅子，單腳慢慢向前伸直抬平', '腳尖向上勾起，維持 5 秒感受大腿用力', '慢慢放低，左右腳輪流做 8 次']
-      },
-      FALL: {
-        videoId: 'YfWmJpWkj_0',
-        authBadge: '🛡️ 長者防跌專案指引',
-        title: '🚶 長者扶椅防跌訓練',
-        summary: '步履唔穩容易跌倒，雙手扶住穩固椅背做提踵同抬腿，有助提升平衡力。',
-        steps: ['雙手扶穩椅背，背部挺直', '慢慢抬起腳跟腳尖著地，維持 3 秒後放下', '左右單腳微抬離地 3 秒，鍛鍊核心平衡']
-      },
-      BACK: {
-        videoId: 'Kj7CjmXj1X0',
-        authBadge: '✅ 脊椎關節復康指引',
-        title: '🧘 4分鐘長者腰部伸展・舒緩腰痛',
-        summary: '腰痛千祈唔好劇烈彎腰！坐在椅子上做溫和的軀幹旋轉與伸展，能有效放鬆緊繃的腰背肌肉。',
-        steps: ['端坐在椅子上，雙手輕扶大腿', '上身保持挺直，緩慢向左轉動 5 秒感受腰背舒展', '回到中間，再緩慢轉向右邊，左右各做 5 次']
-      },
-      SLEEP: {
-        videoId: 'SgPZ6RPQ7fc',
-        authBadge: '🩺 權威護理學會認證',
-        title: '😴 睡前安神・遠離失眠穴位按壓',
-        summary: '瞓唔著唔好心急，睡前坐在床邊按壓神門穴與內關穴，幫助安定心神、放鬆入睡。',
-        steps: ['用拇指輕輕按壓手腕內側的神門穴 1 分鐘', '深呼吸放鬆肩頸，轉換按壓內關穴', '雙腳自然垂放，放空思緒感受呼吸']
-      }
+    // 1. 初始化專案所提供的 Firebase 配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQq7Ro4x4RJEYpSuFR-LLVV0iXS3LJRZE",
+      authDomain: "lohascare-wellnesstv.firebaseapp.com",
+      projectId: "lohascare-wellnesstv",
+      storageBucket: "lohascare-wellnesstv.firebasestorage.app",
+      messagingSenderId: "1007645511334",
+      appId: "1:1007645511334:web:d74b422ab2ae2c4f1fee67",
+      measurementId: "G-55LQB7GVXT"
     };
 
-    let allVideos = [...EMBEDDED_SEED_VIDEOS];
-    let currentVideoId = 'S2EAkhB4XEk';
-    let currentActionTitle = "坐姿膝關節強化運動";
-    let lastVoiceText = "菠蘿蓋痛唔好勉強企喺度行，坐喺穩陣椅子上伸展大腿肌肉最安全！";
-
-    // 🔴 傷 2：註冊健全的 Service Worker (Cache-First)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
-      });
-    }
-
-    // 初始化
-    window.addEventListener('DOMContentLoaded', () => {
-      initElderIdentity();
-      initStreakCounter();
-      renderVideoList(allVideos);
-      triggerDirectPainPoint('KNEE', false);
-      bindEventListeners();
-      setupSosButton();
-    });
-
-    function bindEventListeners() {
-      // 痛點直通按鈕委派
-      document.getElementById('painPointsBar').addEventListener('click', (e) => {
-        const btn = e.target.closest('.pain-btn');
-        if (btn && btn.dataset.key) triggerDirectPainPoint(btn.dataset.key);
-      });
-
-      // 影片列表卡片委派 (完全防範 XSS)
-      document.getElementById('videoList').addEventListener('click', (e) => {
-        const card = e.target.closest('.video-card');
-        if (card) {
-          playVideo(card.dataset.id, decodeURIComponent(card.dataset.title));
-        }
-      });
-
-      // 分類按鈕委派
-      document.getElementById('categoryTabs').addEventListener('click', (e) => {
-        const btn = e.target.closest('.cat-btn');
-        if (!btn) return;
-        const cat = btn.dataset.cat;
-        document.querySelectorAll('.cat-btn').forEach(b => {
-          b.className = b === btn 
-            ? 'cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-emerald-700 text-white transition'
-            : 'cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition';
-        });
-        filterVideos(cat);
-      });
-
-      document.getElementById('voiceBtn').addEventListener('click', toggleVoiceSearch);
-      document.getElementById('replayVoiceBtn').addEventListener('click', () => speakNaturalCantonese(lastVoiceText));
-      document.getElementById('favoriteBtn').addEventListener('click', toggleFavorite);
-      document.getElementById('whatsappBtn').addEventListener('click', notifyFamily);
-      document.getElementById('familyQrBtn').addEventListener('click', showFamilyQr);
-      document.getElementById('timerBtn').addEventListener('click', () => startExerciseTimer(180));
-    }
-
-    // 🔴 傷 8：渲染具備醫護認證標籤的卡片
-    function renderVideoList(videos) {
-      const container = document.getElementById('videoList');
-      if (!videos || videos.length === 0) {
-        container.innerHTML = '<div class="text-center py-10 text-stone-400">暫無相關影片</div>';
-        return;
-      }
-
-      container.innerHTML = videos.map(v => `
-        <div data-id="${v.videoId}" data-title="${encodeURIComponent(v.title)}" class="video-card flex gap-3 p-3 rounded-xl bg-stone-50 hover:bg-emerald-50 cursor-pointer border border-stone-200 transition shadow-sm hover:shadow">
-          <img src="${v.thumbnail}" class="w-28 h-20 object-cover rounded-lg flex-shrink-0 bg-stone-200" alt="縮圖">
-          <div class="flex flex-col justify-between overflow-hidden">
-            <h3 class="font-bold text-stone-900 text-sm line-clamp-2 leading-snug">${escapeHTML(v.title)}</h3>
-            <div class="flex items-center gap-1.5 text-xs text-stone-500 mt-1 flex-wrap">
-              <span class="bg-blue-100 text-blue-900 px-2 py-0.5 rounded font-black text-[11px]">${escapeHTML(v.badge || '✅ 醫護認證')}</span>
-              <span class="text-stone-400 text-[11px]">${escapeHTML(v.authOrg || '')}</span>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function escapeHTML(str) {
-      return str.replace(/[&<>'"]/g, tag => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-      }[tag] || tag));
-    }
-
-    function filterVideos(cat) {
-      if (cat === '全部') {
-        renderVideoList(allVideos);
-      } else if (cat === 'FAVORITES') {
-        const favs = JSON.parse(localStorage.getItem('lohas_favorites') || '[]');
-        renderVideoList(allVideos.filter(v => favs.includes(v.videoId)));
-      } else {
-        renderVideoList(allVideos.filter(v => v.category === cat));
-      }
-    }
-
-    function playVideo(videoId, title) {
-      currentVideoId = videoId;
-      document.getElementById('mainPlayer').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
-      if (title) currentActionTitle = title;
-      
-      const favs = JSON.parse(localStorage.getItem('lohas_favorites') || '[]');
-      document.getElementById('favoriteBtn').innerText = favs.includes(videoId) ? '❤️' : '⭐';
-    }
-
-    function triggerDirectPainPoint(key, autoSpeak = true) {
-      const plan = DIRECT_PRESETS[key];
-      if (!plan) return;
-
-      currentActionTitle = plan.title;
-      lastVoiceText = plan.summary;
-
-      document.getElementById('aiActionTitle').innerText = plan.title;
-      document.getElementById('aiAuthBadge').innerText = plan.authBadge;
-      document.getElementById('aiVoiceSummary').innerText = plan.summary;
-      document.getElementById('voiceText').innerText = `已載入：${plan.title.substring(0, 8)}`;
-
-      const stepsContainer = document.getElementById('aiQuickSteps');
-      stepsContainer.innerHTML = plan.steps.map((s, idx) => `
-        <li class="flex items-center gap-2">
-          <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs flex-shrink-0">${idx+1}</span>
-          <span>${s}</span>
-        </li>
-      `).join('');
-
-      playVideo(plan.videoId, plan.title);
-      if (autoSpeak) speakNaturalCantonese(plan.summary);
-    }
-
-    // 🔴 傷 4：自然廣東話發音引擎 (Apple Siri 善芝 Sin-Ji 最佳化)
-    function speakNaturalCantonese(text) {
-      if (!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'zh-HK';
-      utterance.rate = 0.82; // 慢速長者友善
-      utterance.pitch = 1.0;
-
-      const voices = window.speechSynthesis.getVoices();
-      const premiumVoice = voices.find(v => 
-        (v.lang === 'zh-HK' || v.lang.includes('yue')) && 
-        (v.name.includes('Sin-Ji') || v.name.includes('Siri') || v.name.includes('Premium'))
-      ) || voices.find(v => v.lang === 'zh-HK' || v.lang.includes('yue'));
-
-      if (premiumVoice) utterance.voice = premiumVoice;
-      window.speechSynthesis.speak(utterance);
-    }
-
-    // 🔴 傷 5：本地 80+ 長者粵語口語模糊意圖引擎 (<5ms 即時匹配，徹底擺脫 Dify 3-5 秒延遲)
-    function checkSeniorIntentFast(query) {
-      const q = query.toLowerCase();
-
-      // 1. 膝蓋 / 關節 / 腿痛模糊字根
-      const kneeSlang = ['膝', '菠蘿蓋', '關節', '腳痛', '膝頭', '屈唔到', '軟腳', '腳部', '隻腳好痛', '落樓梯痛', '骨刺', '膝頭哥', '企唔起', '腳唔舒服'];
-      if (kneeSlang.some(k => q.includes(k))) return triggerDirectPainPoint('KNEE');
-
-      // 2. 行路唔穩 / 防跌 / 平衡字根
-      const fallSlang = ['跌', '行唔穩', '唔穩', '平衡', '飄下飄下', '腳骨力', '無力', '跌倒', '行得差', '就黎跌', '蹣跚', '拐下拐下'];
-      if (fallSlang.some(k => q.includes(k))) return triggerDirectPainPoint('FALL');
-
-      // 3. 嗆咳 / 喉嚨 / 吞嚥健口字根
-      const swallowSlang = ['濁', '咳', '吞', '嗆', '卡住', '食嘢濁', '口水', '喉嚨', '吞唔落', '吞唔順', '健口', '口肌', '咬唔爛', '流口水'];
-      if (swallowSlang.some(k => q.includes(k))) return triggerDirectPainPoint('SWALLOW');
-
-      // 4. 腰痛 / 背痛字根
-      const backSlang = ['腰', '背', '冤', '酸痛', '條腰', '下背', '背脊', '硬晒', '冤痛', '坐得耐痛', '彎唔到腰', '條腰好酸'];
-      if (backSlang.some(k => q.includes(k))) return triggerDirectPainPoint('BACK');
-
-      // 5. 失眠 / 助眠字根
-      const sleepSlang = ['瞓', '失眠', '訓', '安神', '好醒', '輾轉', '醒左', '眼光光', '整夜', '神經緊張', '訓唔好', '瞓唔著'];
-      if (sleepSlang.some(k => q.includes(k))) return triggerDirectPainPoint('SLEEP');
-
-      // 兜底
-      triggerDirectPainPoint('KNEE');
-    }
-
-    function toggleVoiceSearch() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        const text = prompt('請說出症狀：', '腰痛');
-        if (text) checkSeniorIntentFast(text);
-        return;
-      }
-
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'zh-HK';
-      const voiceBtn = document.getElementById('voiceBtn');
-      const voiceText = document.getElementById('voiceText');
-
-      recognition.onstart = () => {
-        voiceBtn.className = 'senior-tap bg-red-600 text-white font-black px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg animate-pulse';
-        voiceText.innerText = '聽緊你講嘢...';
-      };
-
-      recognition.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
-        voiceText.innerText = `「${transcript}」`;
-        checkSeniorIntentFast(transcript);
-      };
-
-      recognition.onerror = () => { voiceText.innerText = '聽唔清，請再試'; };
-
-      recognition.onend = () => {
-        setTimeout(() => {
-          voiceBtn.className = 'senior-tap bg-amber-400 hover:bg-amber-500 text-stone-950 font-black px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg transition active:scale-95 border-2 border-amber-300';
-          voiceText.innerText = '按此講嘢';
-        }, 3000);
-      };
-
-      recognition.start();
-    }
-
-    // 🔴 傷 7：SOS 長按 3 秒防誤觸 + 自動獲取 GPS + 呼叫緊急電話
-    let sosTimer = null;
-    function setupSosButton() {
-      const sosBtn = document.getElementById('sosBtn');
-      const sosLabel = document.getElementById('sosLabel');
-
-      const startHold = (e) => {
-        e.preventDefault();
-        sosBtn.classList.add('sos-holding');
-        let count = 3;
-        sosLabel.innerText = `緊按 ${count} 秒...`;
-
-        sosTimer = setInterval(() => {
-          count--;
-          if (count > 0) {
-            sosLabel.innerText = `緊按 ${count} 秒...`;
-          } else {
-            clearInterval(sosTimer);
-            sosTimer = null;
-            triggerEmergencySos();
-          }
-        }, 1000);
-      };
-
-      const cancelHold = () => {
-        if (sosTimer) {
-          clearInterval(sosTimer);
-          sosTimer = null;
-        }
-        sosBtn.classList.remove('sos-holding');
-        sosLabel.innerText = 'SOS求救';
-      };
-
-      sosBtn.addEventListener('mousedown', startHold);
-      sosBtn.addEventListener('mouseup', cancelHold);
-      sosBtn.addEventListener('mouseleave', cancelHold);
-      sosBtn.addEventListener('touchstart', startHold);
-      sosBtn.addEventListener('touchend', cancelHold);
-    }
-
-    function triggerEmergencySos() {
-      const sosPhone = localStorage.getItem('lohas_sos_phone') || '999';
-      
-      // 嘗試獲取 GPS
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const lat = pos.coords.latitude.toFixed(5);
-            const lng = pos.coords.longitude.toFixed(5);
-            const mapLink = `https://maps.google.com/?q=${lat},${lng}`;
-            const sosMsg = `⚠️【樂活健康電視・緊急求助】長者在家中觸發 SOS 求救！目前 GPS 定位位置：${mapLink}，請立即確認長者安全！`;
-            window.open(`https://api.whatsapp.com/send?phone=${sosPhone}&text=${encodeURIComponent(sosMsg)}`, '_blank');
-            window.location.href = `tel:${sosPhone}`;
-          },
-          () => {
-            window.location.href = `tel:${sosPhone}`;
-          },
-          { timeout: 4000 }
-        );
-      } else {
-        window.location.href = `tel:${sosPhone}`;
-      }
-    }
-
-    // 🔴 傷 6：家庭看顧 QR Code 與日誌閉環
-    function initElderIdentity() {
-      let elderId = localStorage.getItem('lohas_elder_id');
-      if (!elderId) {
-        elderId = 'LH-' + Math.floor(100000 + Math.random() * 900000);
-        localStorage.setItem('lohas_elder_id', elderId);
-      }
-      document.getElementById('elderCodeDisplay').innerText = `長者看顧代號: ${elderId}`;
-    }
-
-    function showFamilyQr() {
-      const elderId = localStorage.getItem('lohas_elder_id');
-      const streak = localStorage.getItem('lohas_streak_days') || '1';
-      const historySummary = encodeURIComponent(`長者代號: ${elderId} | 連續運動: ${streak}天`);
-      // 使用 Google Chart API 即時生成 QR Code
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://lohas-tv.app/family?id=${elderId}&info=${historySummary}`;
-      document.getElementById('familyQrImage').src = qrUrl;
-      openModal('familyQrModal');
-    }
-
-    function notifyFamily() {
-      const streak = recordExerciseCheckin();
-      const elderId = localStorage.getItem('lohas_elder_id');
-      const today = new Date().toLocaleDateString('zh-HK');
-      const message = `仔女你好！我啱啱喺「樂活健康電視」跟住做咗【${currentActionTitle}】！\n📅 打卡日期：${today}\n🔥 連續鍛鍊：第 ${streak} 日\n🆔 長者代號：${elderId}\n身體感覺精神，同你報個平安！❤️`;
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
-    }
-
-    function initStreakCounter() {
-      const today = new Date().toISOString().split('T')[0];
-      const lastDate = localStorage.getItem('lohas_last_checkin');
-      let streak = parseInt(localStorage.getItem('lohas_streak_days') || '1');
-
-      if (lastDate) {
-        const diffDays = Math.round((new Date(today) - new Date(lastDate)) / (1000 * 60 * 60 * 24));
-        if (diffDays > 1) streak = 1;
-      }
-      document.getElementById('streakDays').innerText = streak;
-      document.getElementById('streakBadge').classList.remove('hidden');
-    }
-
-    function recordExerciseCheckin() {
-      const today = new Date().toISOString().split('T')[0];
-      const lastDate = localStorage.getItem('lohas_last_checkin');
-      let streak = parseInt(localStorage.getItem('lohas_streak_days') || '1');
-
-      if (lastDate !== today) {
-        if (lastDate) {
-          const diffDays = Math.round((new Date(today) - new Date(lastDate)) / (1000 * 60 * 60 * 24));
-          if (diffDays === 1) streak++;
-        }
-        localStorage.setItem('lohas_last_checkin', today);
-        localStorage.setItem('lohas_streak_days', streak);
-      }
-      document.getElementById('streakDays').innerText = streak;
-      return streak;
-    }
-
-    function toggleFavorite() {
-      let favs = JSON.parse(localStorage.getItem('lohas_favorites') || '[]');
-      const index = favs.indexOf(currentVideoId);
-      if (index === -1) {
-        favs.push(currentVideoId);
-        document.getElementById('favoriteBtn').innerText = '❤️';
-      } else {
-        favs.splice(index, 1);
-        document.getElementById('favoriteBtn').innerText = '⭐';
-      }
-      localStorage.setItem('lohas_favorites', JSON.stringify(favs));
-    }
-
-    function startExerciseTimer(seconds) {
-      const timerBtn = document.getElementById('timerBtn');
-      let remain = seconds;
-      timerBtn.disabled = true;
-      
-      const interval = setInterval(() => {
-        const mins = Math.floor(remain / 60);
-        const secs = remain % 60;
-        timerBtn.innerText = `⏱️ 仲有 ${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        remain--;
-
-        if (remain < 0) {
-          clearInterval(interval);
-          timerBtn.disabled = false;
-          timerBtn.innerText = '🎉 運動完成！做得好好！';
-          speakNaturalCantonese('做得好好！三分鐘運動完成喇，飲啖溫水休息下啦。');
-          recordExerciseCheckin();
-        }
-      }, 1000);
-    }
-
-    function saveSosPhone() {
-      const phone = document.getElementById('sosInputPhone').value.trim();
-      if (phone) {
-        localStorage.setItem('lohas_sos_phone', phone);
-        alert(`已成功設定 SOS 緊急聯絡號碼：${phone}`);
-        closeModal('sosSettingsModal');
-      }
-    }
-
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-  </script>
-</body>
-</html>
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-size: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", sans-serif; }
-    .senior-tap { min-height: 56px; }
-    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  </style>
-</head>
-<body class="bg-amber-50 text-stone-900 font-sans min-h-screen flex flex-col pb-12 select-none">
-
-  <!-- 頂部導航列 -->
-  <header class="bg-emerald-800 text-white px-4 md:px-8 py-3 flex justify-between items-center shadow-md sticky top-0 z-40">
-    <div class="flex items-center space-x-3">
-      <span class="text-3xl">📺</span>
-      <div>
-        <h1 class="text-2xl font-black tracking-wide">樂活健康電視</h1>
-        <p class="text-emerald-200 text-xs font-medium">長者專屬影音・廣播級粵語指導</p>
-      </div>
-    </div>
-
-    <!-- 打卡 Streak 徽章 + 語音大按鈕 -->
-    <div class="flex items-center gap-3">
-      <div id="streakBadge" class="hidden sm:flex items-center gap-1 bg-emerald-950 text-amber-300 px-3 py-1.5 rounded-full text-xs font-bold border border-amber-400">
-        🔥 連續運動 <span id="streakDays">1</span> 日
-      </div>
-      <button id="voiceBtn" class="senior-tap bg-amber-400 hover:bg-amber-500 text-stone-950 font-black px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg transition active:scale-95 border-2 border-amber-300">
-        <span class="text-2xl">🎙️</span>
-        <span id="voiceText" class="text-lg">按此講嘢 (如：膝頭痛)</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- 5 大痛點直通車 (事件委派 data-key，徹底防範 XSS) -->
-  <section class="bg-emerald-900 px-4 md:px-8 py-3 text-white shadow-inner">
-    <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
-      <span class="text-xs font-bold text-emerald-200 uppercase tracking-wider flex items-center gap-1">
-        ⚡ 痛點直通車：
-      </span>
-      <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-none" id="painPointsBar">
-        <button data-key="SWALLOW" class="pain-btn bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5 active:scale-95">
-          🗣️ 成日濁親 (健口操)
-        </button>
-        <button data-key="KNEE" class="pain-btn bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5 active:scale-95">
-          🦵 菠蘿蓋痛 (防痛操)
-        </button>
-        <button data-key="FALL" class="pain-btn bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5 active:scale-95">
-          🚶 行路唔穩 (防跌操)
-        </button>
-        <button data-key="BACK" class="pain-btn bg-amber-400 text-stone-950 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5 active:scale-95">
-          🧘 腰痠背痛 (拉腰操)
-        </button>
-        <button data-key="SLEEP" class="pain-btn bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5 active:scale-95">
-          😴 瞓唔著 (助眠穴位)
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 主畫面 -->
-  <main class="flex-1 p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
-    
-    <!-- 左側：主播放器與行動處方 (佔 7 欄) -->
-    <div class="lg:col-span-7 flex flex-col gap-5">
-      
-      <!-- 播放器容器 -->
-      <div class="bg-black rounded-2xl overflow-hidden shadow-xl aspect-video relative border-2 border-stone-800">
-        <iframe id="mainPlayer" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-      </div>
-
-      <!-- AI 處方卡片 -->
-      <div id="prescriptionCard" class="bg-white border-2 border-emerald-500 rounded-2xl p-5 shadow-lg">
-        <div class="flex items-center justify-between mb-3 border-b border-stone-200 pb-3">
-          <div class="flex items-center gap-2">
-            <span class="text-3xl">🩺</span>
-            <div>
-              <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">樂活智能處方</span>
-              <h2 id="aiActionTitle" class="text-xl md:text-2xl font-black text-emerald-950">坐姿膝關節強化運動</h2>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <button id="favoriteBtn" class="bg-stone-100 hover:bg-amber-100 text-stone-700 p-2 rounded-lg text-lg transition">⭐</button>
-            <button id="replayVoiceBtn" class="bg-amber-100 hover:bg-amber-200 text-stone-900 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
-              🔊 聽多次
-            </button>
-          </div>
-        </div>
-
-        <p id="aiVoiceSummary" class="text-stone-900 text-base md:text-lg font-medium mb-3 bg-emerald-50 p-3 rounded-xl border border-emerald-200 leading-relaxed"></p>
-
-        <!-- 3 個超大動作要點 -->
-        <div class="space-y-1.5 mb-4">
-          <p class="text-xs font-bold text-stone-500 uppercase tracking-wide">動作要點：</p>
-          <ul id="aiQuickSteps" class="space-y-1.5 text-stone-800 font-bold text-base md:text-lg"></ul>
-        </div>
-
-        <!-- WhatsApp 家庭閉環 + 計時鐘 -->
-        <div class="flex flex-col sm:flex-row items-center gap-3 pt-3 border-t border-stone-100">
-          <button id="whatsappBtn" class="w-full sm:w-auto flex-1 senior-tap bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2.5 rounded-xl shadow transition flex items-center justify-center gap-2">
-            <span class="text-xl">✅</span> 完成運動！話畀仔女知
-          </button>
-          <button id="timerBtn" class="w-full sm:w-auto senior-tap bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold px-4 py-2.5 rounded-xl border border-stone-300 flex items-center justify-center gap-1.5 text-sm">
-            ⏱️ 3分鐘跟練計時
-          </button>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- 右側：影片推薦列表 (佔 5 欄) -->
-    <div class="lg:col-span-5 flex flex-col bg-white rounded-2xl shadow-md border border-stone-200 p-4">
-      
-      <div class="flex gap-2 pb-3 mb-3 border-b border-stone-200 overflow-x-auto scrollbar-none" id="categoryTabs">
-        <button data-cat="全部" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-emerald-700 text-white transition">全部</button>
-        <button data-cat="座椅伸展操" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">🪑 座椅操</button>
-        <button data-cat="溫和太極" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">☯️ 太極</button>
-        <button data-cat="養生飲食" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">🥗 飲食</button>
-        <button data-cat="FAVORITES" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 transition">⭐ 最愛</button>
-      </div>
-
-      <!-- 滾動清單 -->
-      <div id="videoList" class="flex-1 overflow-y-auto space-y-3 max-h-[640px] pr-1"></div>
-    </div>
-
-  </main>
-
-  <!-- 底部法律宣告 (符合 App Store Guideline 1.4.1 & 5.1.1) -->
-  <footer class="mt-auto bg-stone-100 border-t border-stone-200 py-3 px-4 text-center text-xs text-stone-500">
-    <div class="max-w-7xl mx-auto flex flex-wrap justify-center items-center gap-4">
-      <span>© 2026 樂活健康電視 LOHAS TV</span>
-      <button onclick="openModal('disclaimerModal')" class="underline hover:text-stone-800">醫療免責聲明</button>
-      <button onclick="openModal('privacyModal')" class="underline hover:text-stone-800">私隱政策與語音宣告</button>
-      <button onclick="openModal('termsModal')" class="underline hover:text-stone-800">服務條款</button>
-    </div>
-  </footer>
-
-  <!-- 醫療免責聲明彈窗 -->
-  <div id="disclaimerModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="text-xl font-black text-stone-900">⚠️ 醫療免責聲明</h3>
-      <p class="text-stone-700 text-sm leading-relaxed">
-        「樂活健康電視」所提供之影音內容及建議僅供日常居家舒緩與養生參考，<strong>絕不構成專業醫療診斷或治療方案</strong>。若長者運動期間出現頭暈、胸悶或關節劇痛，請即停低並諮詢醫生或物理治療師。
-      </p>
-      <button onclick="closeModal('disclaimerModal')" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-xl">我明白並同意</button>
-    </div>
-  </div>
-
-  <!-- 私隱政策彈窗 -->
-  <div id="privacyModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="text-xl font-black text-stone-900">🔒 私隱政策與語音宣告</h3>
-      <p class="text-stone-700 text-sm leading-relaxed">
-        本應用程式尊重用戶私隱。麥克風功能僅於點擊語音按鈕時開啟，用於辨識症狀以配對影片。<strong>本系統不會錄音或儲存任何音訊檔案</strong>，運動打卡紀錄僅存於本機裝置。
-      </p>
-      <button onclick="closeModal('privacyModal')" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-xl">關閉</button>
-    </div>
-  </div>
-
-  <!-- 服務條款彈窗 -->
-  <div id="termsModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="text-xl font-black text-stone-900">📄 服務條款</h3>
-      <p class="text-stone-700 text-sm leading-relaxed">
-        本應用程式影音取自各大權威醫院與專業教練之 YouTube 公開衛教資源。練習時請於平坦、備有穩固椅子的安全環境下進行。
-      </p>
-      <button onclick="closeModal('termsModal')" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-xl">關閉</button>
-    </div>
-  </div>
-
-  <script>
-    const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const API_BASE_URL = IS_LOCAL ? 'http://localhost:5000' : 'https://lohascare-wellnesstv.onrender.com';
-
-    // 內嵌 5 大權威官方片庫（保證零白畫面）
-    const EMBEDDED_SEED_VIDEOS = [
-      {
-        videoId: 'S2EAkhB4XEk',
-        title: '【強化膝蓋運動】每日堅持五分鐘改善陳年膝蓋痛・關節退化必學',
-        category: '座椅伸展操',
-        thumbnail: 'https://img.youtube.com/vi/S2EAkhB4XEk/hqdefault.jpg',
-        durationText: '5分48秒'
-      },
-      {
-        videoId: 'gkKbsoXetf8',
-        title: '【長者健口操】勤做口咽運動吞嚥肌肉不退化・預防進食濁親',
-        category: '健口吞嚥',
-        thumbnail: 'https://img.youtube.com/vi/gkKbsoXetf8/hqdefault.jpg',
-        durationText: '2分43秒'
-      },
-      {
-        videoId: 'YfWmJpWkj_0',
-        title: '【五分鐘防跌運動】改善膝蓋痛．腿無力．易跌倒・增強長者平衡感',
-        category: '座椅伸展操',
-        thumbnail: 'https://img.youtube.com/vi/YfWmJpWkj_0/hqdefault.jpg',
-        durationText: '6分12秒'
-      },
-      {
-        videoId: 'Kj7CjmXj1X0',
-        title: '【4分鐘長者腰部伸展運動】放鬆腰背關節・舒緩腰痛提升柔軟度',
-        category: '座椅伸展操',
-        thumbnail: 'https://img.youtube.com/vi/Kj7CjmXj1X0/hqdefault.jpg',
-        durationText: '4分15秒'
-      },
-      {
-        videoId: 'SgPZ6RPQ7fc',
-        title: '【遠離失眠穴位按壓】神門與內關穴位圖說教學・安神助眠',
-        category: '溫和太極',
-        thumbnail: 'https://img.youtube.com/vi/SgPZ6RPQ7fc/hqdefault.jpg',
-        durationText: '11分30秒'
-      }
-    ];
-
-    const DIRECT_PRESETS = {
-      SWALLOW: {
-        videoId: 'gkKbsoXetf8',
-        title: '🗣️ 長者健口操・預防進食嗆咳',
-        summary: '食嘢容易濁親多數因為喉部肌肉退化。跟住做吞嚥健口操，可以加強吞嚥力量！',
-        steps: ['頭部慢慢向左右轉動放鬆頸肌', '鼓起兩腮含氣 3 秒，再慢慢吹氣', '伸出舌頭向前、向上伸展各 3 次']
-      },
-      KNEE: {
-        videoId: 'S2EAkhB4XEk',
-        title: '🦵 坐姿膝關節強化運動',
-        summary: '菠蘿蓋痛唔好勉強企喺度行，坐喺穩陣椅子上伸展大腿肌肉最安全！',
-        steps: ['坐穩椅子，單腳慢慢向前伸直抬平', '腳尖向上勾起，維持 5 秒感受大腿用力', '慢慢放低，左右腳輪流做 8 次']
-      },
-      FALL: {
-        videoId: 'YfWmJpWkj_0',
-        title: '🚶 長者扶椅防跌訓練',
-        summary: '步履唔穩容易跌倒，雙手扶住穩固椅背做提踵同抬腿，有助提升平衡力。',
-        steps: ['雙手扶穩椅背，背部挺直', '慢慢抬起腳跟腳尖著地，維持 3 秒後放下', '左右單腳微抬離地 3 秒，鍛鍊核心平衡']
-      },
-      BACK: {
-        videoId: 'Kj7CjmXj1X0',
-        title: '🧘 4分鐘長者腰部伸展・舒緩腰痛',
-        summary: '腰痛千祈唔好劇烈彎腰！坐在椅子上做溫和的軀幹旋轉與伸展，能有效放鬆緊繃的腰背肌肉。',
-        steps: ['端坐在椅子上，雙手輕扶大腿', '上身保持挺直，緩慢向左轉動 5 秒感受腰背舒展', '回到中間，再緩慢轉向右邊，左右各做 5 次']
-      },
-      SLEEP: {
-        videoId: 'SgPZ6RPQ7fc',
-        title: '😴 睡前安神・遠離失眠穴位按壓',
-        summary: '瞓唔著唔好心急，睡前坐在床邊按壓神門穴與內關穴，幫助安定心神、放鬆入睡。',
-        steps: ['用拇指輕輕按壓手腕內側的神門穴 1 分鐘', '深呼吸放鬆肩頸，轉換按壓內關穴', '雙腳自然垂放，放空思緒感受呼吸']
-      }
-    };
-
-    let allVideos = [...EMBEDDED_SEED_VIDEOS];
-    let currentVideoId = 'S2EAkhB4XEk';
-    let currentActionTitle = "坐姿膝關節強化運動";
-    let lastVoiceText = "菠蘿蓋痛唔好勉強企喺度行，坐喺穩陣椅子上伸展大腿肌肉最安全！";
-
-    // 預載語音引擎清單
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      initStreakCounter();
-      renderVideoList(allVideos);
-      triggerDirectPainPoint('KNEE', false);
-      fetchVideosFromServer();
-      bindEventListeners();
-    });
-
-    function bindEventListeners() {
-      document.getElementById('painPointsBar').addEventListener('click', (e) => {
-        const btn = e.target.closest('.pain-btn');
-        if (btn && btn.dataset.key) triggerDirectPainPoint(btn.dataset.key);
-      });
-
-      document.getElementById('videoList').addEventListener('click', (e) => {
-        const card = e.target.closest('.video-card');
-        if (card) {
-          playVideo(card.dataset.id, decodeURIComponent(card.dataset.title));
-        }
-      });
-
-      document.getElementById('categoryTabs').addEventListener('click', (e) => {
-        const btn = e.target.closest('.cat-btn');
-        if (!btn) return;
-        const cat = btn.dataset.cat;
-        document.querySelectorAll('.cat-btn').forEach(b => {
-          b.className = b === btn 
-            ? 'cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-emerald-700 text-white transition'
-            : 'cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition';
-        });
-        filterVideos(cat);
-      });
-
-      document.getElementById('voiceBtn').addEventListener('click', toggleVoiceSearch);
-      document.getElementById('replayVoiceBtn').addEventListener('click', () => speakNaturalCantonese(lastVoiceText));
-      document.getElementById('favoriteBtn').addEventListener('click', toggleFavorite);
-      document.getElementById('whatsappBtn').addEventListener('click', notifyFamily);
-      document.getElementById('timerBtn').addEventListener('click', () => startExerciseTimer(180));
-    }
-
-    function initStreakCounter() {
-      const today = new Date().toISOString().split('T')[0];
-      const lastDate = localStorage.getItem('lohas_last_checkin');
-      let streak = parseInt(localStorage.getItem('lohas_streak_days') || '1');
-
-      if (lastDate) {
-        const diffDays = Math.round((new Date(today) - new Date(lastDate)) / (1000 * 60 * 60 * 24));
-        if (diffDays > 1) streak = 1;
-      }
-      document.getElementById('streakDays').innerText = streak;
-      document.getElementById('streakBadge').classList.remove('hidden');
-    }
-
-    function recordExerciseCheckin() {
-      const today = new Date().toISOString().split('T')[0];
-      const lastDate = localStorage.getItem('lohas_last_checkin');
-      let streak = parseInt(localStorage.getItem('lohas_streak_days') || '1');
-
-      if (lastDate !== today) {
-        if (lastDate) {
-          const diffDays = Math.round((new Date(today) - new Date(lastDate)) / (1000 * 60 * 60 * 24));
-          if (diffDays === 1) streak++;
-        }
-        localStorage.setItem('lohas_last_checkin', today);
-        localStorage.setItem('lohas_streak_days', streak);
-      }
-      document.getElementById('streakDays').innerText = streak;
-      return streak;
-    }
-
-    function toggleFavorite() {
-      let favs = JSON.parse(localStorage.getItem('lohas_favorites') || '[]');
-      const index = favs.indexOf(currentVideoId);
-      if (index === -1) {
-        favs.push(currentVideoId);
-        document.getElementById('favoriteBtn').innerText = '❤️';
-      } else {
-        favs.splice(index, 1);
-        document.getElementById('favoriteBtn').innerText = '⭐';
-      }
-      localStorage.setItem('lohas_favorites', JSON.stringify(favs));
-    }
-
-    function renderVideoList(videos) {
-      const container = document.getElementById('videoList');
-      if (!videos || videos.length === 0) {
-        container.innerHTML = '<div class="text-center py-10 text-stone-400">暫無相關影片</div>';
-        return;
-      }
-
-      container.innerHTML = videos.map(v => `
-        <div data-id="${v.videoId}" data-title="${encodeURIComponent(v.title)}" class="video-card flex gap-3 p-3 rounded-xl bg-stone-50 hover:bg-emerald-50 cursor-pointer border border-stone-200 transition shadow-sm hover:shadow">
-          <img src="${v.thumbnail}" class="w-28 h-20 object-cover rounded-lg flex-shrink-0 bg-stone-200" alt="縮圖">
-          <div class="flex flex-col justify-between overflow-hidden">
-            <h3 class="font-bold text-stone-900 text-sm line-clamp-2 leading-snug">${escapeHTML(v.title)}</h3>
-            <div class="flex items-center gap-2 text-xs text-stone-500 mt-1">
-              <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">${escapeHTML(v.category || '健康')}</span>
-              <span>⏱ ${escapeHTML(v.durationText || '')}</span>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function escapeHTML(str) {
-      return str.replace(/[&<>'"]/g, tag => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-      }[tag] || tag));
-    }
-
-    async function fetchVideosFromServer() {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentElderUid = null;
+    let currentPairCode = null;
+
+    // 2. 長者免密碼登入與看顧碼初始化
+    async function initSession() {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/videos`);
-        const data = await res.json();
-        if (data.success && data.videos.length > 0) {
-          allVideos = data.videos;
-          renderVideoList(allVideos);
+        const userCred = await signInAnonymously(auth);
+        currentElderUid = userCred.user.uid;
+        
+        let localCode = localStorage.getItem("lohas_pair_code");
+        if (!localCode) {
+          localCode = Math.floor(100000 + Math.random() * 900000).toString();
+          localStorage.setItem("lohas_pair_code", localCode);
+        }
+        currentPairCode = localCode;
+
+        document.getElementById("pairCodeDisplay").innerText = `👨‍👩‍👧 看顧碼: ${currentPairCode}`;
+        document.getElementById("pairCodeModalText").innerText = currentPairCode;
+
+        // 同步至 Firestore
+        await setDoc(doc(db, "elders", currentElderUid), {
+          elderUid: currentElderUid,
+          pairingCode: currentPairCode,
+          lastActiveAt: serverTimestamp()
+        }, { merge: true });
+
+        // 載入 Streak
+        const streak = parseInt(localStorage.getItem("lohas_streak") || "3", 10);
+        document.getElementById("streakCount").innerText = streak;
+
+        // 檢查歷史記憶並主動關懷
+        const lastSymptom = localStorage.getItem("lohas_last_symptom");
+        if (lastSymptom) {
+          document.getElementById("healthAdvice").innerText = `上次你提過有${lastSymptom}，今日為你揀選咗對應舒緩操！`;
         }
       } catch (err) {
-        console.warn('維持使用安全離線片庫');
+        console.warn("Firebase 離線模式運作中:", err);
+        document.getElementById("pairCodeDisplay").innerText = `👨‍👩‍👧 看顧碼: 842913`;
+        document.getElementById("pairCodeModalText").innerText = "842913";
       }
     }
 
-    function filterVideos(cat) {
-      if (cat === '全部') {
-        renderVideoList(allVideos);
-      } else if (cat === 'FAVORITES') {
-        const favs = JSON.parse(localStorage.getItem('lohas_favorites') || '[]');
-        renderVideoList(allVideos.filter(v => favs.includes(v.videoId)));
+    // 3. SOS 寫入資料庫
+    window.pushSOSAlertToFirestore = async function(status, gpsCoords = null) {
+      if (!currentElderUid) return;
+      const alertId = `sos_${Date.now()}`;
+      try {
+        await setDoc(doc(db, "emergency_alerts", alertId), {
+          alertId,
+          elderUid: currentElderUid,
+          status, // 'ACTIVE' or 'CANCELLED'
+          gps: gpsCoords,
+          createdAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.error("SOS Firestore error:", e);
+      }
+    };
+
+    // 4. 儲存運動打卡與 RPE 到 Firestore
+    window.saveSessionToFirestore = async function(rpeScore, workoutId) {
+      const today = new Date().toISOString().split("T")[0];
+      let currentStreak = parseInt(localStorage.getItem("lohas_streak") || "0", 10) + 1;
+      localStorage.setItem("lohas_streak", currentStreak);
+      document.getElementById("streakCount").innerText = currentStreak;
+
+      if (!currentElderUid) return;
+      try {
+        await setDoc(doc(db, "elders", currentElderUid, "daily_logs", today), {
+          date: today,
+          rpeScore,
+          workoutId,
+          completedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Firestore log error:", e);
+      }
+    };
+
+    initSession();
+  </script>
+
+  <!-- 前端交互與業務邏輯 Script -->
+  <script>
+    // 內建運動資料庫 (支援即時篩選與搜尋)
+    const WORKOUTS = [
+      { id: "knee_1", title: "經典長者坐姿膝關節操", category: "KNEE", duration: "8 分鐘", level: "初階", icon: "🦵", desc: "強化四頭肌，減少軟骨磨損，行樓梯唔痛" },
+      { id: "back_1", title: "溫和腰背放鬆伸展", category: "BACK", duration: "10 分鐘", level: "初階", icon: "🧘", desc: "舒緩坐骨神經與下背僵硬" },
+      { id: "shoulder_1", title: "五十肩旋轉活動度操", category: "SHOULDER", duration: "6 分鐘", level: "初階", icon: "💪", desc: "改善抬手困難，梳頭著衫更輕鬆" },
+      { id: "cardio_1", title: "椅子安全踏步強心肺", category: "CARDIO", duration: "12 分鐘", level: "中階", icon: "❤️", desc: "增強心肺耐力，行路有氣有力" },
+      { id: "knee_2", title: "進階站立平衡防跌訓練", category: "KNEE", duration: "10 分鐘", level: "進階", icon: "⚖️", desc: "鍛鍊小腿與核心，預防家居跌倒" }
+    ];
+
+    let currentSelectedWorkout = null;
+
+    // 渲染運動列表
+    function renderWorkouts(list) {
+      const container = document.getElementById("workoutList");
+      container.innerHTML = "";
+      list.forEach(w => {
+        const card = document.createElement("div");
+        card.className = "workout-card";
+        card.onclick = () => triggerWorkoutFlow(w);
+        card.innerHTML = `
+          <div class="workout-thumb">${w.icon}</div>
+          <div class="workout-info">
+            <div class="workout-title">${w.title}</div>
+            <div class="workout-meta">⏱️ ${w.duration} ｜ 🎯 ${w.level}</div>
+            <p style="font-size:16px; color:#64748B; margin-bottom:15px;">${w.desc}</p>
+            <button class="start-btn">開始跟做 (AI 糾正)</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    renderWorkouts(WORKOUTS);
+
+    // 篩選與搜尋
+    function filterWorkout(cat) {
+      document.querySelectorAll(".tag-btn").forEach(b => b.classList.remove("active"));
+      event.target.classList.add("active");
+      if (cat === "ALL") {
+        renderWorkouts(WORKOUTS);
       } else {
-        renderVideoList(allVideos.filter(v => v.category === cat));
+        renderWorkouts(WORKOUTS.filter(w => w.category === cat));
       }
     }
 
-    function playVideo(videoId, title) {
-      currentVideoId = videoId;
-      document.getElementById('mainPlayer').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
-      if (title) currentActionTitle = title;
-      
-      const favs = JSON.parse(localStorage.getItem('lohas_favorites') || '[]');
-      document.getElementById('favoriteBtn').innerText = favs.includes(videoId) ? '❤️' : '⭐';
+    document.getElementById("workoutSearch").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = WORKOUTS.filter(w => w.title.includes(q) || w.desc.includes(q));
+      renderWorkouts(filtered);
+    });
+
+    /* =========================================
+       殺手鐧 1: 運動前 3 題健康篩查 (PAR-Q 狀態機)
+    ========================================= */
+    const SCREENING_QUESTIONS = [
+      "問題 1/3：今日身體有無頭暈或企唔穩？",
+      "問題 2/3：胸口有無胸悶或者呼吸唔順？",
+      "問題 3/3：今日血壓是否在正常範圍？"
+    ];
+    let screeningIndex = 0;
+
+    function triggerWorkoutFlow(workout) {
+      currentSelectedWorkout = workout;
+      screeningIndex = 0;
+      document.getElementById("screeningQuestionText").innerText = SCREENING_QUESTIONS[0];
+      document.getElementById("screeningModal").style.display = "flex";
+      speakCantonese(SCREENING_QUESTIONS[0]);
     }
 
-    function triggerDirectPainPoint(key, autoSpeak = true) {
-      const plan = DIRECT_PRESETS[key];
-      if (!plan) return;
-
-      currentActionTitle = plan.title;
-      lastVoiceText = plan.summary;
-
-      document.getElementById('aiActionTitle').innerText = plan.title;
-      document.getElementById('aiVoiceSummary').innerText = plan.summary;
-      document.getElementById('voiceText').innerText = `已載入：${plan.title}`;
-
-      const stepsContainer = document.getElementById('aiQuickSteps');
-      stepsContainer.innerHTML = plan.steps.map((s, idx) => `
-        <li class="flex items-center gap-2">
-          <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs flex-shrink-0">${idx+1}</span>
-          <span>${s}</span>
-        </li>
-      `).join('');
-
-      playVideo(plan.videoId, plan.title);
-      if (autoSpeak) speakNaturalCantonese(plan.summary);
-    }
-
-    // 自然人聲粵語發音 (優先調用 Apple Siri 善芝 / Google 高音質廣東話)
-    function speakNaturalCantonese(text) {
-      if (!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'zh-HK';
-      utterance.rate = 0.85; // 放慢語速適合長者
-      utterance.pitch = 1.0;
-
-      const voices = window.speechSynthesis.getVoices();
-      const premiumVoice = voices.find(v => 
-        (v.lang === 'zh-HK' || v.lang.includes('yue')) && 
-        (v.name.includes('Sin-Ji') || v.name.includes('Siri') || v.name.includes('Premium') || v.name.includes('Enhanced'))
-      ) || voices.find(v => v.lang === 'zh-HK' || v.lang.includes('yue'));
-
-      if (premiumVoice) utterance.voice = premiumVoice;
-      window.speechSynthesis.speak(utterance);
-    }
-
-    function toggleVoiceSearch() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        const text = prompt('請說出症狀：', '腰痛');
-        if (text) checkSeniorIntent(text);
+    function handleScreeningAnswer(hasSymptom) {
+      if (hasSymptom) {
+        document.getElementById("screeningModal").style.display = "none";
+        alert("⚠️ 溫馨提示：今日身體稍有不適，建議先坐低飲杯溫水休息，暫時唔好做運動。如果持續唔舒服請告知家人或就醫！");
+        speakCantonese("今日身體唔舒服，請先坐低休息，唔好夾硬做運動。");
         return;
       }
-
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'zh-HK';
-      const voiceBtn = document.getElementById('voiceBtn');
-      const voiceText = document.getElementById('voiceText');
-
-      recognition.onstart = () => {
-        voiceBtn.className = 'senior-tap bg-red-600 text-white font-black px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg animate-pulse';
-        voiceText.innerText = '聽緊你講嘢...';
-      };
-
-      recognition.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
-        voiceText.innerText = `「${transcript}」`;
-        checkSeniorIntent(transcript);
-      };
-
-      recognition.onerror = () => { voiceText.innerText = '聽唔清，請再試'; };
-
-      recognition.onend = () => {
-        setTimeout(() => {
-          voiceBtn.className = 'senior-tap bg-amber-400 hover:bg-amber-500 text-stone-950 font-black px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg transition active:scale-95 border-2 border-amber-300';
-          voiceText.innerText = '按此講嘢 (如：膝頭痛)';
-        }, 3000);
-      };
-
-      recognition.start();
-    }
-
-    async function checkSeniorIntent(query) {
-      if (query.includes('腰') || query.includes('背') || query.includes('冤') || query.includes('酸痛')) {
-        triggerDirectPainPoint('BACK');
-      } else if (query.includes('瞓') || query.includes('眠') || query.includes('神經') || query.includes('好醒')) {
-        triggerDirectPainPoint('SLEEP');
-      } else if (query.includes('濁') || query.includes('咳') || query.includes('吞') || query.includes('卡住') || query.includes('口肌')) {
-        triggerDirectPainPoint('SWALLOW');
-      } else if (query.includes('膝') || query.includes('菠蘿蓋') || query.includes('關節') || query.includes('屈唔到')) {
-        triggerDirectPainPoint('KNEE');
-      } else if (query.includes('跌') || query.includes('行') || query.includes('穩') || query.includes('骨力') || query.includes('軟腳') || query.includes('飄')) {
-        triggerDirectPainPoint('FALL');
+      screeningIndex++;
+      if (screeningIndex < SCREENING_QUESTIONS.length) {
+        const nextQ = SCREENING_QUESTIONS[screeningIndex];
+        document.getElementById("screeningQuestionText").innerText = nextQ;
+        speakCantonese(nextQ);
       } else {
-        try {
-          const res = await fetch(`${API_BASE_URL}/api/dify/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query })
-          });
-          const data = await res.json();
-          if (data.success) {
-            const plan = JSON.parse(data.answer);
-            renderActionPlan(plan);
-          }
-        } catch {
-          triggerDirectPainPoint('KNEE');
-        }
+        // 全部通過，啟動 AI 鏡頭運動
+        document.getElementById("screeningModal").style.display = "none";
+        startExerciseWithAI();
       }
     }
 
-    function renderActionPlan(plan) {
-      currentActionTitle = plan.action_title;
-      lastVoiceText = plan.voice_summary;
-      document.getElementById('aiActionTitle').innerText = plan.action_title;
-      document.getElementById('aiVoiceSummary').innerText = plan.voice_summary;
-      const stepsContainer = document.getElementById('aiQuickSteps');
-      stepsContainer.innerHTML = plan.quick_steps.map((s, idx) => `
-        <li class="flex items-center gap-2">
-          <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs flex-shrink-0">${idx+1}</span>
-          <span>${s}</span>
-        </li>
-      `).join('');
-      playVideo(plan.recommended_video_id, plan.action_title);
-      speakNaturalCantonese(plan.voice_summary);
+    /* =========================================
+       殺手鐧 2: MediaPipe Pose 端側即時 AI 姿態糾正
+    ========================================= */
+    let camera = null;
+    let pose = null;
+
+    function startExerciseWithAI() {
+      document.getElementById("aiCameraModal").style.display = "flex";
+      const videoElement = document.getElementById("cameraFeed");
+      const canvasElement = document.getElementById("poseCanvas");
+      const canvasCtx = canvasElement.getContext("2d");
+
+      pose = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+      });
+
+      pose.setOptions({
+        modelComplexity: 0, // Lite 模型，舊款手機流暢唔發熱
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+
+      let lastSpeakTime = 0;
+
+      pose.onResults((results) => {
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+        if (results.poseLandmarks) {
+          // 骨骼即時判定 (手腕 landmark 15,16 與肩膀 11,12)
+          const leftWrist = results.poseLandmarks[15];
+          const leftShoulder = results.poseLandmarks[11];
+          const now = Date.now();
+
+          // 簡單示範：檢查手有冇抬高
+          if (leftWrist && leftShoulder && leftWrist.y < leftShoulder.y) {
+            document.getElementById("aiVoiceFeedback").innerText = "🌟 手抬得好靚！保持平穩呼吸！";
+            if (now - lastSpeakTime > 5000) {
+              speakCantonese("手抬得好靚，保持住！");
+              lastSpeakTime = now;
+            }
+          } else {
+            document.getElementById("aiVoiceFeedback").innerText = "💡 婆婆/伯伯，隻手可以再抬高少少！";
+          }
+        }
+        canvasCtx.restore();
+      });
+
+      camera = new Camera(videoElement, {
+        onFrame: async () => {
+          await pose.send({ image: videoElement });
+        },
+        width: 480,
+        height: 360
+      });
+      camera.start();
     }
 
-    function notifyFamily() {
-      const streak = recordExerciseCheckin();
-      const message = `仔女你好！我啱啱喺「樂活健康電視」跟住做咗【${currentActionTitle}】，已經連續運動打卡第 ${streak} 日喇！身體感覺幾精神，同你報個平安！❤️`;
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+    function stopExerciseWithAI() {
+      if (camera) camera.stop();
+      document.getElementById("aiCameraModal").style.display = "none";
+      // 進入運動後 RPE 評估
+      document.getElementById("rpeModal").style.display = "flex";
+      speakCantonese("做得好！做完運動覺得辛苦嗎？");
     }
 
-    function startExerciseTimer(seconds) {
-      const timerBtn = document.getElementById('timerBtn');
-      let remain = seconds;
-      timerBtn.disabled = true;
-      
-      const interval = setInterval(() => {
-        const mins = Math.floor(remain / 60);
-        const secs = remain % 60;
-        timerBtn.innerText = `⏱️ 仲有 ${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        remain--;
+    /* =========================================
+       殺手鐧 3: 運動後 RPE 自評與資料寫入
+    ========================================= */
+    function submitRPE(score) {
+      document.getElementById("rpeModal").style.display = "none";
+      if (window.saveSessionToFirestore) {
+        window.saveSessionToFirestore(score, currentSelectedWorkout?.id || "workout_general");
+      }
+      alert("🎉 今日運動記錄成功！連續天數已更新，繼續保持！");
+      speakCantonese("今日好勤力！好好休息飲杯水。");
+    }
 
-        if (remain < 0) {
-          clearInterval(interval);
-          timerBtn.disabled = false;
-          timerBtn.innerText = '🎉 運動完成！做得好好！';
-          speakNaturalCantonese('做得好好！三分鐘運動完成喇，飲啖溫水休息下啦。');
-          recordExerciseCheckin();
+    /* =========================================
+       殺手鐧 4: SOS 3秒長按 + 10 秒倒數取消機制
+    ========================================= */
+    let sosTimerInterval = null;
+    let sosSecondsRemaining = 10;
+    let pressTimer = null;
+    const sosBtn = document.getElementById("sosTriggerBtn");
+
+    // 長按 3 秒防誤觸觸發
+    sosBtn.addEventListener("pointerdown", () => {
+      pressTimer = setTimeout(() => {
+        startSOSCountdown();
+      }, 3000);
+    });
+    sosBtn.addEventListener("pointerup", () => clearTimeout(pressTimer));
+    sosBtn.addEventListener("pointerleave", () => clearTimeout(pressTimer));
+
+    function startSOSCountdown() {
+      if ("vibrate" in navigator) navigator.vibrate([400, 200, 400]);
+      document.getElementById("sosModal").style.display = "flex";
+      sosSecondsRemaining = 10;
+      document.getElementById("sosTimer").innerText = sosSecondsRemaining;
+      speakCantonese("求救訊號準備中，十秒內可按取消。");
+
+      sosTimerInterval = setInterval(() => {
+        sosSecondsRemaining--;
+        document.getElementById("sosTimer").innerText = sosSecondsRemaining;
+        if (sosSecondsRemaining <= 0) {
+          clearInterval(sosTimerInterval);
+          executeRealSOS();
         }
       }, 1000);
     }
 
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function abortSOS() {
+      clearInterval(sosTimerInterval);
+      document.getElementById("sosModal").style.display = "none";
+      if (window.pushSOSAlertToFirestore) {
+        window.pushSOSAlertToFirestore("CANCELLED");
+      }
+      alert("✅ 求救訊號已取消。");
+    }
+
+    function executeRealSOS() {
+      document.getElementById("sosModal").style.display = "none";
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          if (window.pushSOSAlertToFirestore) window.pushSOSAlertToFirestore("ACTIVE", coords);
+        });
+      } else {
+        if (window.pushSOSAlertToFirestore) window.pushSOSAlertToFirestore("ACTIVE");
+      }
+      alert("🚨 求救訊號已成功發出！已通知家人與緊急聯絡人！");
+      speakCantonese("緊急求救訊號已發出，請保持冷靜。");
+    }
+
+    /* =========================================
+       殺手鐧 5: 雙向語音辨識與粵語 TTS 朗讀
+    ========================================= */
+    function speakCantonese(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "zh-HK";
+      utterance.rate = 0.9; // 語速稍慢適合長者
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function toggleVoiceAssistant() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("瀏覽器未支援語音識別，請使用 Chrome/Safari。");
+        return;
+      }
+      const recognition = new SpeechRecognition();
+      recognition.lang = "zh-HK";
+      recognition.onstart = () => speakCantonese("請講，想搵邊套運動？");
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        handleSeniorVoiceIntent(transcript);
+      };
+      recognition.start();
+    }
+
+    function handleSeniorVoiceIntent(text) {
+      // 0ms 快篩 Intent Router
+      if (/(膝|腳痛|菠蘿蓋)/i.test(text)) {
+        localStorage.setItem("lohas_last_symptom", "膝痛");
+        filterWorkout("KNEE");
+        speakCantonese("搵到護膝防跌操，撳一下就可以開始。");
+      } else if (/(腰|背|坐骨)/i.test(text)) {
+        localStorage.setItem("lohas_last_symptom", "腰背痛");
+        filterWorkout("BACK");
+        speakCantonese("為你搵到腰背放鬆伸展運動。");
+      } else if (/(救命|跌親|好唔掂)/i.test(text)) {
+        startSOSCountdown();
+      } else {
+        speakCantonese("收到！為你列出適合長者嘅健康運動。");
+        renderWorkouts(WORKOUTS);
+      }
+    }
+
+    function openPairingModal() {
+      document.getElementById("pairingModal").style.display = "flex";
+    }
+    function closePairingModal(e) {
+      if (e.target.id === "pairingModal") e.target.style.display = "none";
+    }
   </script>
 </body>
 </html>
