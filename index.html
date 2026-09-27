@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>樂活健康電視 LOHAS TV</title>
   
-  <!-- PWA 設定 -->
   <link rel="manifest" href="/manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,13 +12,12 @@
   
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* 長者特大字體與無障礙視力友善設定 */
-    body { font-size: 20px; -webkit-tap-highlight-color: transparent; }
+    body { font-size: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     .senior-tap { min-height: 56px; }
     .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   </style>
 </head>
-<body class="bg-amber-50 text-stone-900 font-sans min-h-screen flex flex-col pb-12">
+<body class="bg-amber-50 text-stone-900 font-sans min-h-screen flex flex-col pb-10">
 
   <!-- 頂部導航列 -->
   <header class="bg-emerald-800 text-white px-4 md:px-8 py-3 flex justify-between items-center shadow-md sticky top-0 z-50">
@@ -31,58 +29,57 @@
       </div>
     </div>
 
-    <!-- 頂部中央：大號語音通話鈕 -->
+    <!-- 語音搜尋大按鈕 -->
     <button id="voiceBtn" onclick="toggleVoiceSearch()" class="senior-tap bg-amber-400 hover:bg-amber-500 text-stone-950 font-black px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg transition active:scale-95 border-2 border-amber-300">
       <span id="voiceIcon" class="text-2xl">🎙️</span>
       <span id="voiceText" class="text-lg">按此講嘢 (如：膝頭痛)</span>
     </button>
   </header>
 
-  <!-- 長者四大常見痛點快捷鍵 (一鍵即播，免打字) -->
+  <!-- 長者四大常見痛點快捷鍵 (直接精準觸發 5000 後端處方) -->
   <section class="bg-emerald-900 px-4 md:px-8 py-3 text-white shadow-inner">
     <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
       <span class="text-xs font-bold text-emerald-200 uppercase tracking-wider flex items-center gap-1">
-        ⚡ 症狀即查：
+        ⚡ 長者痛點即按：
       </span>
-      <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-none">
-        <button onclick="quickPrescription('經常嗆咳')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
+      <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-1">
+        <button onclick="handleAISymptomQuery('濁親')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
           🗣️ 成日濁親 (健口操)
         </button>
-        <button onclick="quickPrescription('膝蓋痛')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
+        <button onclick="handleAISymptomQuery('膝蓋痛')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
           🦵 菠蘿蓋痛 (防痛操)
         </button>
-        <button onclick="quickPrescription('走路不穩')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
+        <button onclick="handleAISymptomQuery('防跌')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
           🚶 行路唔穩 (防跌)
         </button>
-        <button onclick="quickPrescription('腰痛失眠')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
-          😴 瞓唔著／腰痛
+        <button onclick="handleAISymptomQuery('太極')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
+          ☯️ 坐式太極 (放鬆)
         </button>
       </div>
     </div>
   </section>
 
-  <!-- 主要內容介面 -->
+  <!-- 主畫面 -->
   <main class="flex-1 p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
     
-    <!-- 左側：影片播放器 + AI 處方卡 + 家庭閉環通知 (佔 7 欄) -->
+    <!-- 左側：主播放器與行動處方 -->
     <div class="lg:col-span-7 flex flex-col gap-5">
       
-      <!-- 主播放器 -->
+      <!-- 播放器 -->
       <div class="bg-black rounded-2xl overflow-hidden shadow-xl aspect-video relative border-2 border-stone-800">
         <iframe id="mainPlayer" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       </div>
 
-      <!-- AI 樂活行動處方卡 (零多餘廢話，大字要點) -->
+      <!-- AI 處方卡片 -->
       <div id="prescriptionCard" class="bg-white border-2 border-emerald-500 rounded-2xl p-5 shadow-lg">
         <div class="flex items-center justify-between mb-3 border-b border-stone-200 pb-3">
           <div class="flex items-center gap-2">
             <span class="text-3xl">🩺</span>
             <div>
               <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">樂活智能處方</span>
-              <h2 id="aiActionTitle" class="text-xl md:text-2xl font-black text-emerald-950">座椅伸展放鬆</h2>
+              <h2 id="aiActionTitle" class="text-xl md:text-2xl font-black text-emerald-950">長者運動處方</h2>
             </div>
           </div>
-          <!-- 廣播級重播按鈕 -->
           <button onclick="replayVoiceSummary()" class="bg-amber-100 hover:bg-amber-200 text-stone-900 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
             🔊 聽多次
           </button>
@@ -90,13 +87,13 @@
 
         <p id="aiVoiceSummary" class="text-stone-900 text-base md:text-lg font-medium mb-3 bg-emerald-50 p-3 rounded-xl border border-emerald-200 leading-relaxed"></p>
 
-        <!-- 3 個超大動作要點 -->
+        <!-- 動作步驟 -->
         <div class="space-y-1.5 mb-4">
           <p class="text-xs font-bold text-stone-500 uppercase tracking-wide">動作要點：</p>
           <ul id="aiQuickSteps" class="space-y-1.5 text-stone-800 font-bold text-base md:text-lg"></ul>
         </div>
 
-        <!-- 閉環設計：家庭連動 (WhatsApp 通知) + 計時鐘 -->
+        <!-- 閉環：WhatsApp 家庭報平安 + 計時 -->
         <div class="flex flex-col sm:flex-row items-center gap-3 pt-3 border-t border-stone-100">
           <button id="whatsappBtn" onclick="notifyFamily()" class="w-full sm:w-auto flex-1 senior-tap bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2.5 rounded-xl shadow transition flex items-center justify-center gap-2">
             <span class="text-xl">✅</span> 完成運動！話畀仔女知
@@ -109,15 +106,15 @@
 
     </div>
 
-    <!-- 右側：影音推薦列表 (佔 5 欄) -->
+    <!-- 右側：影片列表 -->
     <div class="lg:col-span-5 flex flex-col bg-white rounded-2xl shadow-md border border-stone-200 p-4">
       
-      <!-- 分類標籤 -->
-      <div class="flex gap-2 pb-3 mb-3 border-b border-stone-200 overflow-x-auto scrollbar-none" id="categoryTabs">
-        <button onclick="filterCategory('全部')" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-emerald-700 text-white transition">全部</button>
-        <button onclick="filterCategory('座椅伸展操')" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">🪑 座椅操</button>
-        <button onclick="filterCategory('溫和太極')" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">☯️ 太極</button>
-        <button onclick="filterCategory('養生飲食')" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">🥗 飲食</button>
+      <!-- 分類標籤 (完全對應 MongoDB 中的 3 大真實分類) -->
+      <div class="flex gap-2 pb-3 mb-3 border-b border-stone-200 overflow-x-auto" id="categoryTabs">
+        <button onclick="switchCategory('全部')" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-emerald-700 text-white transition">全部</button>
+        <button onclick="switchCategory('座椅伸展操')" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">🪑 座椅操</button>
+        <button onclick="switchCategory('溫和太極')" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">☯️ 太極</button>
+        <button onclick="switchCategory('養生飲食')" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">🥗 飲食</button>
       </div>
 
       <!-- 滾動清單 -->
@@ -127,75 +124,57 @@
   </main>
 
   <script>
-    // 智慧連線設定
-    const API_BASE_URL = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
-      ? window.location.origin
-      : 'https://lohascare-wellnesstv.onrender.com';
+    // 鎖定本地 5000 埠號，杜絕連到外部或讀取舊快取
+    const API_BASE_URL = 'http://localhost:5000';
 
-    let allVideos = [];
-    let currentVideos = [];
     let currentActionTitle = "長者健康運動";
     let lastVoiceText = "";
 
-    // 1. 初始化 (Cache-First 秒開機制)
+    // 清除舊快取，強制從本地 5000 取資料
+    localStorage.removeItem('lohas_cached_videos');
+
     window.addEventListener('DOMContentLoaded', () => {
-      // 優先讀取本地快取，0.01 秒即刻有畫面
-      const cached = localStorage.getItem('lohas_cached_videos');
-      if (cached) {
-        try {
-          allVideos = JSON.parse(cached);
-          currentVideos = allVideos;
-          renderVideoList(allVideos);
-          playVideo(allVideos[0].videoId);
-        } catch (e) {
-          console.error('快取解析失敗', e);
-        }
-      }
-
-      // 背景發送請求，同時喚醒 Render 免費節點
-      fetchVideosFromServer();
-
-      // 註冊 PWA Service Worker
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-      }
+      loadVideosFrom5000('全部');
     });
 
-    // 2. 向伺服器同步最新影片
-    async function fetchVideosFromServer() {
+    // 直接向 http://localhost:5000/api/videos 索取最精準的影音列表
+    async function loadVideosFrom5000(category) {
+      const container = document.getElementById('videoList');
+      container.innerHTML = '<div class="text-center py-10 text-stone-400">正在讀取精選影片...</div>';
+
       try {
-        const res = await fetch(`${API_BASE_URL}/api/videos`);
+        const url = category === '全部'
+          ? `${API_BASE_URL}/api/videos`
+          : `${API_BASE_URL}/api/videos?category=${encodeURIComponent(category)}`;
+
+        const res = await fetch(url);
         const data = await res.json();
+
         if (data.success && data.videos.length > 0) {
-          allVideos = data.videos;
-          currentVideos = allVideos;
-          // 更新本地儲存
-          localStorage.setItem('lohas_cached_videos', JSON.stringify(data.videos));
-          renderVideoList(allVideos);
+          renderVideoList(data.videos);
+          // 首次預設播放第一部
           if (!document.getElementById('mainPlayer').src || document.getElementById('mainPlayer').src === 'about:blank') {
-            playVideo(allVideos[0].videoId);
+            playVideo(data.videos[0].videoId, data.videos[0].title);
           }
+        } else {
+          container.innerHTML = '<div class="text-center py-10 text-stone-400">暫無此分類影片</div>';
         }
       } catch (err) {
-        console.warn('目前離線或伺服器喚醒中，持續使用本機快取');
+        console.error('連線失敗:', err);
+        container.innerHTML = '<div class="text-center py-10 text-red-500 font-bold">無法連線至 http://localhost:5000<br>請確認 node server.js 正在運行</div>';
       }
     }
 
-    // 3. 渲染影片列表卡片
+    // 渲染影片卡片
     function renderVideoList(videos) {
       const container = document.getElementById('videoList');
-      if (!videos || videos.length === 0) {
-        container.innerHTML = '<div class="text-center py-10 text-stone-400">暫無相關影片</div>';
-        return;
-      }
-
-      container.innerHTML = videos.map((v, i) => `
+      container.innerHTML = videos.map(v => `
         <div onclick="playVideo('${v.videoId}', '${v.title.replace(/'/g, "\\'")}')" class="flex gap-3 p-3 rounded-xl bg-stone-50 hover:bg-emerald-50 cursor-pointer border border-stone-200 transition shadow-sm hover:shadow">
           <img src="${v.thumbnail}" class="w-28 h-20 object-cover rounded-lg flex-shrink-0 bg-stone-200" alt="縮圖">
           <div class="flex flex-col justify-between overflow-hidden">
             <h3 class="font-bold text-stone-900 text-sm line-clamp-2 leading-snug">${v.title}</h3>
             <div class="flex items-center gap-2 text-xs text-stone-500 mt-1">
-              <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">${v.category || '健康'}</span>
+              <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">${v.category}</span>
               <span>⏱ ${v.durationText || ''}</span>
             </div>
           </div>
@@ -203,17 +182,8 @@
       `).join('');
     }
 
-    // 4. 播放影片
-    function playVideo(videoId, title) {
-      if (!videoId) return;
-      document.getElementById('mainPlayer').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
-      if (title) {
-        currentActionTitle = title;
-      }
-    }
-
-    // 5. 分類切換
-    function filterCategory(cat) {
+    // 分類切換
+    function switchCategory(cat) {
       document.querySelectorAll('.cat-btn').forEach(b => {
         if (b.innerText.includes(cat)) {
           b.className = 'cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-emerald-700 text-white transition';
@@ -221,25 +191,64 @@
           b.className = 'cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition';
         }
       });
+      loadVideosFrom5000(cat);
+    }
 
-      if (cat === '全部') {
-        renderVideoList(allVideos);
-      } else {
-        renderVideoList(allVideos.filter(v => v.category === cat));
+    // 播放影片
+    function playVideo(videoId, title) {
+      if (!videoId) return;
+      document.getElementById('mainPlayer').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+      if (title) currentActionTitle = title;
+    }
+
+    // 呼叫 5000 後端的精準處方匹配引擎
+    async function handleAISymptomQuery(query) {
+      document.getElementById('voiceText').innerText = `查詢中：「${query}」...`;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/dify/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          const plan = JSON.parse(data.answer);
+          renderActionCard(plan);
+        }
+      } catch (err) {
+        console.error('查詢失敗:', err);
       }
     }
 
-    // 6. 快捷痛點點擊（免打字）
-    function quickPrescription(symptom) {
-      document.getElementById('voiceText').innerText = `查詢：「${symptom}」...`;
-      handleAISymptomQuery(symptom);
+    // 渲染處方並啟動慢速粵語
+    function renderActionCard(plan) {
+      currentActionTitle = plan.action_title || "樂活運動處方";
+      document.getElementById('aiActionTitle').innerText = currentActionTitle;
+      
+      lastVoiceText = plan.voice_summary;
+      document.getElementById('aiVoiceSummary').innerText = plan.voice_summary;
+
+      const stepsContainer = document.getElementById('aiQuickSteps');
+      stepsContainer.innerHTML = plan.quick_steps.map((s, idx) => `
+        <li class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs flex-shrink-0">${idx+1}</span>
+          <span>${s}</span>
+        </li>
+      `).join('');
+
+      if (plan.recommended_video_id) {
+        playVideo(plan.recommended_video_id);
+      }
+
+      speakCantonese(plan.voice_summary);
     }
 
-    // 7. Web Speech API (長者粵語語音輸入)
+    // 語音輸入
     function toggleVoiceSearch() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        const text = prompt('請說出或輸入您的健康情況：', '成日濁親');
+        const text = prompt('請說出症狀：', '膝頭痛');
         if (text) handleAISymptomQuery(text);
         return;
       }
@@ -274,81 +283,28 @@
       recognition.start();
     }
 
-    // 8. 向後端索取結構化 AI 處方
-    async function handleAISymptomQuery(query) {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/dify/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query })
-        });
-        const data = await res.json();
-        
-        if (data.success) {
-          try {
-            const plan = JSON.parse(data.answer);
-            renderActionCard(plan);
-          } catch (e) {
-            // 文字回覆
-            document.getElementById('aiVoiceSummary').innerText = data.answer;
-          }
-        }
-      } catch (err) {
-        console.error('AI 處方查詢異常:', err);
-      }
-    }
-
-    // 9. 渲染行動處方並播放
-    function renderActionCard(plan) {
-      currentActionTitle = plan.action_title || "樂活運動處方";
-      document.getElementById('aiActionTitle').innerText = currentActionTitle;
-      
-      lastVoiceText = plan.voice_summary;
-      document.getElementById('aiVoiceSummary').innerText = plan.voice_summary;
-
-      const stepsContainer = document.getElementById('aiQuickSteps');
-      stepsContainer.innerHTML = plan.quick_steps.map((s, idx) => `
-        <li class="flex items-center gap-2">
-          <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs flex-shrink-0">${idx+1}</span>
-          <span>${s}</span>
-        </li>
-      `).join('');
-
-      // 切換影片
-      if (plan.recommended_video_id) {
-        playVideo(plan.recommended_video_id);
-      }
-
-      // 粵語溫和語音播報 (0.85 慢速)
-      speakCantonese(plan.voice_summary);
-    }
-
-    // 10. 慢速粵語語音朗讀
+    // 粵語發音 (0.85 慢速)
     function speakCantonese(text) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'zh-HK';
-        utterance.rate = 0.85; // 減慢語速
-        utterance.pitch = 1.0;
+        utterance.rate = 0.85;
         window.speechSynthesis.speak(utterance);
       }
     }
 
     function replayVoiceSummary() {
-      if (lastVoiceText) {
-        speakCantonese(lastVoiceText);
-      }
+      if (lastVoiceText) speakCantonese(lastVoiceText);
     }
 
-    // 11. WhatsApp 家庭通知連動
+    // WhatsApp 閉環
     function notifyFamily() {
       const message = `仔女你好！我啱啱喺「樂活健康電視」跟住做咗「${currentActionTitle}」，身體感覺唔錯，同你報個平安！❤️`;
-      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
     }
 
-    // 12. 3分鐘計時器
+    // 計時器
     function startExerciseTimer(seconds) {
       const timerBtn = document.getElementById('timerBtn');
       let remain = seconds;
