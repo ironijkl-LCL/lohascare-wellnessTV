@@ -1,4 +1,3 @@
-cat << 'EOF' > ~/lohas-backend/manifest.json
 {
   "name": "樂活健康電視",
   "short_name": "樂活電視",
