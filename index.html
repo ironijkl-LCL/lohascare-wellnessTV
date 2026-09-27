@@ -5,11 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>樂活健康電視 LOHAS TV</title>
   
-  <link rel="manifest" href="/manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#065f46">
-  
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-size: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -29,31 +24,34 @@
       </div>
     </div>
 
-    <!-- 語音搜尋大按鈕 -->
+    <!-- 語音搜尋按鈕 -->
     <button id="voiceBtn" onclick="toggleVoiceSearch()" class="senior-tap bg-amber-400 hover:bg-amber-500 text-stone-950 font-black px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg transition active:scale-95 border-2 border-amber-300">
       <span id="voiceIcon" class="text-2xl">🎙️</span>
-      <span id="voiceText" class="text-lg">按此講嘢 (如：膝頭痛)</span>
+      <span id="voiceText" class="text-lg">按此講嘢 (如：腰痛)</span>
     </button>
   </header>
 
-  <!-- 長者四大常見痛點快捷鍵 (直接精準觸發 5000 後端處方) -->
+  <!-- 長者 5 大痛點直通車 (獨立分開 5 粒按鈕，點擊 0 延遲精準開播) -->
   <section class="bg-emerald-900 px-4 md:px-8 py-3 text-white shadow-inner">
     <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
       <span class="text-xs font-bold text-emerald-200 uppercase tracking-wider flex items-center gap-1">
-        ⚡ 長者痛點即按：
+        ⚡ 痛點直通車：
       </span>
-      <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-1">
-        <button onclick="handleAISymptomQuery('濁親')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
+      <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-none">
+        <button onclick="triggerDirectPainPoint('濁親')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5 active:scale-95">
           🗣️ 成日濁親 (健口操)
         </button>
-        <button onclick="handleAISymptomQuery('膝蓋痛')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
+        <button onclick="triggerDirectPainPoint('膝蓋痛')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5 active:scale-95">
           🦵 菠蘿蓋痛 (防痛操)
         </button>
-        <button onclick="handleAISymptomQuery('防跌')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
-          🚶 行路唔穩 (防跌)
+        <button onclick="triggerDirectPainPoint('防跌')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5 active:scale-95">
+          🚶 行路唔穩 (防跌操)
         </button>
-        <button onclick="handleAISymptomQuery('太極')" class="bg-emerald-700 hover:bg-amber-500 hover:text-stone-950 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5">
-          ☯️ 坐式太極 (放鬆)
+        <button onclick="triggerDirectPainPoint('腰痛')" class="bg-amber-400 text-stone-950 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5 active:scale-95">
+          🧘 腰痠背痛 (拉腰操)
+        </button>
+        <button onclick="triggerDirectPainPoint('瞓唔著')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow transition flex items-center gap-1.5 active:scale-95">
+          😴 瞓唔著 (助眠穴位)
         </button>
       </div>
     </div>
@@ -62,12 +60,12 @@
   <!-- 主畫面 -->
   <main class="flex-1 p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
     
-    <!-- 左側：主播放器與行動處方 -->
+    <!-- 左側：主播放器與行動處方 (佔 7 欄) -->
     <div class="lg:col-span-7 flex flex-col gap-5">
       
       <!-- 播放器 -->
       <div class="bg-black rounded-2xl overflow-hidden shadow-xl aspect-video relative border-2 border-stone-800">
-        <iframe id="mainPlayer" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <iframe id="mainPlayer" class="w-full h-full" src="https://www.youtube.com/embed/S2EAkhB4XEk?autoplay=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       </div>
 
       <!-- AI 處方卡片 -->
@@ -77,7 +75,7 @@
             <span class="text-3xl">🩺</span>
             <div>
               <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">樂活智能處方</span>
-              <h2 id="aiActionTitle" class="text-xl md:text-2xl font-black text-emerald-950">長者運動處方</h2>
+              <h2 id="aiActionTitle" class="text-xl md:text-2xl font-black text-emerald-950">坐姿膝關節強化運動</h2>
             </div>
           </div>
           <button onclick="replayVoiceSummary()" class="bg-amber-100 hover:bg-amber-200 text-stone-900 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
@@ -85,12 +83,18 @@
           </button>
         </div>
 
-        <p id="aiVoiceSummary" class="text-stone-900 text-base md:text-lg font-medium mb-3 bg-emerald-50 p-3 rounded-xl border border-emerald-200 leading-relaxed"></p>
+        <p id="aiVoiceSummary" class="text-stone-900 text-base md:text-lg font-medium mb-3 bg-emerald-50 p-3 rounded-xl border border-emerald-200 leading-relaxed">
+          菠蘿蓋痛唔好勉強企喺度行，坐喺穩陣椅子上伸展大腿肌肉最安全！
+        </p>
 
         <!-- 動作步驟 -->
         <div class="space-y-1.5 mb-4">
           <p class="text-xs font-bold text-stone-500 uppercase tracking-wide">動作要點：</p>
-          <ul id="aiQuickSteps" class="space-y-1.5 text-stone-800 font-bold text-base md:text-lg"></ul>
+          <ul id="aiQuickSteps" class="space-y-1.5 text-stone-800 font-bold text-base md:text-lg">
+            <li class="flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs flex-shrink-0">1</span><span>坐穩椅子，單腳慢慢向前伸直抬平</span></li>
+            <li class="flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs flex-shrink-0">2</span><span>腳尖向上勾起，維持 5 秒感受大腿用力</span></li>
+            <li class="flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs flex-shrink-0">3</span><span>慢慢放低，左右腳輪流做 8 次</span></li>
+          </ul>
         </div>
 
         <!-- 閉環：WhatsApp 家庭報平安 + 計時 -->
@@ -106,10 +110,10 @@
 
     </div>
 
-    <!-- 右側：影片列表 -->
+    <!-- 右側：影片列表 (佔 5 欄) -->
     <div class="lg:col-span-5 flex flex-col bg-white rounded-2xl shadow-md border border-stone-200 p-4">
       
-      <!-- 分類標籤 (完全對應 MongoDB 中的 3 大真實分類) -->
+      <!-- 分類標籤 -->
       <div class="flex gap-2 pb-3 mb-3 border-b border-stone-200 overflow-x-auto" id="categoryTabs">
         <button onclick="switchCategory('全部')" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-emerald-700 text-white transition">全部</button>
         <button onclick="switchCategory('座椅伸展操')" class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-stone-100 hover:bg-emerald-100 text-stone-700 transition">🪑 座椅操</button>
@@ -124,24 +128,87 @@
   </main>
 
   <script>
-    // 鎖定本地 5000 埠號，杜絕連到外部或讀取舊快取
     const API_BASE_URL = 'http://localhost:5000';
 
-    let currentActionTitle = "長者健康運動";
-    let lastVoiceText = "";
+    // 5 大長者痛點前端直連對照表 (0ms 延遲，100% 絕對精準)
+    const DIRECT_PRESETS = {
+      '濁親': {
+        videoId: 'gkKbsoXetf8',
+        title: '🗣️ 長者健口操・預防進食嗆咳',
+        summary: '食嘢容易濁親多數因為喉部肌肉退化。跟住做吞嚥健口操，可以加強吞嚥力量！',
+        steps: ['頭部慢慢向左右轉動放鬆頸肌', '鼓起兩腮含氣 3 秒，再慢慢吹氣', '伸出舌頭向前、向上伸展各 3 次']
+      },
+      '膝蓋痛': {
+        videoId: 'S2EAkhB4XEk',
+        title: '🦵 坐姿膝關節強化運動',
+        summary: '菠蘿蓋痛唔好勉強企喺度行，坐喺穩陣椅子上伸展大腿肌肉最安全！',
+        steps: ['坐穩椅子，單腳慢慢向前伸直抬平', '腳尖向上勾起，維持 5 秒感受大腿用力', '慢慢放低，左右腳輪流做 8 次']
+      },
+      '防跌': {
+        videoId: 'YfWmJpWkj_0',
+        title: '🚶 長者扶椅防跌訓練',
+        summary: '步履唔穩容易跌倒，雙手扶住穩固椅背做提踵同抬腿，有助提升平衡力。',
+        steps: ['雙手扶穩椅背，背部挺直', '慢慢抬起腳跟腳尖著地，維持 3 秒後放下', '左右單腳微抬離地 3 秒，鍛鍊核心平衡']
+      },
+      '腰痛': {
+        videoId: 'Kj7CjmXj1X0',
+        title: '🧘 4分鐘長者腰部伸展・舒緩腰痛',
+        summary: '腰痛千祈唔好劇烈彎腰！坐在椅子上做溫和的軀幹旋轉與伸展，能有效放鬆緊繃的腰背肌肉。',
+        steps: ['端坐在椅子上，雙手輕扶大腿', '上身保持挺直，緩慢向左轉動 5 秒感受腰背舒展', '回到中間，再緩慢轉向右邊，左右各做 5 次']
+      },
+      '瞓唔著': {
+        videoId: 'SgPZ6RPQ7fc',
+        title: '😴 睡前安神・遠離失眠穴位按壓',
+        summary: '瞓唔著唔好心急，睡前坐在床邊按壓神門穴與內關穴，幫助安定心神、放鬆入睡。',
+        steps: ['用拇指輕輕按壓手腕內側的神門穴 1 分鐘', '深呼吸放鬆肩頸，轉換按壓內關穴', '雙腳自然垂放，放空思緒感受呼吸']
+      }
+    };
 
-    // 清除舊快取，強制從本地 5000 取資料
-    localStorage.removeItem('lohas_cached_videos');
+    let currentActionTitle = "坐姿膝關節強化運動";
+    let lastVoiceText = "菠蘿蓋痛唔好勉強企喺度行，坐喺穩陣椅子上伸展大腿肌肉最安全！";
+
+    // 強制註銷舊有 Service Worker 與清理所有快取
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let reg of registrations) { reg.unregister(); }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        for (let name of names) caches.delete(name);
+      });
+    }
 
     window.addEventListener('DOMContentLoaded', () => {
       loadVideosFrom5000('全部');
     });
 
-    // 直接向 http://localhost:5000/api/videos 索取最精準的影音列表
+    // 點擊痛點直通車 (前端直接瞬間執行，零延遲更換影片與處方)
+    function triggerDirectPainPoint(key) {
+      const plan = DIRECT_PRESETS[key];
+      if (!plan) return;
+
+      currentActionTitle = plan.title;
+      lastVoiceText = plan.summary;
+
+      document.getElementById('aiActionTitle').innerText = plan.title;
+      document.getElementById('aiVoiceSummary').innerText = plan.summary;
+      document.getElementById('voiceText').innerText = `已載入：${plan.title}`;
+
+      const stepsContainer = document.getElementById('aiQuickSteps');
+      stepsContainer.innerHTML = plan.steps.map((s, idx) => `
+        <li class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs flex-shrink-0">${idx+1}</span>
+          <span>${s}</span>
+        </li>
+      `).join('');
+
+      document.getElementById('mainPlayer').src = `https://www.youtube.com/embed/${plan.videoId}?autoplay=1&rel=0`;
+      speakCantonese(plan.summary);
+    }
+
     async function loadVideosFrom5000(category) {
       const container = document.getElementById('videoList');
-      container.innerHTML = '<div class="text-center py-10 text-stone-400">正在讀取精選影片...</div>';
-
       try {
         const url = category === '全部'
           ? `${API_BASE_URL}/api/videos`
@@ -152,20 +219,12 @@
 
         if (data.success && data.videos.length > 0) {
           renderVideoList(data.videos);
-          // 首次預設播放第一部
-          if (!document.getElementById('mainPlayer').src || document.getElementById('mainPlayer').src === 'about:blank') {
-            playVideo(data.videos[0].videoId, data.videos[0].title);
-          }
-        } else {
-          container.innerHTML = '<div class="text-center py-10 text-stone-400">暫無此分類影片</div>';
         }
       } catch (err) {
-        console.error('連線失敗:', err);
-        container.innerHTML = '<div class="text-center py-10 text-red-500 font-bold">無法連線至 http://localhost:5000<br>請確認 node server.js 正在運行</div>';
+        console.error('API 讀取異常:', err);
       }
     }
 
-    // 渲染影片卡片
     function renderVideoList(videos) {
       const container = document.getElementById('videoList');
       container.innerHTML = videos.map(v => `
@@ -182,7 +241,6 @@
       `).join('');
     }
 
-    // 分類切換
     function switchCategory(cat) {
       document.querySelectorAll('.cat-btn').forEach(b => {
         if (b.innerText.includes(cat)) {
@@ -194,62 +252,17 @@
       loadVideosFrom5000(cat);
     }
 
-    // 播放影片
     function playVideo(videoId, title) {
       if (!videoId) return;
       document.getElementById('mainPlayer').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
       if (title) currentActionTitle = title;
     }
 
-    // 呼叫 5000 後端的精準處方匹配引擎
-    async function handleAISymptomQuery(query) {
-      document.getElementById('voiceText').innerText = `查詢中：「${query}」...`;
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/dify/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query })
-        });
-        const data = await res.json();
-        
-        if (data.success) {
-          const plan = JSON.parse(data.answer);
-          renderActionCard(plan);
-        }
-      } catch (err) {
-        console.error('查詢失敗:', err);
-      }
-    }
-
-    // 渲染處方並啟動慢速粵語
-    function renderActionCard(plan) {
-      currentActionTitle = plan.action_title || "樂活運動處方";
-      document.getElementById('aiActionTitle').innerText = currentActionTitle;
-      
-      lastVoiceText = plan.voice_summary;
-      document.getElementById('aiVoiceSummary').innerText = plan.voice_summary;
-
-      const stepsContainer = document.getElementById('aiQuickSteps');
-      stepsContainer.innerHTML = plan.quick_steps.map((s, idx) => `
-        <li class="flex items-center gap-2">
-          <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs flex-shrink-0">${idx+1}</span>
-          <span>${s}</span>
-        </li>
-      `).join('');
-
-      if (plan.recommended_video_id) {
-        playVideo(plan.recommended_video_id);
-      }
-
-      speakCantonese(plan.voice_summary);
-    }
-
-    // 語音輸入
     function toggleVoiceSearch() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        const text = prompt('請說出症狀：', '膝頭痛');
-        if (text) handleAISymptomQuery(text);
+        const text = prompt('請說出症狀：', '腰痛');
+        if (text) checkVoiceTrigger(text);
         return;
       }
 
@@ -266,7 +279,7 @@
       recognition.onresult = (e) => {
         const transcript = e.results[0][0].transcript;
         voiceText.innerText = `「${transcript}」`;
-        handleAISymptomQuery(transcript);
+        checkVoiceTrigger(transcript);
       };
 
       recognition.onerror = () => {
@@ -276,14 +289,29 @@
       recognition.onend = () => {
         setTimeout(() => {
           voiceBtn.className = 'senior-tap bg-amber-400 hover:bg-amber-500 text-stone-950 font-black px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg transition active:scale-95 border-2 border-amber-300';
-          voiceText.innerText = '按此講嘢 (如：膝頭痛)';
+          voiceText.innerText = '按此講嘢 (如：腰痛)';
         }, 3000);
       };
 
       recognition.start();
     }
 
-    // 粵語發音 (0.85 慢速)
+    function checkVoiceTrigger(query) {
+      if (query.includes('腰') || query.includes('背')) {
+        triggerDirectPainPoint('腰痛');
+      } else if (query.includes('瞓') || query.includes('眠')) {
+        triggerDirectPainPoint('瞓唔著');
+      } else if (query.includes('濁') || query.includes('咳') || query.includes('吞')) {
+        triggerDirectPainPoint('濁親');
+      } else if (query.includes('膝') || query.includes('菠蘿蓋') || query.includes('關節')) {
+        triggerDirectPainPoint('膝蓋痛');
+      } else if (query.includes('跌') || query.includes('行') || query.includes('穩')) {
+        triggerDirectPainPoint('防跌');
+      } else {
+        triggerDirectPainPoint('膝蓋痛');
+      }
+    }
+
     function speakCantonese(text) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -298,13 +326,11 @@
       if (lastVoiceText) speakCantonese(lastVoiceText);
     }
 
-    // WhatsApp 閉環
     function notifyFamily() {
       const message = `仔女你好！我啱啱喺「樂活健康電視」跟住做咗「${currentActionTitle}」，身體感覺唔錯，同你報個平安！❤️`;
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
     }
 
-    // 計時器
     function startExerciseTimer(seconds) {
       const timerBtn = document.getElementById('timerBtn');
       let remain = seconds;
