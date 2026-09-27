@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <!-- 宣告合規 Referrer 政策，解決 YouTube 153 -->
+  <!-- 宣告合規 Referrer 政策 -->
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#064E3B">
   <title>LOHAS TV - 樂活智能長者健康系統</title>
@@ -327,24 +327,42 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
     }
     .room-title {
       font-size: 17px;
       font-weight: 900;
-      max-width: 65%;
+      max-width: 50%;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .header-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-native-yt {
+      background: #334155;
+      color: #FEF08A;
+      border: 1px solid #64748B;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
     }
     .btn-finish-room {
       background: var(--danger-red);
       color: white;
       border: none;
-      padding: 9px 16px;
+      padding: 9px 14px;
       border-radius: 12px;
       font-size: 15px;
       font-weight: 900;
       cursor: pointer;
+      white-space: nowrap;
     }
     .room-body {
       flex: 1;
@@ -380,7 +398,7 @@
       border: 3px solid var(--accent-jade);
     }
 
-    /* 關鍵：可手指觸控拖曳移動的相機視窗樣式 */
+    /* 手指指控全方向自由拖動相機卡片 */
     .camera-pip-card {
       position: absolute;
       bottom: max(20px, var(--sab));
@@ -394,15 +412,13 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.6);
       z-index: 100;
       display: none;
-
-      /* 允許自定義指控拖曳，防止觸發瀏覽器原生物理滑動 */
       touch-action: none;
       user-select: none;
       cursor: grab;
     }
     .camera-pip-card:active {
       cursor: grabbing;
-      box-shadow: 0 14px 35px rgba(0,0,0,0.8);
+      box-shadow: 0 14px 35px rgba(0,0,0,0.85);
     }
     #cameraFeed {
       width: 100%;
@@ -541,7 +557,11 @@
   <div id="exerciseRoomModal">
     <div class="room-header">
       <div class="room-title" id="roomWorkoutTitle">運動進行中</div>
-      <button class="btn-finish-room" onclick="stopExerciseWithAI()">做完！評估辛苦度 👏</button>
+      <div class="header-btn-group">
+        <!-- 備用原生 YouTube 按鈕：點擊直接以官方 App 開啟 -->
+        <button class="btn-native-yt" onclick="openInNativeYouTube()">📺 官方App開</button>
+        <button class="btn-finish-room" onclick="stopExerciseWithAI()">做完！評估 👏</button>
+      </div>
     </div>
     <div class="room-body">
       <div class="ai-live-prompt" id="aiVoiceFeedback">💡 請跟隨教練動作，保持呼吸！</div>
@@ -559,16 +579,16 @@
         <p style="font-size:15px; color:#94A3B8; max-width:80%;">現正處於離線狀態。AI 姿態鏡頭與語音已啟動，請照著圖示做動作！</p>
       </div>
 
-      <!-- 可自由拖動的 PIP 相機視窗 -->
+      <!-- 可自由指控移動的 PIP 相機視窗 -->
       <div class="camera-pip-card" id="cameraPipBox">
-        <div class="pip-label">✥ 按住任意移動 📹</div>
+        <div class="pip-label">✥ 按住拖動 📹</div>
         <video id="cameraFeed" playsinline autoplay muted></video>
         <canvas id="poseCanvas"></canvas>
       </div>
     </div>
   </div>
 
-  <!-- Modal 1: 運動前篩查（加跳過測試掣） -->
+  <!-- Modal 1: 運動前篩查（附體驗跳過按鈕） -->
   <div class="modal-overlay" id="screeningModal">
     <div class="modal-card">
       <div class="modal-title">🩺 運動前健康評估</div>
@@ -612,7 +632,7 @@
     </div>
   </div>
 
-  <!-- Modal 4: 配對碼彈窗（支援一鍵 WhatsApp） -->
+  <!-- Modal 4: 配對碼彈窗 -->
   <div class="modal-overlay" id="pairingModal" onclick="closePairingModal(event)">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-title">👨‍👩‍👧 家人看顧配對碼</div>
@@ -676,7 +696,6 @@
         document.getElementById("pairCodeDisplay").innerText = `👨‍👩‍👧 看顧碼: ${pairCode}`;
         document.getElementById("pairCodeModalText").innerText = pairCode;
 
-        // 同步寫入長者檔案與配對索引表
         await setDoc(doc(db, "elders", currentElderUid), {
           elderUid: currentElderUid,
           pairingCode: pairCode,
@@ -691,7 +710,6 @@
         const streak = parseInt(localStorage.getItem("lohas_streak") || "1", 10);
         document.getElementById("streakCount").innerText = streak;
 
-        // 監聽家人確認 SOS
         onSnapshot(doc(db, "elders", currentElderUid), (docSnap) => {
           if (docSnap.exists() && docSnap.data().sosAcknowledged) {
             document.getElementById("aiVoiceFeedback").innerText = "💚 仔女已收到你的求救訊號！通話中！";
@@ -699,7 +717,6 @@
           }
         });
 
-        // 監聽家人語音叮囑
         onSnapshot(doc(db, "elders", currentElderUid, "reminders", "latest"), (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
@@ -938,7 +955,7 @@
     };
 
     // ==========================================
-    // 關鍵亮點：指控全方向自由拖曳相機視窗控制器
+    // 指控全方向自由拖曳相機視窗控制器
     // ==========================================
     function initDraggablePip() {
       const pip = document.getElementById("cameraPipBox");
@@ -952,7 +969,6 @@
         isDragging = true;
         pip.setPointerCapture(e.pointerId);
 
-        // 將 CSS 轉成 top/left 絕對像素座標，擺脫 bottom/right 錨定
         const rect = pip.getBoundingClientRect();
         pip.style.bottom = "auto";
         pip.style.right = "auto";
@@ -974,11 +990,10 @@
         let targetX = startLeft + dx;
         let targetY = startTop + dy;
 
-        // 螢幕防出界邊界限制 (避開頂部「正在跟做」標題欄)
-        const minX = 12;
+        const minX = 10;
         const minY = 65;
-        const maxX = window.innerWidth - pip.offsetWidth - 12;
-        const maxY = window.innerHeight - pip.offsetHeight - 12;
+        const maxX = window.innerWidth - pip.offsetWidth - 10;
+        const maxY = window.innerHeight - pip.offsetHeight - 10;
 
         targetX = Math.max(minX, Math.min(targetX, maxX));
         targetY = Math.max(minY, Math.min(targetY, maxY));
@@ -998,7 +1013,6 @@
       pip.addEventListener("pointercancel", stopDrag);
     }
 
-    // 啟動拖曳監聽
     window.addEventListener("DOMContentLoaded", initDraggablePip);
     initDraggablePip();
 
@@ -1018,13 +1032,12 @@
       const iframe = document.getElementById("trainerVideoFrame");
       const offlinePlayer = document.getElementById("offlineFallbackPlayer");
 
-      // 動態 Origin 徹底解決 YouTube 153
-      const dynamicOrigin = encodeURIComponent(window.location.origin || "https://localhost");
-
       if (navigator.onLine) {
         iframe.style.display = "block";
         offlinePlayer.style.display = "none";
-        iframe.src = `https://www.youtube.com/embed/${workout.youtubeId}?autoplay=1&enablejsapi=1&rel=0&playsinline=1&origin=${dynamicOrigin}`;
+        
+        // 核心修復：徹底拔除引發 153 設定衝突的 enablejsapi 與 origin 參數
+        iframe.src = `https://www.youtube.com/embed/${workout.youtubeId}?autoplay=1&playsinline=1&rel=0`;
       } else {
         iframe.style.display = "none";
         offlinePlayer.style.display = "flex";
@@ -1102,6 +1115,16 @@
         console.warn("相機啟動或姿態分析略過:", err);
       }
     }
+
+    // 原生 YouTube App 備用啟動函式
+    window.openInNativeYouTube = function() {
+      if (currentWorkout && currentWorkout.youtubeId) {
+        window.location.href = `youtube://watch?v=${currentWorkout.youtubeId}`;
+        setTimeout(() => {
+          window.open(`https://www.youtube.com/watch?v=${currentWorkout.youtubeId}`, '_blank');
+        }, 600);
+      }
+    };
 
     let lastCalculatedAccuracy = 85;
 
