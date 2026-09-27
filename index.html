@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <!-- 宣告合規 Referrer 政策 -->
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#064E3B">
   <title>LOHAS TV - 樂活智能長者健康系統</title>
@@ -398,7 +397,7 @@
       border: 3px solid var(--accent-jade);
     }
 
-    /* 手指指控全方向自由拖動相機卡片 */
+    /* 手指指控全方向自由拖曳鏡頭卡片樣式 */
     .camera-pip-card {
       position: absolute;
       bottom: max(20px, var(--sab));
@@ -419,7 +418,9 @@
     .camera-pip-card:active {
       cursor: grabbing;
       box-shadow: 0 14px 35px rgba(0,0,0,0.85);
+      transform: scale(1.02);
     }
+    /* 關鍵：內部元素設為 pointer-events: none，確保拖曳事件直接由外層卡片捕獲 */
     #cameraFeed {
       width: 100%;
       height: 100%;
@@ -558,7 +559,6 @@
     <div class="room-header">
       <div class="room-title" id="roomWorkoutTitle">運動進行中</div>
       <div class="header-btn-group">
-        <!-- 備用原生 YouTube 按鈕：點擊直接以官方 App 開啟 -->
         <button class="btn-native-yt" onclick="openInNativeYouTube()">📺 官方App開</button>
         <button class="btn-finish-room" onclick="stopExerciseWithAI()">做完！評估 👏</button>
       </div>
@@ -581,7 +581,7 @@
 
       <!-- 可自由指控移動的 PIP 相機視窗 -->
       <div class="camera-pip-card" id="cameraPipBox">
-        <div class="pip-label">✥ 按住拖動 📹</div>
+        <div class="pip-label">✥ 按住任意移動 📹</div>
         <video id="cameraFeed" playsinline autoplay muted></video>
         <canvas id="poseCanvas"></canvas>
       </div>
@@ -955,7 +955,7 @@
     };
 
     // ==========================================
-    // 指控全方向自由拖曳相機視窗控制器
+    // 核心亮點：鏡頭自由指控拖曳移動控制器
     // ==========================================
     function initDraggablePip() {
       const pip = document.getElementById("cameraPipBox");
@@ -969,6 +969,7 @@
         isDragging = true;
         pip.setPointerCapture(e.pointerId);
 
+        // 轉為絕對像素座標，擺脫 CSS bottom/right 錨定干擾
         const rect = pip.getBoundingClientRect();
         pip.style.bottom = "auto";
         pip.style.right = "auto";
@@ -990,6 +991,7 @@
         let targetX = startLeft + dx;
         let targetY = startTop + dy;
 
+        // 安全邊界限制：防止拖出螢幕或遮擋頂部導航
         const minX = 10;
         const minY = 65;
         const maxX = window.innerWidth - pip.offsetWidth - 10;
@@ -1013,6 +1015,7 @@
       pip.addEventListener("pointercancel", stopDrag);
     }
 
+    // DOM 載入後自動啟用全方向自由拖曳
     window.addEventListener("DOMContentLoaded", initDraggablePip);
     initDraggablePip();
 
@@ -1035,8 +1038,6 @@
       if (navigator.onLine) {
         iframe.style.display = "block";
         offlinePlayer.style.display = "none";
-        
-        // 核心修復：徹底拔除引發 153 設定衝突的 enablejsapi 與 origin 參數
         iframe.src = `https://www.youtube.com/embed/${workout.youtubeId}?autoplay=1&playsinline=1&rel=0`;
       } else {
         iframe.style.display = "none";
