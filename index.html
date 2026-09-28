@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#064E3B">
-  <title>LOHAS TV - 樂活智能長者健康系統 (v11 臨床閉環旗艦版)</title>
+  <title>LOHAS TV - 樂活智能長者健康系統 (v12 商業旗艦版)</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/elderly-person.png">
@@ -26,7 +26,7 @@
       --bg-cream: #F8FAFC;
       --card-white: #FFFFFF;
       --text-main: #0F172A;
-      --text-muted: #334155; /* 提升對比度至 10:1 以上，符合長者眼力需求 */
+      --text-muted: #334155;
       --danger-red: #DC2626;
 
       --font-scale: 1;
@@ -222,7 +222,7 @@
       font-weight: 800;
       cursor: pointer;
       white-space: nowrap;
-      min-height: 54px; /* 符合長者防震大觸控區標準 */
+      min-height: 54px;
       transition: all 0.2s ease;
     }
     .btn-micro-chip.active {
@@ -419,6 +419,33 @@
     .btn-history-tab { background: #F1F5F9; color: #1E293B; border: 1.5px solid #CBD5E1; }
     .btn-family-tab { background: #ECFDF5; color: #065F46; border: 1.5px solid #A7F3D0; }
     .btn-settings { background: #F8FAFC; color: #334155; border: 1.5px solid #CBD5E1; }
+
+    /* ======================================================== */
+    /* 致命傷 1 解決方案：實體痛感懸浮大掣（iOS Safari 零阻力）   */
+    /* ======================================================== */
+    .btn-floating-pain {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: #DC2626;
+      color: white;
+      border: 2px solid #FCA5A5;
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: 900;
+      box-shadow: 0 4px 15px rgba(220, 38, 38, 0.6);
+      cursor: pointer;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 48px;
+    }
+    .btn-floating-pain:active {
+      transform: scale(0.95);
+      background: #B91C1C;
+    }
 
     /* 一分鐘微運動 HUD 視窗 */
     #microWorkoutRoomModal {
@@ -744,6 +771,62 @@
       border: 2px solid var(--accent-jade);
     }
 
+    /* ======================================================== */
+    /* 致命傷 2 解決方案：適老化 In-App 提示與確認 Modal        */
+    /* ======================================================== */
+    .in-app-dialog-card {
+      background: white;
+      border-radius: 28px;
+      padding: 24px;
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      animation: dialogZoom 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes dialogZoom {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .in-app-dialog-title {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: var(--primary-green);
+      margin-bottom: 10px;
+    }
+    .in-app-dialog-body {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #1E293B;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      white-space: pre-line;
+    }
+    .in-app-dialog-btn-primary {
+      width: 100%;
+      background: var(--accent-jade);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      min-height: 52px;
+    }
+    .in-app-dialog-btn-secondary {
+      width: 100%;
+      background: #E2E8F0;
+      color: #334155;
+      border: none;
+      padding: 15px;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      min-height: 52px;
+    }
+
     .modal-overlay {
       display: none;
       position: fixed;
@@ -851,7 +934,6 @@
       margin-left: 6px;
     }
 
-    /* 長者白話文溫暖轉譯卡片 */
     .vernacular-translation-card {
       background: #EFF6FF;
       border: 1.5px solid #3B82F6;
@@ -989,7 +1071,7 @@
       </div>
     </div>
 
-    <!-- 一分鐘微運動卡片 (5 大動作支援) -->
+    <!-- 一分鐘微運動卡片 -->
     <div class="micro-workout-banner">
       <div class="micro-banner-top">
         <div class="micro-workout-info">
@@ -1034,7 +1116,7 @@
     <button class="action-btn btn-settings" onclick="openSettingsModal()">⚙️ 設定</button>
   </div>
 
-  <!-- 一分鐘微運動全屏 HUD 視窗 -->
+  <!-- 一分鐘微運動全屏 HUD 視窗 (含實體痛感中斷大掣) -->
   <div id="microWorkoutRoomModal">
     <div class="micro-hud-header">
       <div class="micro-hud-title" id="microActiveActionTitle">⚡ 1分鐘微運動 • 坐姿抬腿防跌</div>
@@ -1043,6 +1125,11 @@
     </div>
 
     <div class="micro-hud-body">
+      <!-- 致命傷 1 實裝：實體痛感中斷大掣 -->
+      <button class="btn-floating-pain" onclick="triggerPainCircuitBreaker('長者按下「好痛」大掣')">
+        🚨 好痛！即刻暫停
+      </button>
+
       <div>
         <div class="micro-voice-instruction" id="microVoiceGuide">請坐直椅子，深呼吸...</div>
         <div class="metronome-visual-indicator" style="margin-top: 8px;">
@@ -1085,7 +1172,7 @@
     </div>
   </div>
 
-  <!-- YouTube 運動室 -->
+  <!-- YouTube 運動室 (含實體痛感中斷大掣) -->
   <div id="exerciseRoomModal">
     <div class="room-header">
       <div class="room-title" id="roomWorkoutTitle">運動進行中</div>
@@ -1098,6 +1185,11 @@
       <div class="room-progress-fill" id="roomProgressFill"></div>
     </div>
     <div class="room-body">
+      <!-- 致命傷 1 實裝：實體痛感中斷大掣 -->
+      <button class="btn-floating-pain" onclick="triggerPainCircuitBreaker('長者按下「好痛」大掣')">
+        🚨 好痛！即刻暫停
+      </button>
+
       <div class="ai-live-prompt" id="aiVoiceFeedback">💡 請坐在穩陣椅子上，保持呼吸！</div>
       
       <iframe class="trainer-iframe" id="trainerVideoFrame"
@@ -1155,7 +1247,6 @@
           </div>
         </div>
 
-        <!-- 創新點：長者專屬白話文轉譯卡片 -->
         <div class="vernacular-translation-card">
           <div class="vernacular-title">💬 物理治療師白話叮囑</div>
           <div class="vernacular-body" id="vernacularReportText">評估中...</div>
@@ -1198,7 +1289,6 @@
         ⚠️ 臨床預警：偵測到近 7 日爆發角速度持續衰退，建議物理治療師介入評估肌少狀況。
       </div>
 
-      <!-- 創新點：Canvas 五維臨床健康雷達圖 -->
       <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:18px; padding:12px; margin-bottom:14px;">
         <div style="font-size:0.85rem; font-weight:900; color:#1E293B; margin-bottom:6px;">🕸️ 五維機能平衡雷達圖</div>
         <canvas id="clinicalRadarCanvas" width="280" height="240" style="margin: 0 auto; display: block;"></canvas>
@@ -1399,6 +1489,27 @@
     </div>
   </div>
 
+  <!-- 致命傷 2 實裝：取代阻塞型 alert() 的 In-App 提示 Modal -->
+  <div class="modal-overlay" id="appAlertModal" style="z-index: 2500;">
+    <div class="in-app-dialog-card">
+      <div class="in-app-dialog-title" id="appAlertTitle">提示</div>
+      <div class="in-app-dialog-body" id="appAlertBody">訊息內容</div>
+      <button class="in-app-dialog-btn-primary" onclick="closeAppAlert()">明白，繼續</button>
+    </div>
+  </div>
+
+  <!-- 致命傷 2 實裝：取代阻塞型 confirm() 的 In-App 確認 Modal -->
+  <div class="modal-overlay" id="appConfirmModal" style="z-index: 2500;">
+    <div class="in-app-dialog-card">
+      <div class="in-app-dialog-title" id="appConfirmTitle">確認</div>
+      <div class="in-app-dialog-body" id="appConfirmBody">是否確認執行？</div>
+      <div style="display:flex; gap:10px;">
+        <button class="in-app-dialog-btn-primary" id="appConfirmOkBtn">確定</button>
+        <button class="in-app-dialog-btn-secondary" id="appConfirmCancelBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase 模組與資料庫同步 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -1537,10 +1648,10 @@
           storagePath: filePath,
           createdAt: serverTimestamp()
         });
-        alert("✅ 語音留言已成功永久傳送給家人！");
+        showAppAlert("發送成功", "✅ 語音留言已成功永久傳送給家人！");
       } catch (err) {
         console.error("Firebase Storage 語音上傳失敗:", err);
-        alert("⚠️ 語音傳送失敗，請檢查網絡連線。");
+        showAppAlert("連線提示", "⚠️ 語音傳送失敗，請檢查網絡連線。");
       }
     };
 
@@ -1582,14 +1693,78 @@
     initSession();
   </script>
 
-  <!-- 業務邏輯、語音痛感熔斷、五維雷達圖、白話轉譯與多模態 FSM 引擎 -->
+  <!-- 業務邏輯、iOS 語音與音訊解鎖、適老化彈窗與全模態 FSM 引擎 -->
   <script>
+    /* ======================================================== */
+    /* 致命傷 2 實裝：取代阻塞型 alert() / confirm() 的函數     */
+    /* ======================================================== */
+    let appAlertCallback = null;
+    function showAppAlert(title, message, callback = null) {
+      document.getElementById("appAlertTitle").innerText = title;
+      document.getElementById("appAlertBody").innerText = message;
+      document.getElementById("appAlertModal").style.display = "flex";
+      appAlertCallback = callback;
+      speak(message);
+    }
+
+    function closeAppAlert() {
+      document.getElementById("appAlertModal").style.display = "none";
+      if (appAlertCallback) {
+        const cb = appAlertCallback;
+        appAlertCallback = null;
+        cb();
+      }
+    }
+
+    function showAppConfirm(title, message, onConfirm, onCancel = null) {
+      document.getElementById("appConfirmTitle").innerText = title;
+      document.getElementById("appConfirmBody").innerText = message;
+      const modal = document.getElementById("appConfirmModal");
+      modal.style.display = "flex";
+      speak(message);
+
+      const okBtn = document.getElementById("appConfirmOkBtn");
+      const cancelBtn = document.getElementById("appConfirmCancelBtn");
+
+      const cleanup = () => {
+        modal.style.display = "none";
+        okBtn.onclick = null;
+        cancelBtn.onclick = null;
+      };
+
+      okBtn.onclick = () => { cleanup(); if (onConfirm) onConfirm(); };
+      cancelBtn.onclick = () => { cleanup(); if (onCancel) onCancel(); };
+    }
+
+    /* ======================================================== */
+    /* 致命傷 3 實裝：iOS AudioContext 解鎖與來電暫停中斷保護  */
+    /* ======================================================== */
     let audioCtx = null;
-    function playMetronomeTick(isAccent = false) {
+    function unlockAudioContextOnGesture() {
       try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === "suspended") audioCtx.resume();
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+      } catch (e) {}
+    }
+    // 監聽首次長者觸控螢幕，瞬間解鎖 iOS 靜音機制
+    document.addEventListener("touchstart", unlockAudioContextOnGesture, { once: true, passive: true });
+    document.addEventListener("click", unlockAudioContextOnGesture, { once: true, passive: true });
 
+    // 來電、跳出 App 或分頁切換時自動暫停，防止崩潰與計時混亂
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        if (document.getElementById("microWorkoutRoomModal").style.display === "flex") {
+          exitMicroWorkout();
+          showAppAlert("溫馨提示", "剛才接聽電話或切換分頁，運動已自動暫停保險。飲啖溫水隨時可重新開始！");
+        }
+      }
+    });
+
+    function playMetronomeTick(isAccent = false) {
+      try {
+        unlockAudioContextOnGesture();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
@@ -1606,9 +1781,7 @@
 
     function playDingChime() {
       try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === "suspended") audioCtx.resume();
-
+        unlockAudioContextOnGesture();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
@@ -1639,13 +1812,9 @@
       return Math.round((Math.abs(leftVal - rightVal) / avg) * 100);
     }
 
-    /* ======================================================== */
-    /* 核心亮點 1：長者道地廣東話白話轉譯層 (Vernacular Translation) */
-    /* ======================================================== */
     function translateKinematicsToVernacular(data) {
       let adviceLines = [];
 
-      // 1. 雙側平衡 (SI%) 轉譯
       if (data.si <= 10) {
         adviceLines.push("好犀利！雙腿發力好平均，行路步態好穩陣！");
       } else if (data.si <= 20) {
@@ -1655,14 +1824,12 @@
         adviceLines.push("雙腿發力差異稍大，行路容易借力代償，坐低起身記得扶穩椅柄！");
       }
 
-      // 2. 爆發角速度 (ω) 轉譯
       if (data.omega >= 135) {
         adviceLines.push("踢腿爆發力十足，關節反應好敏捷！");
       } else if (data.omega < 80) {
         adviceLines.push("今日動作反應稍慢，係咪有啲攰或者唔夠瞓？飲啖溫水慢慢嚟。");
       }
 
-      // 3. TUG 與 CFRS 整體跌倒重心轉譯
       if (data.fallRiskIndex >= 80) {
         adviceLines.push("重心四平八穩，防跌能力極佳，繼續保持！");
       } else if (data.fallRiskIndex < 50) {
@@ -1673,14 +1840,17 @@
     }
 
     /* ======================================================== */
-    /* 核心亮點 2：語音痛感斷路器 (Pain Circuit Breaker)         */
+    /* 致命傷 1 實裝：語音識別容錯 + 痛感斷路器                  */
     /* ======================================================== */
     let painRecognitionInstance = null;
     let isPainListeningActive = false;
 
     function startPainListening() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) return;
+      if (!SR) {
+        // iOS Safari 若不支援語音辨識，安全返回，長者可直接按畫面上大紅掣「🚨 好痛」
+        return;
+      }
 
       try {
         if (!painRecognitionInstance) {
@@ -1738,13 +1908,14 @@
 
       setTimeout(() => {
         exitMicroWorkout();
-        alert(`⚠️ 系統已即時記錄痛點（「${heardWord}」），並自動為下次降低難度。\n若關節持續刺痛，請尋求物理治療師協助！`);
-      }, 2500);
+        // 致命傷 2 解決：使用適老化 In-App Modal，告別原生阻塞型 alert()
+        showAppAlert(
+          "痛感保護終止",
+          `⚠️ 系統已即時記錄痛點（「${heardWord}」），並已自動為下次運動調輕目標。\n若關節持續刺痛，請尋求物理治療師協助！`
+        );
+      }, 1600);
     }
 
-    /* ======================================================== */
-    /* 核心亮點 3：Canvas 五維臨床健康雷達圖 (Clinical Radar)    */
-    /* ======================================================== */
     function drawClinicalRadar(canvasId, stats) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
@@ -1768,7 +1939,6 @@
       const totalAxes = metrics.length;
       const angleStep = (Math.PI * 2) / totalAxes;
 
-      // 1. 繪製同心環背景
       for (let level = 1; level <= 4; level++) {
         const r = (radius / 4) * level;
         ctx.beginPath();
@@ -1785,7 +1955,6 @@
         ctx.stroke();
       }
 
-      // 2. 繪製雷達輻射軸線
       for (let i = 0; i < totalAxes; i++) {
         const angle = i * angleStep - Math.PI / 2;
         ctx.beginPath();
@@ -1795,7 +1964,6 @@
         ctx.stroke();
       }
 
-      // 3. 繪製長者真實指標多邊形
       ctx.beginPath();
       metrics.forEach((m, i) => {
         const angle = i * angleStep - Math.PI / 2;
@@ -1812,7 +1980,6 @@
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // 4. 繪製座標標籤
       ctx.font = "bold 11px sans-serif";
       ctx.fillStyle = "#1E293B";
       ctx.textAlign = "center";
@@ -2083,8 +2250,8 @@
       screeningHistoryAnswers[screeningStep] = hasSymptom;
       if (hasSymptom) {
         document.getElementById("screeningModal").style.display = "none";
-        alert("⚠️ 今日身體稍有不適，建議先坐低休息飲杯溫水，切勿勉強運動！");
-        speak("今日身體稍有不適，請先坐低休息，唔好勉強運動。");
+        // 致命傷 2 解決：使用適老化 In-App Modal，告別原生阻塞型 alert()
+        showAppAlert("健康提示", "⚠️ 今日身體稍有不適，建議先坐低休息飲杯溫水，切勿勉強運動！");
         return;
       }
       screeningStep++;
@@ -2294,8 +2461,8 @@
 
       setTimeout(() => {
         exitAutoTugSession();
-        alert(`⏱️ TUG 測試完成！\n${msg}`);
-      }, 2000);
+        showAppAlert("TUG 臨床測試結果", `⏱️ 測試完成！\n${msg}`);
+      }, 1500);
     }
 
     window.forceManualTugStop = function() {
@@ -2317,7 +2484,7 @@
     };
 
     /* ========================================================================= */
-    /* 一分鐘微運動：整合語音痛感監聽、擴胸、手指伸展與漸變透明度               */
+    /* 一分鐘微運動                                                              */
     /* ========================================================================= */
     let microCameraStream = null;
     let microPoseInstance = null;
@@ -2368,7 +2535,6 @@
       guideEl.innerText = `準備開始：${selectedMicroAction.name}！`;
       speak(`坐穩，我哋依家開始${selectedMicroAction.name}，跟隨節奏進行！`);
 
-      // 啟動痛感監聽保護
       startPainListening();
 
       const videoEl = document.getElementById("microCameraFeed");
@@ -2602,6 +2768,10 @@
         : 140;
       const finalSI = calculateSymmetryIndex(avgMaxL, avgMaxR);
 
+      if (Math.abs(avgMaxL - avgMaxR) > 18) {
+        speak(`留意到${avgMaxL < avgMaxR ? '左邊' : '右邊'}稍有肌力不對稱，稍後可加強單側鍛鍊。`);
+      }
+
       const allV = [...microSideVelocities.LEFT, ...microSideVelocities.RIGHT];
       const avgOmega = allV.length > 0 ? Math.round(allV.reduce((a, b) => a + b, 0) / allV.length) : 115;
       const peakOmega = allV.length > 0 ? Math.max(...allV) : 140;
@@ -2636,7 +2806,6 @@
         date: new Date().toISOString().split("T")[0]
       };
 
-      // 生成廣東話白話轉譯
       const vernacularAdvice = translateKinematicsToVernacular({
         si: finalSI,
         weakerSide: sessionTelemetry.weakerSide,
@@ -3101,7 +3270,7 @@
           : `尚無 TUG 實測數據`;
 
         const difyPayload = `
-【LOHAS TV v11 臨床遙測報告】
+【LOHAS TV v12 臨床遙測報告】
 - 訓練型態：${sessionTelemetry.workoutType}
 - 項目：${sessionTelemetry.workoutTitle}
 - 達標：${sessionTelemetry.successReps} / ${sessionTelemetry.targetReps} 次
@@ -3137,9 +3306,14 @@
       const streak = localStorage.getItem("lohas_streak") || "1";
       const message = `仔女你好！我啱啱喺「樂活健康電視」做完【${sessionTelemetry?.workoutTitle}】！今日成功達標 ${sessionTelemetry?.successReps} 次，防跌指數 ${sessionTelemetry?.fallRiskIndex} 分，連續打卡第 ${streak} 日，同你報個平安！❤️`;
       
-      if (confirm("🎉 今日運動記錄成功！想唔想順便發送 WhatsApp 話畀仔女知？")) {
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
-      }
+      // 致命傷 2 解決：使用適老化 In-App Confirm 代替原生 confirm()
+      showAppConfirm(
+        "運動記錄成功",
+        `🎉 今日運動已成功記錄！\n想唔想順便發送 WhatsApp 話畀仔女知？`,
+        () => {
+          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+        }
+      );
     }
 
     const DIFY_CONFIG = {
@@ -3192,7 +3366,10 @@
 
     function toggleVoiceAssistant() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) return alert("請使用支援語音辨識之瀏覽器。");
+      if (!SR) {
+        showAppAlert("語音提示", "如使用 Apple 設備，請直接點擊螢幕按鈕操作。");
+        return;
+      }
 
       const r = new SR();
       r.lang = localStorage.getItem("lohas_speech_lang") || "zh-HK";
@@ -3282,8 +3459,7 @@
       clearInterval(sosTimer);
       document.getElementById("sosModal").style.display = "none";
       if (window.pushSOSAlertToFirestore) window.pushSOSAlertToFirestore("CANCELLED");
-      alert("✅ 已成功取消求救。");
-      speak("已取消求救訊號。");
+      showAppAlert("求救已取消", "✅ 已成功取消求救訊號。");
     }
 
     function directEmergencyCall() {
@@ -3312,7 +3488,6 @@
         barContainer.innerHTML = "<div style='color:#334155; margin:auto;'>暫無趨勢數據</div>";
         listEl.innerHTML = "<div style='color:#334155; text-align:center; padding:16px;'>尚無運動記錄</div>";
         warningBox.style.display = "none";
-        // 繪製空雷達圖
         drawClinicalRadar("clinicalRadarCanvas", { omega: 50, si: 10, holdSec: 1, rom: 80, tugSec: 14 });
       } else {
         const recent7 = history.slice(0, 7);
@@ -3338,7 +3513,6 @@
           </div>
         `).join("");
 
-        // 提取最新數據繪製五維雷達圖
         const latest = history[0];
         drawClinicalRadar("clinicalRadarCanvas", {
           omega: latest.avgOmega || 120,
@@ -3389,7 +3563,7 @@
       if (!records || records.length === 0) {
         records = JSON.parse(localStorage.getItem("lohas_full_history") || "[]");
       }
-      if (records.length === 0) return alert("尚無運動記錄可供匯出。");
+      if (records.length === 0) return showAppAlert("匯出提示", "尚無運動記錄可供匯出。");
 
       let csvContent = "\uFEFF日期,類型,動作項目,達標次數,目標次數,達標率,雙側不對稱度(SI%),角速度(ω),跌倒防護指數(CFRS),TUG實測秒數,TUG與CFRS一致性,RPE辛苦度,肌肉疲勞,自適應降級\n";
       records.forEach(h => {
@@ -3408,11 +3582,16 @@
     };
 
     window.clearAllUserDataAppStore = function() {
-      if (confirm("⚠️ 確定要清除所有運動紀錄與個人偏好設定？清除後將無法復原。")) {
-        localStorage.clear();
-        alert("✅ 本機資料已全部清除。");
-        location.reload();
-      }
+      showAppConfirm(
+        "清除資料確認",
+        "⚠️ 確定要清除所有運動紀錄與個人偏好設定？清除後將無法復原。",
+        () => {
+          localStorage.clear();
+          showAppAlert("清除完畢", "✅ 本機資料已全部清除。", () => {
+            location.reload();
+          });
+        }
+      );
     };
 
     let mediaRecorder = null;
@@ -3446,7 +3625,7 @@
           btn.innerText = "⏹️ 停止錄音";
           btn.style.background = "#DC2626";
         } catch (err) {
-          alert("無法取用麥克風進行語音錄製。");
+          showAppAlert("麥克風提示", "無法取用麥克風進行語音錄製。請檢查設備權限。");
         }
       } else {
         mediaRecorder.stop();
@@ -3527,7 +3706,7 @@
 
     function callKidFromHub() {
       const phone = localStorage.getItem("lohas_sos_phone");
-      if (!phone) return alert("請先於「設定」輸入仔女電話號碼！");
+      if (!phone) return showAppAlert("設定提示", "請先於「設定」輸入仔女電話號碼！");
       window.location.href = `tel:${phone}`;
     }
 
