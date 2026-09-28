@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#064E3B">
-  <title>LOHAS TV - 樂活智能長者健康系統</title>
+  <title>LOHAS TV - 樂活智能長者健康系統 (v10 臨床閉環完整版)</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/elderly-person.png">
@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
 
-  <!-- 本地端離線視覺與二維碼庫 (杜絕向第三方傳送長者 ID) -->
+  <!-- 本地端離線視覺與二維碼生成庫 -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" crossorigin="anonymous"></script>
 
@@ -35,6 +35,18 @@
       --sab: env(safe-area-inset-bottom, 0px);
       --sal: env(safe-area-inset-left, 0px);
       --sar: env(safe-area-inset-right, 0px);
+    }
+
+    body.high-contrast {
+      --primary-green: #000000;
+      --accent-jade: #00875A;
+      --warm-amber: #D97706;
+      --bg-cream: #FFFFFF;
+      --card-white: #FFFFFF;
+      --text-main: #000000;
+      --text-muted: #1F2937;
+      --danger-red: #990000;
+      filter: contrast(1.15);
     }
 
     * {
@@ -74,6 +86,28 @@
       z-index: 60;
       border-bottom: 1px solid #F59E0B;
     }
+
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      z-index: 3000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #334155;
+      border-top-color: var(--accent-jade);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     header {
       background: linear-gradient(135deg, var(--primary-green), #047857);
@@ -126,7 +160,6 @@
       padding: 16px;
     }
 
-    /* 歡迎橫幅與一分鐘微運動突顯區 */
     .greeting-card {
       background: var(--card-white);
       border-radius: 24px;
@@ -161,21 +194,24 @@
       white-space: nowrap;
     }
 
-    /* 創新點 4: 一分鐘微運動專屬呼叫卡片 */
+    /* 一分鐘微運動卡片與動作選擇器 */
     .micro-workout-banner {
       background: linear-gradient(135deg, #1E293B, #0F172A);
-      border-radius: 20px;
-      padding: 16px 20px;
+      border-radius: 22px;
+      padding: 18px 20px;
       margin-bottom: 20px;
       color: white;
+      border: 2px solid #38BDF8;
+      box-shadow: 0 6px 22px rgba(56, 189, 248, 0.22);
+    }
+    .micro-banner-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border: 2px solid #38BDF8;
-      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.2);
+      margin-bottom: 12px;
     }
     .micro-workout-info h3 {
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       font-weight: 900;
       color: #38BDF8;
       display: flex;
@@ -185,7 +221,33 @@
     .micro-workout-info p {
       font-size: 0.85rem;
       color: #CBD5E1;
-      margin-top: 4px;
+      margin-top: 3px;
+    }
+    .micro-action-selector {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: none;
+    }
+    .micro-action-selector::-webkit-scrollbar { display: none; }
+    .btn-micro-chip {
+      background: #334155;
+      color: #E2E8F0;
+      border: 1px solid #475569;
+      border-radius: 14px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .btn-micro-chip.active {
+      background: #0284C7;
+      color: white;
+      border-color: #38BDF8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
     }
     .btn-launch-micro {
       background: #0284C7;
@@ -201,9 +263,6 @@
       gap: 6px;
       box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
       white-space: nowrap;
-    }
-    .btn-launch-micro:active {
-      transform: scale(0.97);
     }
 
     .search-box { margin-bottom: 20px; }
@@ -368,13 +427,14 @@
       gap: 5px;
       white-space: nowrap;
     }
-    .btn-voice { background: #2563EB; color: white; flex: 1.4; }
+    .btn-voice { background: #2563EB; color: white; flex: 1.3; }
+    .btn-tug-tab { background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; }
     .btn-history-tab { background: #F1F5F9; color: #1E293B; border: 1.5px solid #CBD5E1; }
     .btn-family-tab { background: #ECFDF5; color: #065F46; border: 1.5px solid #A7F3D0; }
     .btn-settings { background: #F8FAFC; color: #475569; border: 1.5px solid #CBD5E1; }
 
     /* ======================================================== */
-    /* 創新點 4 & 5: 一分鐘微運動全屏 HUD 介面（零影片干擾） */
+    /* 一分鐘微運動 HUD 視窗                                     */
     /* ======================================================== */
     #microWorkoutRoomModal {
       display: none;
@@ -387,7 +447,7 @@
       padding-bottom: var(--sab);
     }
     .micro-hud-header {
-      padding: 14px 20px;
+      padding: 12px 18px;
       background: #111827;
       display: flex;
       justify-content: space-between;
@@ -396,14 +456,14 @@
     }
     .micro-hud-title {
       color: #38BDF8;
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: 900;
     }
     .btn-quit-micro {
       background: #374151;
       color: #F87171;
       border: 1px solid #4B5563;
-      padding: 8px 14px;
+      padding: 7px 12px;
       border-radius: 10px;
       font-weight: 800;
       cursor: pointer;
@@ -416,21 +476,20 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-around;
-      padding: 16px;
+      padding: 12px;
       overflow: hidden;
     }
 
-    /* 骨架視覺畫布居中，超大顯示 */
     .micro-canvas-container {
       position: relative;
       width: 100%;
       max-width: 440px;
-      height: 320px;
-      border-radius: 24px;
+      height: 290px;
+      border-radius: 20px;
       overflow: hidden;
       background: #1E293B;
       border: 3px solid #38BDF8;
-      box-shadow: 0 0 30px rgba(56, 189, 248, 0.25);
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
     }
     #microCameraFeed, #microPoseCanvas {
       position: absolute;
@@ -440,20 +499,40 @@
       transform: scaleX(-1);
     }
 
-    /* 節拍器與動作階段引導 */
+    .leg-comparison-box {
+      position: absolute;
+      bottom: 8px;
+      left: 10px;
+      right: 10px;
+      background: rgba(15, 23, 42, 0.88);
+      border-radius: 12px;
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      z-index: 10;
+      border: 1px solid #334155;
+    }
+    .leg-col { flex: 1; }
+    .leg-label { font-size: 10px; color: #94A3B8; font-weight: 800; margin-bottom: 2px; }
+    .leg-bar-bg { height: 6px; background: #334155; border-radius: 4px; overflow: hidden; }
+    .leg-bar-fill { height: 100%; background: #10B981; width: 0%; transition: width 0.15s ease; }
+
     .micro-voice-instruction {
-      font-size: 1.45rem;
+      font-size: 1.35rem;
       font-weight: 900;
       color: #FEF08A;
       text-align: center;
-      min-height: 50px;
+      min-height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 0 8px;
     }
     .metronome-visual-indicator {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       align-items: center;
       justify-content: center;
     }
@@ -462,44 +541,35 @@
       height: 20px;
       border-radius: 50%;
       background: #374151;
-      transition: all 0.15s ease;
+      transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.12s ease;
     }
     .metronome-dot.active-tick {
       background: #10B981;
-      transform: scale(1.35);
+      transform: scale(1.45);
       box-shadow: 0 0 14px #10B981;
     }
     .metronome-dot.active-accent {
       background: #F59E0B;
-      transform: scale(1.5);
-      box-shadow: 0 0 18px #F59E0B;
+      transform: scale(1.65);
+      box-shadow: 0 0 20px #F59E0B;
     }
 
     .micro-stats-dashboard {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      gap: 8px;
       width: 100%;
       max-width: 440px;
     }
     .micro-stat-card {
       background: rgba(30, 41, 59, 0.85);
       border: 1px solid #334155;
-      border-radius: 16px;
-      padding: 10px 8px;
+      border-radius: 14px;
+      padding: 8px;
       text-align: center;
     }
-    .micro-stat-label {
-      font-size: 0.72rem;
-      color: #94A3B8;
-      font-weight: 700;
-    }
-    .micro-stat-val {
-      font-size: 1.3rem;
-      font-weight: 900;
-      color: #38BDF8;
-      margin-top: 2px;
-    }
+    .micro-stat-label { font-size: 0.7rem; color: #94A3B8; font-weight: 700; }
+    .micro-stat-val { font-size: 1.15rem; font-weight: 900; color: #38BDF8; margin-top: 2px; }
 
     /* 原有 YouTube 訓練室 */
     #exerciseRoomModal {
@@ -515,32 +585,28 @@
     .room-header {
       background: #1E293B;
       color: white;
-      padding: max(14px, var(--sat)) 18px 14px 18px;
+      padding: max(12px, var(--sat)) 16px 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
     }
     .room-title {
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 900;
-      max-width: 50%;
+      max-width: 45%;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .header-btn-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .header-btn-group { display: flex; align-items: center; gap: 8px; }
     .btn-native-yt {
       background: #334155;
       color: #FEF08A;
       border: 1px solid #64748B;
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 10px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 800;
       cursor: pointer;
     }
@@ -548,11 +614,22 @@
       background: var(--danger-red);
       color: white;
       border: none;
-      padding: 9px 14px;
+      padding: 8px 12px;
       border-radius: 12px;
-      font-size: 0.92rem;
+      font-size: 0.88rem;
       font-weight: 900;
       cursor: pointer;
+    }
+    .room-progress-track {
+      height: 4px;
+      background: #334155;
+      width: 100%;
+    }
+    .room-progress-fill {
+      height: 100%;
+      background: var(--accent-jade);
+      width: 0%;
+      transition: width 0.3s ease;
     }
     .room-body {
       flex: 1;
@@ -562,12 +639,7 @@
       background: #000;
       overflow: hidden;
     }
-    .trainer-iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      flex: 1;
-    }
+    .trainer-iframe { width: 100%; height: 100%; border: none; flex: 1; }
 
     #cooldownOverlay {
       position: absolute;
@@ -582,12 +654,7 @@
       text-align: center;
       padding: 24px;
     }
-    .cooldown-timer {
-      font-size: 68px;
-      font-weight: 900;
-      color: #FEF08A;
-      margin: 14px 0;
-    }
+    .cooldown-timer { font-size: 68px; font-weight: 900; color: #FEF08A; margin: 14px 0; }
 
     .camera-pip-card {
       position: absolute;
@@ -621,8 +688,7 @@
     }
     .pip-label {
       position: absolute;
-      top: 6px;
-      left: 6px;
+      top: 6px; left: 6px;
       background: rgba(0,0,0,0.75);
       color: white;
       padding: 3px 8px;
@@ -634,8 +700,7 @@
     }
     .pip-hud-stats {
       position: absolute;
-      top: 28px;
-      left: 6px;
+      top: 28px; left: 6px;
       background: rgba(6, 78, 59, 0.88);
       color: #A7F3D0;
       padding: 3px 8px;
@@ -647,10 +712,8 @@
     }
     .pip-resize-handle {
       position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 32px;
-      height: 32px;
+      bottom: 0; right: 0;
+      width: 32px; height: 32px;
       background: rgba(16, 185, 129, 0.9);
       color: white;
       border-radius: 10px 0 14px 0;
@@ -665,14 +728,13 @@
     }
     .ai-live-prompt {
       position: absolute;
-      top: 15px;
-      left: 50%;
+      top: 15px; left: 50%;
       transform: translateX(-50%);
       background: rgba(6, 78, 59, 0.95);
       color: #FEF08A;
-      padding: 10px 20px;
+      padding: 8px 18px;
       border-radius: 30px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 900;
       box-shadow: 0 4px 20px rgba(0,0,0,0.4);
       z-index: 10;
@@ -684,9 +746,7 @@
 
     .speech-interim-box {
       position: fixed;
-      bottom: 85px;
-      left: 5%;
-      right: 5%;
+      bottom: 85px; left: 5%; right: 5%;
       background: rgba(15, 23, 42, 0.95);
       color: #FEF08A;
       padding: 14px 20px;
@@ -804,9 +864,103 @@
       font-weight: 900;
       margin-left: 6px;
     }
+
+    /* 創新點：TUG 姿態序列自動偵測專用全屏 Modal */
+    #tugAutoTestModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0B132B;
+      z-index: 1200;
+      flex-direction: column;
+      padding: max(16px, var(--sat)) 16px max(16px, var(--sab)) 16px;
+    }
+    .tug-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .tug-phase-track {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto 12px auto;
+    }
+    .tug-phase-step {
+      flex: 1;
+      padding: 6px 2px;
+      text-align: center;
+      background: #1C2541;
+      color: #94A3B8;
+      font-size: 0.72rem;
+      font-weight: 800;
+      border-radius: 8px;
+      border: 1px solid #3A506B;
+    }
+    .tug-phase-step.active {
+      background: #10B981;
+      color: white;
+      border-color: #34D399;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+    .tug-viewport-card {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      height: 320px;
+      margin: 0 auto;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #000;
+      border: 2px solid #3A506B;
+    }
+    #tugCameraFeed, #tugPoseCanvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      position: absolute;
+      top: 0; left: 0;
+    }
+    .tug-timer-overlay {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0,0,0,0.75);
+      border: 2px solid #38BDF8;
+      border-radius: 14px;
+      padding: 6px 14px;
+      font-family: monospace;
+      font-size: 2rem;
+      font-weight: 900;
+      color: #FEF08A;
+      z-index: 10;
+    }
+    .tug-hud-prompt {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      background: rgba(6, 78, 59, 0.92);
+      color: #FEF08A;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 900;
+      text-align: center;
+      z-index: 10;
+      border: 1px solid #10B981;
+    }
   </style>
 </head>
 <body>
+
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div style="font-weight:900; font-size:1.1rem;" id="loadingText">雲端安全連線中...</div>
+  </div>
 
   <div id="networkStatusBar">⚠️ 網絡連線中斷，系統已切換至「本機離線安全模式」，數據將於連線後自動同步。</div>
 
@@ -829,15 +983,24 @@
       </div>
     </div>
 
-    <!-- 創新點 4: 零影片、碎片化一分鐘微運動啟動入口 -->
+    <!-- 一分鐘微運動卡片 (5 大動作支援) -->
     <div class="micro-workout-banner">
-      <div class="micro-workout-info">
-        <h3>⚡ 一分鐘微運動模式</h3>
-        <p>廣告時間/等開茶即開即練 • 純語音節拍教練 • 零影片載入</p>
+      <div class="micro-banner-top">
+        <div class="micro-workout-info">
+          <h3>⚡ 一分鐘微運動模式</h3>
+          <p id="microProgressionSub">第 1 週入門 • 坐姿訓練 6 次</p>
+        </div>
+        <button class="btn-launch-micro" onclick="startSelectedMicroWorkout()">
+          ▶ 立即開始 (1分鐘)
+        </button>
       </div>
-      <button class="btn-launch-micro" onclick="startMicroWorkoutSession()">
-        ▶ 立即開始 (1分鐘)
-      </button>
+      <div class="micro-action-selector">
+        <button class="btn-micro-chip active" onclick="selectMicroWorkout('KNEE_LIFT', this)">🦵 坐姿抬腿防跌</button>
+        <button class="btn-micro-chip" onclick="selectMicroWorkout('ANKLE_PUMP', this)">🦶 腳踝泵護足</button>
+        <button class="btn-micro-chip" onclick="selectMicroWorkout('NECK_ROTATE', this)">🙆 頸部溫和伸展</button>
+        <button class="btn-micro-chip" onclick="selectMicroWorkout('BREATHE', this)">🫁 深呼吸擴胸</button>
+        <button class="btn-micro-chip" onclick="selectMicroWorkout('FINGER_STRETCH', this)">✋ 手指手腕舒緩</button>
+      </div>
     </div>
 
     <div class="search-box">
@@ -858,26 +1021,25 @@
   <div class="speech-interim-box" id="speechInterimBox">🎙️ 聽緊你講嘢...</div>
 
   <div class="bottom-bar">
-    <button class="action-btn btn-voice" onclick="toggleVoiceAssistant()">🎙️ 語音對話 / 智能分流</button>
+    <button class="action-btn btn-voice" onclick="toggleVoiceAssistant()">🎙️ 語音教練</button>
+    <button class="action-btn btn-tug-tab" onclick="launchAutoTugSession()">⏱️ TUG 姿態自測</button>
     <button class="action-btn btn-history-tab" onclick="openHistoryTrendModal()">📊 歷史趨勢</button>
     <button class="action-btn btn-family-tab" onclick="openFamilyHubModal()">👨‍👩‍👧 家人關懷</button>
     <button class="action-btn btn-settings" onclick="openSettingsModal()">⚙️ 設定</button>
   </div>
 
-  <!-- ======================================================== -->
-  <!-- 創新點 4、5、6: 一分鐘微運動全屏體驗室 -->
-  <!-- ======================================================== -->
+  <!-- 一分鐘微運動全屏 HUD 視窗 -->
   <div id="microWorkoutRoomModal">
     <div class="micro-hud-header">
-      <div class="micro-hud-title">⚡ 1分鐘微運動 • 坐姿抬腿防跌訓練</div>
+      <div class="micro-hud-title" id="microActiveActionTitle">⚡ 1分鐘微運動 • 坐姿抬腿防跌</div>
+      <div style="color:#FEF08A; font-weight:900;" id="microWorkoutTimer">剩餘: 60 秒</div>
       <button class="btn-quit-micro" onclick="exitMicroWorkout()">✕ 退出</button>
     </div>
 
     <div class="micro-hud-body">
-      <!-- 語音提示與節拍燈 -->
       <div>
         <div class="micro-voice-instruction" id="microVoiceGuide">請坐直椅子，深呼吸...</div>
-        <div class="metronome-visual-indicator" style="margin-top: 10px;">
+        <div class="metronome-visual-indicator" style="margin-top: 8px;">
           <div class="metronome-dot" id="metroDot1"></div>
           <div class="metronome-dot" id="metroDot2"></div>
           <div class="metronome-dot" id="metroDot3"></div>
@@ -885,16 +1047,24 @@
         </div>
       </div>
 
-      <!-- 骨架畫布 -->
       <div class="micro-canvas-container">
         <video id="microCameraFeed" playsinline autoplay muted></video>
         <canvas id="microPoseCanvas"></canvas>
+        <div class="leg-comparison-box" id="microLegComparison">
+          <div class="leg-col">
+            <div class="leg-label" id="legLeftText">左側指標: 0</div>
+            <div class="leg-bar-bg"><div class="leg-bar-fill" id="legLeftBar"></div></div>
+          </div>
+          <div class="leg-col">
+            <div class="leg-label" id="legRightText">右側指標: 0</div>
+            <div class="leg-bar-bg"><div class="leg-bar-fill" id="legRightBar"></div></div>
+          </div>
+        </div>
       </div>
 
-      <!-- 實時臨床動力學數值 HUD (角速度 + 對稱指數 + 達標次數) -->
       <div class="micro-stats-dashboard">
         <div class="micro-stat-card">
-          <div class="micro-stat-label">踢腿角速度 (ω)</div>
+          <div class="micro-stat-label">即時角速度 (ω)</div>
           <div class="micro-stat-val" id="microHudVelocity">0 °/s</div>
         </div>
         <div class="micro-stat-card">
@@ -918,6 +1088,9 @@
         <button class="btn-finish-room" onclick="initiateWorkoutCompletion()">做完！評估 👏</button>
       </div>
     </div>
+    <div class="room-progress-track">
+      <div class="room-progress-fill" id="roomProgressFill"></div>
+    </div>
     <div class="room-body">
       <div class="ai-live-prompt" id="aiVoiceFeedback">💡 請坐在穩陣椅子上，保持呼吸！</div>
       
@@ -927,8 +1100,8 @@
         allowfullscreen></iframe>
 
       <div id="cooldownOverlay">
-        <h2 style="font-size:24px; font-weight:900;" id="cooldownTitle">👏 運動完成！放鬆大腿肌群</h2>
-        <p style="font-size:16px; margin-top:8px;" id="cooldownSubGuide">依家進入緩和階段，配合深呼吸，雙腿自然平放：</p>
+        <h2 style="font-size:24px; font-weight:900;" id="cooldownTitle">👏 運動完成！放鬆肌群</h2>
+        <p style="font-size:16px; margin-top:8px;" id="cooldownSubGuide">依家進入緩和階段，配合深呼吸：</p>
         <div class="cooldown-timer" id="cooldownTimer">20</div>
         <button onclick="skipCooldownToRpe()" style="background:transparent; border:1px solid #FEF08A; color:#FEF08A; padding:8px 16px; border-radius:20px; font-size:14px; cursor:pointer;">
           跳過冷卻 ➔
@@ -971,7 +1144,7 @@
         
         <div style="margin-top:6px; padding-top:6px; border-top:1px dashed #A7F3D0;" id="cfrsContainer">
           <div style="font-size:0.88rem; font-weight:800; color:#065F46;">
-            🛡️ 跌倒防護評分：<span id="poseCfrsValue">--</span> 分
+            🛡️ 臨床跌倒防護指數 (CFRS)：<span id="poseCfrsValue">--</span> 分
             <span class="cfrs-badge" id="poseCfrsBadge">良好</span>
           </div>
           <div style="font-size:0.78rem; color:#0f766e; margin-top:3px;" id="poseCfrsAdvice">評估中...</div>
@@ -1005,27 +1178,31 @@
     </div>
   </div>
 
-  <!-- Modal 4: 歷史趨勢視覺化 -->
+  <!-- Modal 4: 歷史趨勢視覺化 (含 TUG 趨勢與角速度下降預警) -->
   <div class="modal-overlay" id="historyTrendModal" onclick="closeModalOnBackdrop(event, 'historyTrendModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-title">📊 運動表現與臨床趨勢</div>
       
-      <div style="font-size:0.8rem; font-weight:700; color:#64748B; text-align:left;">📈 近 7 日達標率（柱狀）與跌倒防護趨勢：</div>
+      <div id="omegaDeclineWarningBox" style="display:none; background:#FEE2E2; border:1.5px solid #EF4444; border-radius:14px; padding:10px; margin-bottom:12px; color:#991B1B; font-weight:800; font-size:0.85rem; text-align:left;">
+        ⚠️ 臨床預警：偵測到近 7 日爆發角速度持續衰退，建議物理治療師介入評估肌少狀況。
+      </div>
+
+      <div style="font-size:0.8rem; font-weight:700; color:#64748B; text-align:left;">📈 近 7 日達標率（柱狀）與防跌走勢：</div>
       <div class="visual-chart-wrap" id="chartBarContainer"></div>
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
         <div style="background:#ECFDF5; padding:12px; border-radius:12px;">
-          <div style="font-size:12px; color:#065F46;">近 7 日達標</div>
+          <div style="font-size:12px; color:#065F46;">近 7 日總達標</div>
           <div style="font-size:22px; font-weight:900; color:#047857;" id="trendRepsSummary">-- 次</div>
         </div>
         <div style="background:#FEF3C7; padding:12px; border-radius:12px;">
-          <div style="font-size:12px; color:#92400E;">防跌防護指數趨勢</div>
-          <div style="font-size:16px; font-weight:900; color:#B45309; margin-top:4px;" id="trendCfrsTrajectory">--</div>
+          <div style="font-size:12px; color:#92400E;">最近 TUG 自測</div>
+          <div style="font-size:17px; font-weight:900; color:#B45309; margin-top:4px;" id="trendTugSummary">-- 秒</div>
         </div>
       </div>
 
-      <div style="text-align:left; font-size:14px; font-weight:800; margin-bottom:8px;">📋 近期打卡記錄：</div>
-      <div id="historyListContainer" style="max-height:180px; overflow-y:auto; text-align:left; font-size:13px;">
+      <div style="text-align:left; font-size:14px; font-weight:800; margin-bottom:8px;">📋 臨床打卡與 TUG 記錄：</div>
+      <div id="historyListContainer" style="max-height:170px; overflow-y:auto; text-align:left; font-size:13px;">
         載入中...
       </div>
       <button class="start-btn" onclick="document.getElementById('historyTrendModal').style.display='none'" style="margin-top:16px;">關閉</button>
@@ -1069,7 +1246,7 @@
         <div id="voicePreviewArea" style="display:none; margin-top:10px;">
           <audio id="elderVoicePreviewAudio" controls style="width:100%; height:36px;"></audio>
           <button onclick="confirmAndSendVoiceReply()" style="width:100%; margin-top:6px; background:#059669; color:white; border:none; padding:8px; border-radius:10px; font-weight:800; font-size:0.85rem; cursor:pointer;">
-            ✅ 聽過無問題，確認發送畀仔女
+            ✅ 聽過無問題，確認發送畀仔女 (永久儲存)
           </button>
         </div>
       </div>
@@ -1087,7 +1264,7 @@
     </div>
   </div>
 
-  <!-- Modal 6: 設定 -->
+  <!-- Modal 6: 設定 (包含高對比與無障礙) -->
   <div class="modal-overlay" id="settingsModal" onclick="closeModalOnBackdrop(event, 'settingsModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-title">⚙️ 系統設定</div>
@@ -1098,6 +1275,23 @@
           <option value="1">標準字體</option>
           <option value="1.15">大字體 (推薦)</option>
           <option value="1.3">特大字體</option>
+        </select>
+      </div>
+
+      <div class="setting-item">
+        <label>高對比無障礙模式</label>
+        <select id="settingHighContrast" onchange="applyHighContrast(this.value)">
+          <option value="OFF">關閉</option>
+          <option value="ON">開啟 (黑白高清晰)</option>
+        </select>
+      </div>
+
+      <div class="setting-item">
+        <label>語音語言</label>
+        <select id="settingSpeechLang" onchange="saveSpeechLang(this.value)">
+          <option value="zh-HK">廣東話 (粵語)</option>
+          <option value="zh-CN">普通話</option>
+          <option value="en-US">English</option>
         </select>
       </div>
 
@@ -1133,7 +1327,7 @@
 
       <div style="display:flex; flex-direction:column; gap:8px;">
         <button onclick="exportClinicalDataForPT('CSV')" style="background:#334155; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; cursor:pointer;">
-          📊 匯出物理治療師評估表 (完整雲端 CSV)
+          📊 匯出物理治療師評估表 (含 TUG 與 ω)
         </button>
         <button onclick="openMedicalDisclaimer()" style="background:#F1F5F9; color:#475569; border:none; padding:10px; border-radius:10px; font-weight:800; cursor:pointer;">
           🩺 臨床醫療免責聲明與私隱政策
@@ -1154,17 +1348,47 @@
     <div class="modal-card">
       <div class="modal-title">🩺 臨床免責聲明</div>
       <p style="font-size:13px; color:#475569; text-align:left; line-height:1.6; margin-bottom:14px;">
-        LOHAS TV 系統旨在提供長者體能輔助指導與運動數據量測，並非醫療診斷設備。跌倒防護指數僅供復康參考。若運動過程中出現頭暈、胸悶、關節刺痛或嚴重呼吸急促，請立即停止運動並尋求專業物理治療師或醫師協助。
+        LOHAS TV 系統旨在提供長者體能輔助指導與運動數據量測，並非醫療診斷設備。跌倒防護指數（CFRS）乃基於 FSM 姿態感測運算之估算參考，並非取代正式之醫療 Timed Up and Go (TUG) 臨床測試。若運動過程中出現頭暈、胸悶、關節刺痛或嚴重呼吸急促，請立即停止運動並尋求專業物理治療師或醫師協助。
       </p>
       <button class="start-btn" onclick="document.getElementById('disclaimerModal').style.display='none'">明白並同意</button>
     </div>
   </div>
 
-  <!-- Firebase 模組與資料同步 -->
+  <!-- 創新點 1 實裝：真正的 TUG 姿態序列自動偵測全屏視窗 -->
+  <div id="tugAutoTestModal">
+    <div class="tug-modal-header">
+      <div style="color:#38BDF8; font-weight:900; font-size:1.1rem;">⏱️ CDC STEADI TUG 姿態自動偵測</div>
+      <button onclick="exitAutoTugSession()" style="background:#374151; color:#F87171; border:1px solid #4B5563; padding:6px 12px; border-radius:8px; font-weight:800; cursor:pointer;">✕ 離開</button>
+    </div>
+
+    <!-- 臨床 4 階段推進器 -->
+    <div class="tug-phase-track">
+      <div class="tug-phase-step active" id="tugStep1">1. 穩坐校準</div>
+      <div class="tug-phase-step" id="tugStep2">2. 起身計時</div>
+      <div class="tug-phase-step" id="tugStep3">3. 行走轉身</div>
+      <div class="tug-phase-step" id="tugStep4">4. 坐低完成</div>
+    </div>
+
+    <div class="tug-viewport-card">
+      <video id="tugCameraFeed" playsinline autoplay muted></video>
+      <canvas id="tugPoseCanvas"></canvas>
+      <div class="tug-timer-overlay" id="tugTimerDisplay">00.00</div>
+      <div class="tug-hud-prompt" id="tugPromptText">正在對準全身，請穩坐椅子上...</div>
+    </div>
+
+    <div style="margin-top:12px; display:flex; justify-content:center;">
+      <button onclick="forceManualTugStop()" style="background:transparent; border:1px dashed #64748B; color:#94A3B8; font-size:0.75rem; padding:6px 12px; border-radius:8px; cursor:pointer;">
+        如鏡頭角度受限，可點此手動結束
+      </button>
+    </div>
+  </div>
+
+  <!-- Firebase 模組與資料庫同步 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCQq7Ro4x4RJEYpSuFR-LLVV0iXS3LJRZE",
@@ -1178,6 +1402,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
     let currentElderUid = localStorage.getItem("lohas_elder_device_id");
     if (!currentElderUid) {
@@ -1271,22 +1496,36 @@
 
       if (!currentElderUid) return;
       try {
-        await setDoc(doc(db, "elders", currentElderUid, "daily_logs", today), {
+        const docRef = doc(db, "elders", currentElderUid, "daily_logs", `${today}_${telemetryData.workoutType}_${Date.now()}`);
+        await setDoc(docRef, {
           ...telemetryData,
           completedAt: serverTimestamp()
         }, { merge: true });
-      } catch (e) {}
+      } catch (e) {
+        console.error("Firestore 儲存失敗:", e);
+      }
     };
 
-    window.uploadElderVoiceReply = async function(audioBlobUrl) {
+    window.uploadElderVoiceReply = async function(audioBlob) {
       if (!currentElderUid) return;
+      const timestamp = Date.now();
+      const filePath = `elders/${currentElderUid}/voice_replies/${timestamp}.webm`;
+      const fileRef = storageRef(storage, filePath);
+
       try {
-        await setDoc(doc(db, "elders", currentElderUid, "voice_replies", `voice_${Date.now()}`), {
-          audioUrl: audioBlobUrl,
+        const uploadResult = await uploadBytes(fileRef, audioBlob, { contentType: 'audio/webm' });
+        const persistentUrl = await getDownloadURL(uploadResult.ref);
+
+        await setDoc(doc(db, "elders", currentElderUid, "voice_replies", `voice_${timestamp}`), {
+          audioUrl: persistentUrl,
+          storagePath: filePath,
           createdAt: serverTimestamp()
         });
-        alert("✅ 語音留言已成功傳送給家人！");
-      } catch (e) {}
+        alert("✅ 語音留言已成功永久傳送給家人！");
+      } catch (err) {
+        console.error("Firebase Storage 語音上傳失敗:", err);
+        alert("⚠️ 語音傳送失敗，請檢查網絡連線。");
+      }
     };
 
     window.fetchCloudHistoryForCsv = async function() {
@@ -1294,7 +1533,7 @@
       try {
         const qSnap = await getDocs(query(collection(db, "elders", currentElderUid, "daily_logs"), orderBy("date", "desc")));
         const records = [];
-        qSnap.forEach(doc => records.push(doc.data()));
+        qSnap.forEach(d => records.push(d.data()));
         return records;
       } catch (e) {
         return null;
@@ -1327,11 +1566,8 @@
     initSession();
   </script>
 
-  <!-- 業務邏輯、Web Audio 節拍器與臨床 STEADI 演算法 -->
+  <!-- 業務邏輯、TUG 姿態序列辨識、多樣化微運動、自適應降速與完整姿態 FSM 引擎 -->
   <script>
-    /* ======================================================== */
-    /* 創新點 5: Web Audio API 本地零延遲節奏合成器 (880Hz / 440Hz) */
-    /* ======================================================== */
     let audioCtx = null;
     function playMetronomeTick(isAccent = false) {
       try {
@@ -1362,7 +1598,7 @@
         osc.connect(gain);
         gain.connect(audioCtx.destination);
 
-        osc.frequency.setValueAtTime(1046.5, audioCtx.currentTime); // C6 高音
+        osc.frequency.setValueAtTime(1046.5, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
 
@@ -1371,24 +1607,86 @@
       } catch (e) {}
     }
 
-    /* ======================================================== */
-    /* 創新點 1: CDC STEADI / TUG 臨床跌倒防護指數分級判定 */
-    /* ======================================================== */
     function getCFRSClassification(score) {
       if (score >= 80) {
         return { label: "低跌倒風險 (健康)", color: "#059669", bg: "#D1FAE5", advice: "步態肌力對稱，TUG預估 < 12秒，表現極佳！" };
       } else if (score >= 50) {
         return { label: "中度風險 (需留意)", color: "#D97706", bg: "#FEF3C7", advice: "TUG預估 12~15秒，下肢稍見單側代償，建議扶椅訓練。" };
       } else {
-        return { label: "高危跌倒風險 ⚠️", color: "#DC2626", bg: "#FEE2E2", advice: "TUG預估 > 15秒，雙側肌力嚴重失衡，建議長者中心或物理治療師跟進！" };
+        return { label: "高危跌倒風險 ⚠️", color: "#DC2626", bg: "#FEE2E2", advice: "TUG預估 > 15秒，雙側肌力顯著失衡，建議物理治療師跟進！" };
       }
     }
 
-    /* 臨床對稱指數 (Symmetry Index, SI) 金標準計算公式 */
     function calculateSymmetryIndex(leftVal, rightVal) {
       const avg = 0.5 * (leftVal + rightVal);
       if (avg === 0) return 0;
       return Math.round((Math.abs(leftVal - rightVal) / avg) * 100);
+    }
+
+    function getMicroWorkoutProgression() {
+      const streak = parseInt(localStorage.getItem("lohas_streak") || "1", 10);
+      const week = Math.min(4, Math.max(1, Math.ceil(streak / 7)));
+      const progressions = {
+        1: { mode: "CHAIR", reps: 6, desc: "第 1 週入門 • 穩坐椅子 6 次" },
+        2: { mode: "CHAIR", reps: 8, desc: "第 2 週進階 • 穩坐椅子 8 次" },
+        3: { mode: "STAND", reps: 6, desc: "第 3 週強化 • 扶椅站立 6 次" },
+        4: { mode: "STAND", reps: 8, desc: "第 4 週卓越 • 扶椅站立 8 次" }
+      };
+      return progressions[week];
+    }
+
+    const MICRO_WORKOUTS = {
+      KNEE_LIFT: {
+        id: "KNEE_LIFT",
+        name: "坐姿抬腿防跌",
+        type: "angle",
+        jointLeft: [23, 25, 27],
+        jointRight: [24, 26, 28],
+        targetAngle: 145,
+        holdMs: 2000,
+        voiceAction: "踢直"
+      },
+      ANKLE_PUMP: {
+        id: "ANKLE_PUMP",
+        name: "腳踝泵護足",
+        type: "angle",
+        jointLeft: [25, 27, 31],
+        jointRight: [26, 28, 32],
+        targetAngle: 130,
+        holdMs: 1500,
+        voiceAction: "勾起腳尖"
+      },
+      NECK_ROTATE: {
+        id: "NECK_ROTATE",
+        name: "頸部溫和伸展",
+        type: "angle",
+        jointLeft: [11, 0, 12],
+        jointRight: [12, 0, 11],
+        targetAngle: 35,
+        holdMs: 2500,
+        voiceAction: "慢慢轉向側邊"
+      },
+      BREATHE: {
+        id: "BREATHE",
+        name: "深呼吸擴胸",
+        type: "chest_expand",
+        holdMs: 3000,
+        voiceAction: "雙臂自然展開深呼吸"
+      },
+      FINGER_STRETCH: {
+        id: "FINGER_STRETCH",
+        name: "手指手腕舒緩",
+        type: "wrist_flex",
+        holdMs: 1800,
+        voiceAction: "手指完全向外張開"
+      }
+    };
+
+    let selectedMicroAction = MICRO_WORKOUTS.KNEE_LIFT;
+    function selectMicroWorkout(key, btn) {
+      selectedMicroAction = MICRO_WORKOUTS[key];
+      document.querySelectorAll(".btn-micro-chip").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
     }
 
     const FSM_CONFIG = {
@@ -1614,37 +1912,266 @@
     }
 
     /* ========================================================================= */
-    /* 核心模組實作：一分鐘微運動（Micro-Workout）＋ 節拍器 AI 語音教練與運動學遙測 */
+    /* 創新點 1 實裝：TUG 姿態序列自動偵測 FSM (Auto-TUG FSM)                     */
+    /* ========================================================================= */
+    let tugCameraStream = null;
+    let tugPoseInstance = null;
+    let tugAnimId = null;
+
+    const TUG_STATES = {
+      CALIBRATING: "CALIBRATING",     // 校準基準坐姿
+      WAITING_STAND: "WAITING_STAND", // 等候長者站立 (準備計時)
+      TIMING: "TIMING",               // 已站起，長者走向3米並轉身中
+      SITTING_DOWN: "SITTING_DOWN",   // 長者返回椅前開始坐下
+      COMPLETE: "COMPLETE"            // 坐下判定完畢，自動終止計時
+    };
+
+    let tugCurrentState = TUG_STATES.CALIBRATING;
+    let tugStartTime = 0;
+    let tugCalibrationFrames = 0;
+    let baselineSittingHipY = 0;
+    let finalTugElapsed = 0;
+
+    window.launchAutoTugSession = async function() {
+      document.getElementById("tugAutoTestModal").style.display = "flex";
+      tugCurrentState = TUG_STATES.CALIBRATING;
+      tugCalibrationFrames = 0;
+      baselineSittingHipY = 0;
+      finalTugElapsed = 0;
+      updateTugPhaseUI(1);
+
+      document.getElementById("tugTimerDisplay").innerText = "00.00";
+      document.getElementById("tugPromptText").innerText = "請穩坐椅子上，鏡頭正校準坐姿基準...";
+      speak("TUG 跌倒臨床自測：請穩坐椅子上，系統正校準全身。");
+
+      const videoEl = document.getElementById("tugCameraFeed");
+      const canvasEl = document.getElementById("tugPoseCanvas");
+      const ctx = canvasEl.getContext("2d");
+
+      try {
+        tugCameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 480 }, height: { ideal: 360 } },
+          audio: false
+        });
+        videoEl.srcObject = tugCameraStream;
+        await videoEl.play();
+
+        tugPoseInstance = new Pose({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+        tugPoseInstance.setOptions({
+          modelComplexity: 0,
+          smoothLandmarks: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5
+        });
+
+        tugPoseInstance.onResults((results) => {
+          ctx.save();
+          ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+          canvasEl.width = videoEl.videoWidth || 480;
+          canvasEl.height = videoEl.videoHeight || 360;
+
+          if (results.poseLandmarks) {
+            const lm = results.poseLandmarks;
+            const now = performance.now();
+
+            // 提取關鍵節點：肩(11,12)、髖(23,24)、膝(25,26)、踝(27,28)
+            const hipY = (lm[23].y + lm[24].y) / 2;
+            const leftKneeAngle = calculateAngle(lm[23], lm[25], lm[27]);
+            const rightKneeAngle = calculateAngle(lm[24], lm[26], lm[28]);
+            const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
+
+            // 繪製人體骨架
+            drawBone(ctx, lm[11], lm[23], canvasEl.width, canvasEl.height, "#10B981");
+            drawBone(ctx, lm[12], lm[24], canvasEl.width, canvasEl.height, "#10B981");
+            drawBone(ctx, lm[23], lm[25], canvasEl.width, canvasEl.height, "#38BDF8");
+            drawBone(ctx, lm[24], lm[26], canvasEl.width, canvasEl.height, "#38BDF8");
+            drawBone(ctx, lm[25], lm[27], canvasEl.width, canvasEl.height, "#38BDF8");
+            drawBone(ctx, lm[26], lm[28], canvasEl.width, canvasEl.height, "#38BDF8");
+
+            // TUG 序列 FSM 核心判定
+            switch (tugCurrentState) {
+              case TUG_STATES.CALIBRATING:
+                if (avgKneeAngle < 115) { // 穩坐狀態
+                  baselineSittingHipY += hipY;
+                  tugCalibrationFrames++;
+                  if (tugCalibrationFrames >= 20) {
+                    baselineSittingHipY /= 20;
+                    tugCurrentState = TUG_STATES.WAITING_STAND;
+                    updateTugPhaseUI(2);
+                    document.getElementById("tugPromptText").innerText = "🔔 準備起步！請站起身向前行 3 米！";
+                    playMetronomeTick(true);
+                    speak("校準完成，請站起身向前行三米！");
+                  }
+                }
+                break;
+
+              case TUG_STATES.WAITING_STAND:
+                // 當長者站起：膝關節伸展 > 145° 且 髖部上升 (y 值顯著變小)
+                if (avgKneeAngle > 145 && (baselineSittingHipY - hipY) > 0.08) {
+                  tugStartTime = performance.now();
+                  tugCurrentState = TUG_STATES.TIMING;
+                  updateTugPhaseUI(3);
+                  playDingChime();
+                  document.getElementById("tugPromptText").innerText = "⏱️ 自動計時中！向前行 3 米，轉身返回坐下！";
+                }
+                break;
+
+              case TUG_STATES.TIMING:
+                finalTugElapsed = (now - tugStartTime) / 1000;
+                document.getElementById("tugTimerDisplay").innerText = finalTugElapsed.toFixed(2);
+
+                // 轉身並返回坐下：膝關節重新彎曲 < 115° 且 髖部回到基準線高度
+                if (finalTugElapsed > 2.5 && avgKneeAngle < 115 && Math.abs(hipY - baselineSittingHipY) < 0.09) {
+                  tugCurrentState = TUG_STATES.COMPLETE;
+                  updateTugPhaseUI(4);
+                  finishAutoTugSession(finalTugElapsed);
+                }
+                break;
+            }
+          }
+          ctx.restore();
+        });
+
+        async function processTugFrame() {
+          if (videoEl.readyState >= 2 && tugPoseInstance && tugCurrentState !== TUG_STATES.COMPLETE) {
+            await tugPoseInstance.send({ image: videoEl });
+          }
+          tugAnimId = requestAnimationFrame(processTugFrame);
+        }
+        processTugFrame();
+
+      } catch (err) {
+        console.warn("TUG 相機啟動失敗:", err);
+      }
+    };
+
+    function updateTugPhaseUI(stepNumber) {
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById(`tugStep${i}`);
+        if (el) {
+          if (i === stepNumber) el.classList.add("active");
+          else el.classList.remove("active");
+        }
+      }
+    }
+
+    function finishAutoTugSession(finalSec) {
+      if (tugAnimId) cancelAnimationFrame(tugAnimId);
+      if (tugCameraStream) {
+        tugCameraStream.getTracks().forEach(t => t.stop());
+        tugCameraStream = null;
+      }
+      playDingChime();
+
+      let riskLevel = "LOW";
+      let msg = "";
+      if (finalSec < 12.0) {
+        riskLevel = "LOW";
+        msg = `用時 ${finalSec.toFixed(2)} 秒，TUG 評定為【低跌倒風險】，動作敏捷！`;
+      } else if (finalSec <= 15.0) {
+        riskLevel = "MODERATE";
+        msg = `用時 ${finalSec.toFixed(2)} 秒，TUG 評定為【中度風險】，轉身起坐請加倍小心。`;
+      } else {
+        riskLevel = "HIGH";
+        msg = `用時 ${finalSec.toFixed(2)} 秒，TUG 評定為【高跌倒風險】，建議物理治療師諮詢！`;
+      }
+
+      // 儲存 TUG 結果並存入 LocalStorage 供 CFRS 校準
+      localStorage.setItem("lohas_last_tug_sec", finalSec.toFixed(2));
+      localStorage.setItem("lohas_last_tug_risk", riskLevel);
+
+      const today = new Date().toISOString().split("T")[0];
+      const tugPayload = {
+        workoutType: "TUG_TEST",
+        workoutTitle: "CDC STEADI TUG 姿態自動自測",
+        tugSeconds: parseFloat(finalSec.toFixed(2)),
+        riskLevel: riskLevel,
+        date: today
+      };
+
+      saveLocalWorkoutHistory(tugPayload);
+      if (window.saveSessionToFirestore) window.saveSessionToFirestore(tugPayload);
+
+      document.getElementById("tugPromptText").innerText = `✅ 測試完成！${msg}`;
+      speak(msg);
+
+      setTimeout(() => {
+        exitAutoTugSession();
+        alert(`⏱️ TUG 測試完成！\n${msg}`);
+      }, 2000);
+    }
+
+    window.forceManualTugStop = function() {
+      if (tugCurrentState === TUG_STATES.TIMING) {
+        const sec = (performance.now() - tugStartTime) / 1000;
+        finishAutoTugSession(sec);
+      } else {
+        exitAutoTugSession();
+      }
+    };
+
+    window.exitAutoTugSession = function() {
+      if (tugAnimId) cancelAnimationFrame(tugAnimId);
+      if (tugCameraStream) {
+        tugCameraStream.getTracks().forEach(t => t.stop());
+        tugCameraStream = null;
+      }
+      document.getElementById("tugAutoTestModal").style.display = "none";
+    };
+
+    /* ========================================================================= */
+    /* 一分鐘微運動：補齊深呼吸(擴胸)與手指伸展 + 軌跡漸變透明度               */
     /* ========================================================================= */
     let microCameraStream = null;
     let microPoseInstance = null;
     let microAnimFrameId = null;
     let microMetronomeInterval = null;
+    let microCountdownInterval = null;
+    let microTimeRemaining = 60;
+    let microBpmInterval = 1000;
 
-    let microState = "IDLE"; // IDLE, PREPARING, KICKING, HOLDING, RESTING
     let microRepsDone = 0;
-    const MICRO_TARGET_REPS = 6;
-    let microTargetSide = "RIGHT"; // RIGHT, then LEFT 交替
+    let microTargetReps = 6;
+    let microTargetSide = "RIGHT";
     let microLastAngle = 90;
     let microLastAngleTime = 0;
     let microPeakVelocity = 0;
     let microSideVelocities = { LEFT: [], RIGHT: [] };
     let microSideMaxAngles = { LEFT: [], RIGHT: [] };
+    let microTrajectoryPoints = [];
+    let recentRepDurations = [];
+    let repCycleStartTime = 0;
 
-    window.startMicroWorkoutSession = async function() {
+    window.startSelectedMicroWorkout = function() {
+      const prog = getMicroWorkoutProgression();
+      microTargetReps = prog.reps;
+      document.getElementById("microProgressionSub").innerText = prog.desc;
+      document.getElementById("microActiveActionTitle").innerText = `⚡ 1分鐘微運動 • ${selectedMicroAction.name}`;
+      startMicroWorkoutSession();
+    };
+
+    async function startMicroWorkoutSession() {
       document.getElementById("microWorkoutRoomModal").style.display = "flex";
       microRepsDone = 0;
       microTargetSide = "RIGHT";
       microPeakVelocity = 0;
       microSideVelocities = { LEFT: [], RIGHT: [] };
       microSideMaxAngles = { LEFT: [], RIGHT: [] };
-      document.getElementById("microHudReps").innerText = `0 / ${MICRO_TARGET_REPS}`;
+      microTrajectoryPoints = [];
+      recentRepDurations = [];
+      microTimeRemaining = 60;
+      microBpmInterval = 1000;
+
+      document.getElementById("microWorkoutTimer").innerText = `剩餘: ${microTimeRemaining} 秒`;
+      document.getElementById("microHudReps").innerText = `0 / ${microTargetReps}`;
       document.getElementById("microHudVelocity").innerText = `0 °/s`;
       document.getElementById("microHudSymmetry").innerText = `0%`;
 
       const guideEl = document.getElementById("microVoiceGuide");
-      guideEl.innerText = "坐穩椅子，挺直腰背，一齊做 1 分鐘微運動！";
-      speak("坐直椅子，挺直腰背，我哋依家開始一分鐘抬腿微運動，跟住節奏踢直腳！");
+      guideEl.innerText = `準備開始：${selectedMicroAction.name}！`;
+      speak(`坐穩，我哋依家開始${selectedMicroAction.name}，跟隨節奏進行！`);
 
       const videoEl = document.getElementById("microCameraFeed");
       const canvasEl = document.getElementById("microPoseCanvas");
@@ -1678,41 +2205,92 @@
             const lm = results.poseLandmarks;
             const now = Date.now();
 
-            // 雙側膝關節角度：Left [23, 25, 27], Right [24, 26, 28]
-            const angleL = calculateAngle(lm[23], lm[25], lm[27]);
-            const angleR = calculateAngle(lm[24], lm[26], lm[28]);
+            // 1. 角度型微運動 (抬腿 / 腳踝 / 頸部)
+            if (selectedMicroAction.type === "angle") {
+              const jl = selectedMicroAction.jointLeft;
+              const jr = selectedMicroAction.jointRight;
+              const angleL = calculateAngle(lm[jl[0]], lm[jl[1]], lm[jl[2]]);
+              const angleR = calculateAngle(lm[jr[0]], lm[jr[1]], lm[jr[2]]);
 
-            // 實時計算對稱指數 (SI%)
-            const currentSI = calculateSymmetryIndex(angleL, angleR);
-            document.getElementById("microHudSymmetry").innerText = `${currentSI}%`;
+              const currentSI = calculateSymmetryIndex(angleL, angleR);
+              document.getElementById("microHudSymmetry").innerText = `${currentSI}%`;
 
-            // 當前目標邊角度與角速度 (ω = Δθ / Δt)
-            const activeAngle = microTargetSide === "RIGHT" ? angleR : angleL;
-            if (microLastAngleTime > 0) {
-              const dt = (now - microLastAngleTime) / 1000;
-              if (dt > 0.05) {
-                const omega = Math.round(Math.abs(activeAngle - microLastAngle) / dt);
-                if (omega < 600) { // 過濾噪聲
-                  document.getElementById("microHudVelocity").innerText = `${omega} °/s`;
-                  if (omega > microPeakVelocity) microPeakVelocity = omega;
+              document.getElementById("legLeftText").innerText = `左: ${angleL}°`;
+              document.getElementById("legRightText").innerText = `右: ${angleR}°`;
+              document.getElementById("legLeftBar").style.width = `${Math.min(100, (angleL / 180) * 100)}%`;
+              document.getElementById("legRightBar").style.width = `${Math.min(100, (angleR / 180) * 100)}%`;
+
+              const activeAngle = microTargetSide === "RIGHT" ? angleR : angleL;
+              const activeJoint = microTargetSide === "RIGHT" ? lm[jr[1]] : lm[jl[1]];
+
+              // 軌跡漸變透明度動態渲染
+              if (activeJoint) {
+                microTrajectoryPoints.push({ x: activeJoint.x * canvasEl.width, y: activeJoint.y * canvasEl.height });
+                if (microTrajectoryPoints.length > 20) microTrajectoryPoints.shift();
+
+                for (let i = 1; i < microTrajectoryPoints.length; i++) {
+                  ctx.beginPath();
+                  ctx.moveTo(microTrajectoryPoints[i - 1].x, microTrajectoryPoints[i - 1].y);
+                  ctx.lineTo(microTrajectoryPoints[i].x, microTrajectoryPoints[i].y);
+                  const alpha = (i / microTrajectoryPoints.length).toFixed(2);
+                  ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+                  ctx.lineWidth = 3;
+                  ctx.stroke();
                 }
+              }
+
+              if (microLastAngleTime > 0) {
+                const dt = (now - microLastAngleTime) / 1000;
+                if (dt > 0.05) {
+                  const omega = Math.round(Math.abs(activeAngle - microLastAngle) / dt);
+                  if (omega < 600) {
+                    document.getElementById("microHudVelocity").innerText = `${omega} °/s`;
+                    if (omega > microPeakVelocity) microPeakVelocity = omega;
+                  }
+                  microLastAngle = activeAngle;
+                  microLastAngleTime = now;
+                }
+              } else {
                 microLastAngle = activeAngle;
                 microLastAngleTime = now;
               }
-            } else {
-              microLastAngle = activeAngle;
-              microLastAngleTime = now;
+
+              const joints = microTargetSide === "RIGHT" ? jr : jl;
+              drawBone(ctx, lm[joints[0]], lm[joints[1]], canvasEl.width, canvasEl.height, "#38BDF8");
+              drawBone(ctx, lm[joints[1]], lm[joints[2]], canvasEl.width, canvasEl.height, "#38BDF8");
+              drawJoint(ctx, lm[joints[1]], canvasEl.width, canvasEl.height, "#F59E0B");
+
+              if (activeAngle > 60) microSideMaxAngles[microTargetSide].push(activeAngle);
             }
+            // 2. 擴胸深呼吸微運動 (BREATHE 實裝)
+            else if (selectedMicroAction.type === "chest_expand") {
+              const shoulderDist = Math.hypot(lm[11].x - lm[12].x, lm[11].y - lm[12].y);
+              const wristDist = Math.hypot(lm[15].x - lm[16].x, lm[15].y - lm[16].y);
+              const expansionRatio = Math.round((wristDist / (shoulderDist + 0.001)) * 100);
 
-            // 骨架渲染
-            const activeJoints = microTargetSide === "RIGHT" ? [24, 26, 28] : [23, 25, 27];
-            drawBone(ctx, lm[activeJoints[0]], lm[activeJoints[1]], canvasEl.width, canvasEl.height, "#38BDF8");
-            drawBone(ctx, lm[activeJoints[1]], lm[activeJoints[2]], canvasEl.width, canvasEl.height, "#38BDF8");
-            drawJoint(ctx, lm[activeJoints[1]], canvasEl.width, canvasEl.height, "#F59E0B");
+              document.getElementById("legLeftText").innerText = `擴胸度: ${expansionRatio}%`;
+              document.getElementById("legRightText").innerText = `對標: 140%`;
+              document.getElementById("legLeftBar").style.width = `${Math.min(100, (expansionRatio / 140) * 100)}%`;
+              document.getElementById("legRightBar").style.width = "100%";
 
-            // 記錄峰值角度
-            if (activeAngle > 100) {
-              microSideMaxAngles[microTargetSide].push(activeAngle);
+              drawBone(ctx, lm[11], lm[12], canvasEl.width, canvasEl.height, "#10B981");
+              drawBone(ctx, lm[11], lm[15], canvasEl.width, canvasEl.height, "#38BDF8");
+              drawBone(ctx, lm[12], lm[16], canvasEl.width, canvasEl.height, "#38BDF8");
+            }
+            // 3. 手指手腕舒緩微運動 (FINGER_STRETCH 實裝)
+            else if (selectedMicroAction.type === "wrist_flex") {
+              const wristSpread = Math.hypot(lm[19].x - lm[21].x, lm[19].y - lm[21].y);
+              const palmSize = Math.hypot(lm[15].x - lm[19].x, lm[15].y - lm[19].y);
+              const stretchRatio = Math.round((wristSpread / (palmSize + 0.001)) * 100);
+
+              document.getElementById("legLeftText").innerText = `手掌張開度: ${stretchRatio}%`;
+              document.getElementById("legRightText").innerText = `對標: 85%`;
+              document.getElementById("legLeftBar").style.width = `${Math.min(100, (stretchRatio / 85) * 100)}%`;
+              document.getElementById("legRightBar").style.width = "100%";
+
+              drawJoint(ctx, lm[15], canvasEl.width, canvasEl.height, "#10B981");
+              drawJoint(ctx, lm[19], canvasEl.width, canvasEl.height, "#38BDF8");
+              drawJoint(ctx, lm[21], canvasEl.width, canvasEl.height, "#F59E0B");
             }
           }
           ctx.restore();
@@ -1726,26 +2304,30 @@
         }
         processMicroFrame();
 
-        // 啟動節拍教練狀態機
-        startRhythmicCoachFsm();
+        startAdaptiveMetronomeFsm();
 
       } catch (err) {
-        console.warn("微運動相機略過:", err);
+        console.warn("微運動相機啟動略過:", err);
       }
-    };
+    }
 
-    /* 4拍節拍語音教練 FSM */
-    function startRhythmicCoachFsm() {
+    function startAdaptiveMetronomeFsm() {
       let beatCounter = 0;
-      let phase = "READY_WAIT"; // READY_WAIT, KICK, HOLD, LOWER
-      let holdSecondsRemaining = 2;
-
+      let phase = "READY_WAIT";
       const guideEl = document.getElementById("microVoiceGuide");
+      repCycleStartTime = Date.now();
 
-      microMetronomeInterval = setInterval(() => {
+      microCountdownInterval = setInterval(() => {
+        microTimeRemaining--;
+        document.getElementById("microWorkoutTimer").innerText = `剩餘: ${microTimeRemaining} 秒`;
+        if (microTimeRemaining <= 0) {
+          completeMicroWorkoutSession();
+        }
+      }, 1000);
+
+      function runBeatLoop() {
         beatCounter = (beatCounter % 4) + 1;
 
-        // 點亮節拍燈 (Beep 880Hz / Tick 440Hz)
         for (let i = 1; i <= 4; i++) {
           const dot = document.getElementById(`metroDot${i}`);
           if (dot) {
@@ -1757,25 +2339,25 @@
         }
 
         if (beatCounter === 1) {
-          playMetronomeTick(true); // 880Hz 重音
+          playMetronomeTick(true);
         } else {
-          playMetronomeTick(false); // 440Hz 輕音
+          playMetronomeTick(false);
         }
 
-        // 動作引導狀態切換
         if (beatCounter === 1) {
-          if (microRepsDone >= MICRO_TARGET_REPS) {
+          if (microRepsDone >= microTargetReps) {
             completeMicroWorkoutSession();
             return;
           }
 
-          const sideText = microTargetSide === "RIGHT" ? "右腳" : "左腳";
+          const sideText = microTargetSide === "RIGHT" ? "右側" : "左側";
 
           if (phase === "READY_WAIT" || phase === "LOWER") {
-            phase = "KICK";
-            guideEl.innerText = `準備……三、二、一，踢直${sideText}！`;
-            speak(`踢直${sideText}！`);
-          } else if (phase === "KICK") {
+            phase = "ACTION";
+            repCycleStartTime = Date.now();
+            guideEl.innerText = `準備……三、二、一，${selectedMicroAction.voiceAction}${sideText}！`;
+            speak(`${selectedMicroAction.voiceAction}！`);
+          } else if (phase === "ACTION") {
             phase = "HOLD";
             guideEl.innerText = `停住……維持！一、二！`;
             speak(`停住，維持！`);
@@ -1783,27 +2365,43 @@
             phase = "LOWER";
             playDingChime();
             microRepsDone++;
-            document.getElementById("microHudReps").innerText = `${microRepsDone} / ${MICRO_TARGET_REPS}`;
+            document.getElementById("microHudReps").innerText = `${microRepsDone} / ${microTargetReps}`;
 
-            // 保存該側峰值角速度
+            const cycleDuration = Date.now() - repCycleStartTime;
+            recentRepDurations.push(cycleDuration);
+            if (recentRepDurations.length >= 3) {
+              const avgD = recentRepDurations.slice(-3).reduce((a, b) => a + b, 0) / 3;
+              if (avgD > microBpmInterval * 4 * 1.35 && microBpmInterval === 1000) {
+                microBpmInterval = 1200;
+                speak("唔使急，動作放慢少少，量力而為。");
+              }
+            }
+
             microSideVelocities[microTargetSide].push(microPeakVelocity);
             microPeakVelocity = 0;
 
             guideEl.innerText = `好！慢慢放低休息。`;
             speak(`好，放低休息。`);
 
-            // 交換左右腿（雙側均衡）
             microTargetSide = microTargetSide === "RIGHT" ? "LEFT" : "RIGHT";
           }
         }
-      }, 1000); // 60 BPM
+
+        microMetronomeInterval = setTimeout(runBeatLoop, microBpmInterval);
+      }
+
+      runBeatLoop();
     }
 
-    /* 結束 1 分鐘微運動並生成 STEADI / CFRS 報告 */
     function completeMicroWorkoutSession() {
       exitMicroWorkout();
 
-      // 計算雙側平均最大角度與對稱指數
+      const cheer = document.createElement("div");
+      cheer.innerHTML = "🎉 微運動完成！做得好棒！";
+      cheer.style.cssText = "position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(6,78,59,0.92); color:#FEF08A; font-size:2rem; font-weight:900; z-index:2500;";
+      document.body.appendChild(cheer);
+      setTimeout(() => cheer.remove(), 1600);
+
       const avgMaxL = microSideMaxAngles.LEFT.length > 0 
         ? microSideMaxAngles.LEFT.reduce((a, b) => a + b, 0) / microSideMaxAngles.LEFT.length 
         : 140;
@@ -1812,28 +2410,46 @@
         : 140;
       const finalSI = calculateSymmetryIndex(avgMaxL, avgMaxR);
 
-      // CDC STEADI 映射分數
-      const baseScore = Math.max(20, Math.min(100, Math.round(100 - (finalSI * 1.5))));
+      if (Math.abs(avgMaxL - avgMaxR) > 18) {
+        speak(`留意到${avgMaxL < avgMaxR ? '左邊' : '右邊'}稍有肌力不對稱，稍後可加強單側鍛鍊。`);
+      }
+
+      const allV = [...microSideVelocities.LEFT, ...microSideVelocities.RIGHT];
+      const avgOmega = allV.length > 0 ? Math.round(allV.reduce((a, b) => a + b, 0) / allV.length) : 115;
+      const peakOmega = allV.length > 0 ? Math.max(...allV) : 140;
+
+      // CFRS 與 TUG 校準
+      const lastTugSec = parseFloat(localStorage.getItem("lohas_last_tug_sec") || "0");
+      let tugAdjustment = 0;
+      if (lastTugSec > 0) {
+        tugAdjustment = lastTugSec < 12.0 ? 5 : lastTugSec <= 15.0 ? 0 : -10;
+      }
+
+      const baseScore = Math.max(15, Math.min(100, Math.round(100 - (finalSI * 1.5) + tugAdjustment)));
       const cfrsMeta = getCFRSClassification(baseScore);
 
       sessionTelemetry = {
-        workoutId: "micro_workout_1min",
-        workoutTitle: "一分鐘微運動（坐姿抬腿防跌）",
+        workoutType: "MICRO",
+        workoutId: `micro_${selectedMicroAction.id}`,
+        workoutTitle: `一分鐘微運動（${selectedMicroAction.name}）`,
         category: "FALL",
-        targetReps: MICRO_TARGET_REPS,
+        targetReps: microTargetReps,
         successReps: microRepsDone,
         accuracyScore: 100,
         avgHoldSec: 2.0,
         asymmetry: finalSI,
+        avgOmega: avgOmega,
+        peakOmega: peakOmega,
         fallRiskIndex: baseScore,
+        tugSeconds: lastTugSec > 0 ? lastTugSec : null,
         isFatigued: false,
         isAdaptiveReduced: false,
         screeningAnswers: [false, false, false],
         date: new Date().toISOString().split("T")[0]
       };
 
-      document.getElementById("poseScoreText").innerText = `🎯 1分鐘微運動完成！達標 ${microRepsDone} 次`;
-      document.getElementById("poseSubDetails").innerText = `雙側不對稱度：${finalSI}% ｜ 動作角速度：理想`;
+      document.getElementById("poseScoreText").innerText = `🎯 微運動完成！達標 ${microRepsDone} 次`;
+      document.getElementById("poseSubDetails").innerText = `雙側不對稱度：${finalSI}% ｜ 動作角速度：${avgOmega}°/s`;
       document.getElementById("poseCfrsValue").innerText = baseScore;
       
       const badgeEl = document.getElementById("poseCfrsBadge");
@@ -1841,14 +2457,15 @@
       badgeEl.style.color = cfrsMeta.color;
       badgeEl.style.background = cfrsMeta.bg;
       document.getElementById("poseCfrsAdvice").innerText = cfrsMeta.advice;
-      document.getElementById("poseLongitudinalCompare").innerText = "📈 碎片化時間微訓練成功，已納入 7 日防跌健康評估。";
+      document.getElementById("poseLongitudinalCompare").innerText = "📈 碎片時間運動已同步至雲端與家人關懷端。";
 
       document.getElementById("rpeModal").style.display = "flex";
-      speak(`一分鐘微運動完成！好嘢，做咗${microRepsDone}下，防跌評估為${cfrsMeta.label}！`);
+      speak(`微運動完成！達標${microRepsDone}次，防跌指數為${cfrsMeta.label}！`);
     }
 
     window.exitMicroWorkout = function() {
-      if (microMetronomeInterval) clearInterval(microMetronomeInterval);
+      if (microMetronomeInterval) clearTimeout(microMetronomeInterval);
+      if (microCountdownInterval) clearInterval(microCountdownInterval);
       if (microAnimFrameId) cancelAnimationFrame(microAnimFrameId);
       if (microCameraStream) {
         microCameraStream.getTracks().forEach(t => t.stop());
@@ -1858,7 +2475,7 @@
     };
 
     /* ========================================================================= */
-    /* 原有 YouTube 跟練與數據報告閉環邏輯 */
+    /* 常規跟練模式：多模態 FSM 完整矩陣 (動態角速度 + 吞嚥 V 波 + 真方差靜止)   */
     /* ========================================================================= */
     let cameraStream = null;
     let poseInstance = null;
@@ -1878,6 +2495,11 @@
     let lastRepStartTime = 0;
     let isFatiguedNotified = false;
 
+    let fullLastAngle = 90;
+    let fullLastAngleTime = 0;
+    let fullPeakVelocity = 0;
+    const fullVelocities = [];
+
     let jawDistanceHistory = [];
     let dualWristHistory = [];
 
@@ -1895,22 +2517,19 @@
       asymmetrySamples = [];
       repTransitionDurations = [];
       repPeakAngles = [];
+      fullVelocities.length = 0;
+      fullPeakVelocity = 0;
+      fullLastAngleTime = 0;
       jawDistanceHistory = [];
       dualWristHistory = [];
       isFatiguedNotified = false;
+      document.getElementById("roomProgressFill").style.width = "0%";
       updatePipHud("準備就緒", 0, activeFsmConfig.targetReps);
 
       const iframe = document.getElementById("trainerVideoFrame");
       iframe.src = `https://www.youtube.com/embed/${workout.youtubeId}?autoplay=1&playsinline=1&rel=0`;
 
-      const script = {
-        READY: "坐穩椅子，雙腳平放，準備動作。",
-        EXTENDING: "慢慢伸直或轉身，保持自然呼吸。",
-        HOLDING: "停住，維持住，一、二。",
-        COMPLETED_REP: "做得好，慢慢放低休息下。",
-        STRUGGLING: "今日慢慢嚟，伸展到呢度就得，唔好勉強。"
-      };
-      speak(script.READY);
+      speak("坐穩椅子，挺直腰背，跟隨教練動作。");
 
       const pipBox = document.getElementById("cameraPipBox");
       const videoElement = document.getElementById("cameraFeed");
@@ -1965,6 +2584,22 @@
               const activeSide = leftAngle >= rightAngle ? "左" : "右";
               const activeJoints = leftAngle >= rightAngle ? jl : jr;
 
+              if (fullLastAngleTime > 0) {
+                const dt = (now - fullLastAngleTime) / 1000;
+                if (dt > 0.05) {
+                  const omega = Math.round(Math.abs(activeAngle - fullLastAngle) / dt);
+                  if (omega < 600) {
+                    fullVelocities.push(omega);
+                    if (omega > fullPeakVelocity) fullPeakVelocity = omega;
+                  }
+                  fullLastAngle = activeAngle;
+                  fullLastAngleTime = now;
+                }
+              } else {
+                fullLastAngle = activeAngle;
+                fullLastAngleTime = now;
+              }
+
               drawBone(canvasCtx, lm[activeJoints[0]], lm[activeJoints[1]], canvasElement.width, canvasElement.height, "#10B981");
               drawBone(canvasCtx, lm[activeJoints[1]], lm[activeJoints[2]], canvasElement.width, canvasElement.height, "#10B981");
               drawJoint(canvasCtx, lm[activeJoints[1]], canvasElement.width, canvasElement.height, "#F59E0B");
@@ -1980,15 +2615,6 @@
                   extendingStartTime = now;
                   if (lastRepStartTime === 0) lastRepStartTime = now;
                 }
-
-                if (!isAdaptiveReduced && (now - extendingStartTime > 12000)) {
-                  isAdaptiveReduced = true;
-                  currentEffectiveTarget = activeFsmConfig.minStruggleAngle;
-                  document.getElementById("aiVoiceFeedback").innerText = `🌱 慢慢嚟 (目標微調至 ${currentEffectiveTarget}°)`;
-                  speak(script.STRUGGLING);
-                } else {
-                  document.getElementById("aiVoiceFeedback").innerText = `💡 慢慢伸展`;
-                }
               } else if (activeAngle >= currentEffectiveTarget) {
                 if (exerciseState !== "HOLDING" && exerciseState !== "COMPLETED_REP") {
                   exerciseState = "HOLDING";
@@ -1999,28 +2625,81 @@
 
                 if (exerciseState === "HOLDING") {
                   const elapsed = now - holdStartTime;
-                  const remainSec = Math.max(0, (activeFsmConfig.holdMs - elapsed) / 1000).toFixed(1);
-
-                  if (Math.floor(elapsed) % 500 < 50) playMetronomeTick(false);
-
-                  if (elapsed < activeFsmConfig.holdMs) {
-                    document.getElementById("aiVoiceFeedback").innerText = `🔥 姿勢標準！維持住 ${remainSec} 秒...`;
-                  } else {
+                  if (elapsed >= activeFsmConfig.holdMs) {
                     validRepCount++;
                     holdDurations.push(elapsed);
                     repPeakAngles.push(activeAngle);
                     exerciseState = "COMPLETED_REP";
+                    playDingChime();
 
-                    if (lastRepStartTime > 0) {
-                      repTransitionDurations.push(now - lastRepStartTime);
-                      lastRepStartTime = 0;
-                      checkDualDimensionalFatigue();
-                    }
-
+                    document.getElementById("roomProgressFill").style.width = `${(validRepCount / activeFsmConfig.targetReps) * 100}%`;
                     updatePipHud(`${activeSide}: ${activeAngle}°`, validRepCount, activeFsmConfig.targetReps);
-                    document.getElementById("aiVoiceFeedback").innerText = `🎉 做得好！（第 ${validRepCount} 次）`;
-                    speak(script.COMPLETED_REP);
+                    speak("做得好！慢慢放低休息。");
                   }
+                }
+              }
+            } else if (activeFsmConfig.type === "jaw_v_wave") {
+              const nose = lm[0];
+              const jaw = lm[152] || lm[10];
+              if (nose && jaw) {
+                const dist = Math.hypot(nose.x - jaw.x, nose.y - jaw.y);
+                jawDistanceHistory.push({ dist, t: now });
+                if (jawDistanceHistory.length > 25) jawDistanceHistory.shift();
+
+                drawJoint(canvasCtx, nose, canvasElement.width, canvasElement.height, "#10B981");
+                drawJoint(canvasCtx, jaw, canvasElement.width, canvasElement.height, "#38BDF8");
+                updatePipHud("吞嚥辨識中", validRepCount, activeFsmConfig.targetReps);
+
+                if (jawDistanceHistory.length >= 15) {
+                  const d0 = jawDistanceHistory[0].dist;
+                  const minEntry = jawDistanceHistory.reduce((min, cur) => cur.dist < min.dist ? cur : min, jawDistanceHistory[0]);
+                  const dLatest = jawDistanceHistory[jawDistanceHistory.length - 1].dist;
+
+                  if ((d0 - minEntry.dist) > 0.015 && (dLatest - minEntry.dist) > 0.012) {
+                    if (exerciseState !== "COMPLETED_REP") {
+                      validRepCount++;
+                      exerciseState = "COMPLETED_REP";
+                      jawDistanceHistory = [];
+                      playDingChime();
+                      speak("做得好，吞嚥動作標準！");
+                      document.getElementById("roomProgressFill").style.width = `${(validRepCount / activeFsmConfig.targetReps) * 100}%`;
+                      setTimeout(() => { exerciseState = "READY"; }, 2200);
+                    }
+                  }
+                }
+              }
+            } else if (activeFsmConfig.type === "true_variance") {
+              const lw = lm[15], rw = lm[16];
+              if (lw && rw) {
+                dualWristHistory.push({ lx: lw.x, ly: lw.y, rx: rw.x, ry: rw.y });
+                if (dualWristHistory.length > 20) dualWristHistory.shift();
+
+                let variance = 1;
+                if (dualWristHistory.length >= 15) {
+                  const n = dualWristHistory.length;
+                  const avgLx = dualWristHistory.reduce((a, b) => a + b.lx, 0) / n;
+                  const avgLy = dualWristHistory.reduce((a, b) => a + b.ly, 0) / n;
+                  const varL = dualWristHistory.reduce((a, b) => a + (b.lx - avgLx) ** 2 + (b.ly - avgLy) ** 2, 0) / n;
+                  variance = varL;
+                }
+
+                updatePipHud(`方差: ${(variance * 1000).toFixed(2)}`, validRepCount, activeFsmConfig.targetReps);
+
+                if (variance < activeFsmConfig.maxVariance) {
+                  if (exerciseState !== "HOLDING") {
+                    exerciseState = "HOLDING";
+                    holdStartTime = now;
+                  }
+                  if (now - holdStartTime >= activeFsmConfig.holdMs) {
+                    validRepCount++;
+                    exerciseState = "COMPLETED_REP";
+                    playDingChime();
+                    speak("深層放鬆，吸氣。");
+                    document.getElementById("roomProgressFill").style.width = `${(validRepCount / activeFsmConfig.targetReps) * 100}%`;
+                    setTimeout(() => { exerciseState = "READY"; }, 2500);
+                  }
+                } else {
+                  exerciseState = "READY";
                 }
               }
             }
@@ -2038,32 +2717,6 @@
 
       } catch (err) {
         console.warn("相機啟動略過:", err);
-      }
-    }
-
-    function checkDualDimensionalFatigue() {
-      if (isFatiguedNotified) return;
-
-      const tLen = repTransitionDurations.length;
-      let timeFatigue = false;
-      if (tLen >= 4) {
-        const recentT = (repTransitionDurations[tLen - 1] + repTransitionDurations[tLen - 2]) / 2;
-        const initialT = (repTransitionDurations[0] + repTransitionDurations[1]) / 2;
-        if (recentT > initialT * 1.35) timeFatigue = true;
-      }
-
-      const aLen = repPeakAngles.length;
-      let angleFatigue = false;
-      if (aLen >= 4) {
-        const recentA = (repPeakAngles[aLen - 1] + repPeakAngles[aLen - 2]) / 2;
-        const initialA = (repPeakAngles[0] + repPeakAngles[1]) / 2;
-        if (recentA < initialA - 10) angleFatigue = true;
-      }
-
-      if (timeFatigue || angleFatigue) {
-        isFatiguedNotified = true;
-        document.getElementById("aiVoiceFeedback").innerText = "⚠️ 偵測到肌肉疲勞（動作放慢/幅度減小），請量力而為！";
-        speak("偵測到你動作幅度開始變細或有啲吃力，千祈唔好勉強，隨時停低飲啖水。");
       }
     }
 
@@ -2116,7 +2769,7 @@
 
       cooldownRemain = 20;
       document.getElementById("cooldownTimer").innerText = cooldownRemain;
-      speak(`運動完成！現在進行二十秒緩和伸展：${activeFsmConfig.cooldownStretch}`);
+      speak(`運動完成！現在進行緩和伸展：${activeFsmConfig.cooldownStretch}`);
 
       cooldownTimerInterval = setInterval(() => {
         cooldownRemain--;
@@ -2148,11 +2801,22 @@
         ? Math.round(asymmetrySamples.reduce((a, b) => a + b, 0) / asymmetrySamples.length)
         : 0;
 
-      // 臨床 CDC STEADI 跌倒防護指數校準
+      const avgOmega = fullVelocities.length > 0 
+        ? Math.round(fullVelocities.reduce((a, b) => a + b, 0) / fullVelocities.length) 
+        : 120;
+      const peakOmega = fullPeakVelocity > 0 ? fullPeakVelocity : 150;
+
+      // 創新點 2 實裝：TUG 實測校準 CFRS
+      const lastTugSec = parseFloat(localStorage.getItem("lohas_last_tug_sec") || "0");
+      let tugAdjustment = 0;
+      if (lastTugSec > 0) {
+        tugAdjustment = lastTugSec < 12.0 ? 5 : lastTugSec <= 15.0 ? 0 : -10;
+      }
+
       const fatiguePenalty = isFatiguedNotified ? 15 : 0;
       const strugglePenalty = isAdaptiveReduced ? 10 : 0;
       const fallRiskIndex = Math.max(10, Math.min(100, Math.round(
-        100 - (0.4 * avgAsymmetry + 0.25 * (100 - accuracyScore) + fatiguePenalty + strugglePenalty)
+        100 - (0.4 * avgAsymmetry + 0.25 * (100 - accuracyScore) + fatiguePenalty + strugglePenalty) + tugAdjustment
       )));
 
       const cfrsMeta = getCFRSClassification(fallRiskIndex);
@@ -2170,7 +2834,7 @@
       }
 
       document.getElementById("poseScoreText").innerText = `🎯 動作達標率：${accuracyScore}%（${validRepCount} / ${activeFsmConfig.targetReps} 次）`;
-      document.getElementById("poseSubDetails").innerText = `平均鎖定：${avgHoldSec} 秒 ｜ 雙側不對稱度：${avgAsymmetry}%`;
+      document.getElementById("poseSubDetails").innerText = `平均鎖定：${avgHoldSec} 秒 ｜ 雙側不對稱度：${avgAsymmetry}% ｜ 角速度：${avgOmega}°/s`;
       
       document.getElementById("poseCfrsValue").innerText = fallRiskIndex;
       const badgeEl = document.getElementById("poseCfrsBadge");
@@ -2182,6 +2846,7 @@
       document.getElementById("poseLongitudinalCompare").innerText = `📈 ${compareText}`;
 
       sessionTelemetry = {
+        workoutType: "FULL",
         workoutId: currentWorkout.id,
         workoutTitle: currentWorkout.title,
         category: currentWorkout.category,
@@ -2190,7 +2855,10 @@
         accuracyScore: accuracyScore,
         avgHoldSec: parseFloat(avgHoldSec),
         asymmetry: avgAsymmetry,
+        avgOmega: avgOmega,
+        peakOmega: peakOmega,
         fallRiskIndex: fallRiskIndex,
+        tugSeconds: lastTugSec > 0 ? lastTugSec : null,
         isFatigued: isFatiguedNotified,
         isAdaptiveReduced: isAdaptiveReduced,
         screeningAnswers: screeningHistoryAnswers,
@@ -2213,6 +2881,47 @@
         saveLocalWorkoutHistory(sessionTelemetry);
         markTodayDone(sessionTelemetry.workoutId);
 
+        const history = JSON.parse(localStorage.getItem("lohas_full_history") || "[]").slice(0, 7);
+        const cfrsTrend = history.map(h => `${h.fallRiskIndex || 80}`).reverse().join(" → ");
+        const asymTrend = history.map(h => `${h.asymmetry || 0}%`).reverse().join(" → ");
+        const omegaTrend = history.map(h => `${h.avgOmega || 120}°/s`).reverse().join(" → ");
+
+        // 創新點 2 實裝：TUG 與 CFRS 一致性分析餵入 Dify
+        const lastTugSec = parseFloat(localStorage.getItem("lohas_last_tug_sec") || "0");
+        const estimatedTug = (10 + (100 - sessionTelemetry.fallRiskIndex) * 0.08).toFixed(1);
+        const consistencyText = lastTugSec > 0 
+          ? `實測 TUG: ${lastTugSec}秒 vs CFRS預估 TUG: ${estimatedTug}秒 (差額: ${Math.abs(lastTugSec - estimatedTug).toFixed(1)}秒)`
+          : `尚無 TUG 實測數據`;
+
+        const difyPayload = `
+【LOHAS TV v10 長者運動臨床遙測數據】
+- 訓練型態：${sessionTelemetry.workoutType} (MICRO: 1分鐘微運動 / FULL: 常規訓練)
+- 運動項目：${sessionTelemetry.workoutTitle}
+- 今日達標：${sessionTelemetry.successReps} / ${sessionTelemetry.targetReps} 次
+- 雙側對稱指數 (SI)：${sessionTelemetry.asymmetry}%
+- 關節角速度 (ω)：平均 ${sessionTelemetry.avgOmega} °/s ｜ 峰值 ${sessionTelemetry.peakOmega} °/s
+- 臨床跌倒防護指數 (CFRS)：${sessionTelemetry.fallRiskIndex} / 100
+- TUG 臨床實測校準：${consistencyText}
+- 疲勞中斷 / 自適應降級：${sessionTelemetry.isFatigued ? '是' : '否'} / ${sessionTelemetry.isAdaptiveReduced ? '是' : '否'}
+- 長者自評辛苦度 (RPE)：${sessionTelemetry.rpeScore} / 5
+- 近 7 日時序走勢：CFRS(${cfrsTrend}) ｜ SI(${asymTrend}) ｜ ω(${omegaTrend})
+請綜合 TUG 實測與 CFRS 姿態數據，給予具臨床嚴謹度與溫暖關懷的廣東話總結。
+        `.trim();
+
+        const report = await callDifyChatflow(difyPayload);
+        let finalVoiceFeedback = "";
+
+        if (report && report.mode === "REPORT") {
+          finalVoiceFeedback = report.voice_summary;
+        } else {
+          finalVoiceFeedback = sessionTelemetry.successReps >= 4 
+            ? `今日做得好出色！達標${sessionTelemetry.successReps}次，動作速度好理想，防跌指數有${sessionTelemetry.fallRiskIndex}分，記得飲溫水！`
+            : `今日辛苦晒喇！慢慢嚟唔好急，聽日再做一定會有進步！`;
+        }
+
+        speak(finalVoiceFeedback);
+        sessionTelemetry.aiFeedback = finalVoiceFeedback;
+
         if (window.saveSessionToFirestore) {
           window.saveSessionToFirestore(sessionTelemetry);
         }
@@ -2227,12 +2936,60 @@
       speak("運動記錄已儲存！今日做得好棒，記得飲啖溫水休息下。");
     }
 
+    const DIFY_CONFIG = {
+      apiEndpoint: "https://api.dify.ai/v1/chat-messages",
+      apiKey: "app-YOUR_DIFY_API_KEY_HERE"
+    };
+
+    let currentDifyConversationId = "";
+
+    function safeParseDifyJson(raw) {
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        const match = raw.match(/\{[\s\S]*\}/);
+        if (match) {
+          try { return JSON.parse(match[0]); } catch (_) {}
+        }
+      }
+      return null;
+    }
+
+    async function callDifyChatflow(inputText) {
+      try {
+        const res = await fetch(DIFY_CONFIG.apiEndpoint, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${DIFY_CONFIG.apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            query: inputText,
+            inputs: {},
+            response_mode: "blocking",
+            user: "elder_lohas_user",
+            conversation_id: currentDifyConversationId
+          })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data.conversation_id) currentDifyConversationId = data.conversation_id;
+
+        return safeParseDifyJson(data.answer);
+      } catch (err) {
+        console.warn("Dify Chatflow 呼叫略過:", err);
+        return null;
+      }
+    }
+
     function toggleVoiceAssistant() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) return alert("請使用支援語音辨識之瀏覽器。");
 
       const r = new SR();
-      r.lang = "zh-HK";
+      r.lang = localStorage.getItem("lohas_speech_lang") || "zh-HK";
       r.interimResults = true;
       r.continuous = false;
 
@@ -2247,9 +3004,14 @@
 
         if (result.isFinal) {
           document.getElementById("workoutSearch").value = transcript;
-          if (/(微運動|一分鐘|快啲|無時間)/i.test(transcript)) {
+          if (/(微運動|一分鐘|快操|無時間)/i.test(transcript)) {
             interimBox.style.display = "none";
-            startMicroWorkoutSession();
+            startSelectedMicroWorkout();
+            return;
+          }
+          if (/(測|行路|tug|起步|行)/i.test(transcript)) {
+            interimBox.style.display = "none";
+            launchAutoTugSession();
             return;
           }
           if (/(膝|菠蘿蓋|腳痛|落樓梯)/i.test(transcript)) filterWorkout("KNEE");
@@ -2334,43 +3096,64 @@
       const history = JSON.parse(localStorage.getItem("lohas_full_history") || "[]");
       const listEl = document.getElementById("historyListContainer");
       const barContainer = document.getElementById("chartBarContainer");
+      const warningBox = document.getElementById("omegaDeclineWarningBox");
+
+      const lastTug = localStorage.getItem("lohas_last_tug_sec") || "--";
+      document.getElementById("trendTugSummary").innerText = `${lastTug} 秒`;
 
       if (history.length === 0) {
         document.getElementById("trendRepsSummary").innerText = "0 次";
-        document.getElementById("trendCfrsTrajectory").innerText = "--";
         barContainer.innerHTML = "<div style='color:#94A3B8; margin:auto;'>暫無趨勢數據</div>";
         listEl.innerHTML = "<div style='color:#94A3B8; text-align:center; padding:16px;'>尚無運動記錄</div>";
+        warningBox.style.display = "none";
       } else {
         const recent7 = history.slice(0, 7);
-        const totalReps = recent7.reduce((a, b) => a + b.successReps, 0);
+        const totalReps = recent7.reduce((a, b) => a + (b.successReps || 0), 0);
 
-        const cfrsValues = recent7.map(h => h.fallRiskIndex || 80).reverse();
-        let trajDesc = "持平";
-        if (cfrsValues.length >= 2) {
-          const delta = cfrsValues[cfrsValues.length - 1] - cfrsValues[0];
-          trajDesc = delta > 0 ? "📈 改善中" : delta < 0 ? "⚠️ 需留意" : "持平";
+        const omegaVals = recent7.map(h => h.avgOmega).filter(v => v !== undefined && v > 0);
+        if (omegaVals.length >= 3) {
+          const deltaOmega = omegaVals[0] - omegaVals[omegaVals.length - 1];
+          if (deltaOmega < -18) {
+            warningBox.style.display = "block";
+            speak("留意到你動作速度有些微下降趨勢，建議多向治療師諮詢。");
+          } else {
+            warningBox.style.display = "none";
+          }
         }
-        document.getElementById("trendCfrsTrajectory").innerText = `${cfrsValues.join(" → ")} (${trajDesc})`;
+
         document.getElementById("trendRepsSummary").innerText = `${totalReps} 次`;
 
         barContainer.innerHTML = recent7.slice().reverse().map(h => `
           <div class="chart-bar-col">
-            <div class="chart-bar-fill" style="height:${h.accuracyScore}%; background:${(h.fallRiskIndex || 80) < 50 ? '#EF4444' : (h.asymmetry || 0) > 20 ? '#F59E0B' : '#10B981'};"></div>
-            <div class="chart-bar-label">${h.date.slice(5)}</div>
+            <div class="chart-bar-fill" style="height:${h.accuracyScore || 80}%; background:${(h.fallRiskIndex || 80) < 50 ? '#EF4444' : (h.asymmetry || 0) > 20 ? '#F59E0B' : '#10B981'};"></div>
+            <div class="chart-bar-label">${h.date ? h.date.slice(5) : ''}</div>
           </div>
         `).join("");
 
         listEl.innerHTML = recent7.map(h => {
+          if (h.workoutType === "TUG_TEST") {
+            return `
+              <div style="padding:8px 0; border-bottom:1px solid #F1F5F9; display:flex; justify-content:space-between; background:#FFFBEB;">
+                <div>
+                  <div style="font-weight:900; color:#92400E;">⏱️ ${h.date} - TUG 姿態自測</div>
+                  <div style="color:#B45309; font-size:11px;">實測秒數: ${h.tugSeconds} 秒 (${h.riskLevel === 'LOW' ? '低風險' : '需留意'})</div>
+                </div>
+                <div style="text-align:right;">
+                  <span class="cfrs-badge" style="background:#FEF3C7; color:#92400E;">實測合格</span>
+                </div>
+              </div>
+            `;
+          }
           const meta = getCFRSClassification(h.fallRiskIndex || 80);
           return `
             <div style="padding:8px 0; border-bottom:1px solid #F1F5F9; display:flex; justify-content:space-between;">
               <div>
                 <div style="font-weight:800;">${h.date} - ${h.workoutTitle}</div>
-                <div style="color:#64748B; font-size:11px;">達標: ${h.successReps}/${h.targetReps} ｜ 不對稱: ${h.asymmetry}%</div>
+                <div style="color:#64748B; font-size:11px;">達標: ${h.successReps || 0}/${h.targetReps || 0} ｜ 不對稱: ${h.asymmetry || 0}% ｜ 角速度: ${h.avgOmega || '--'}°/s</div>
               </div>
               <div style="text-align:right;">
                 <span class="cfrs-badge" style="color:${meta.color}; background:${meta.bg};">${h.fallRiskIndex || 80}分 (${meta.label})</span>
-                <div style="font-size:11px; color:#64748B; margin-top:2px;">RPE: ${h.rpeScore}/5</div>
+                <div style="font-size:11px; color:#64748B; margin-top:2px;">RPE: ${h.rpeScore || '--'}/5</div>
               </div>
             </div>
           `;
@@ -2390,16 +3173,18 @@
       }
       if (records.length === 0) return alert("尚無運動記錄可供匯出。");
 
-      let csvContent = "\uFEFF日期,動作項目,達標次數,目標次數,達標率,雙側不對稱度(SI%),跌倒防護指數(CFRS),RPE辛苦度,肌肉疲勞,自適應降級\n";
+      let csvContent = "\uFEFF日期,類型,動作項目,達標次數,目標次數,達標率,雙側不對稱度(SI%),角速度(ω),跌倒防護指數(CFRS),TUG實測秒數,TUG與CFRS一致性,RPE辛苦度,肌肉疲勞,自適應降級\n";
       records.forEach(h => {
-        csvContent += `${h.date},"${h.workoutTitle}",${h.successReps},${h.targetReps},${h.accuracyScore}%,${h.asymmetry}%,${h.fallRiskIndex || 80},${h.rpeScore},${h.isFatigued ? '是' : '否'},${h.isAdaptiveReduced ? '是' : '否'}\n`;
+        const estTug = h.fallRiskIndex ? (10 + (100 - h.fallRiskIndex) * 0.08).toFixed(1) : "--";
+        const consistency = h.tugSeconds && h.fallRiskIndex ? `${Math.abs(h.tugSeconds - estTug).toFixed(1)}s差異` : "未測";
+        csvContent += `${h.date},"${h.workoutType || 'FULL'}","${h.workoutTitle}",${h.successReps || 0},${h.targetReps || 0},${h.accuracyScore || 0}%,${h.asymmetry || 0}%,${h.avgOmega || 0},${h.fallRiskIndex || 80},${h.tugSeconds || '--'},"${consistency}",${h.rpeScore || '--'},${h.isFatigued ? '是' : '否'},${h.isAdaptiveReduced ? '是' : '否'}\n`;
       });
 
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `LOHAS_Clinical_STEADI_Data_${new Date().toISOString().split("T")[0]}.csv`;
+      a.download = `LOHAS_Clinical_Comprehensive_Report_${new Date().toISOString().split("T")[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     };
@@ -2430,6 +3215,7 @@
           mediaRecorder.ondataavailable = (e) => { audioChunks.push(e.data); };
           mediaRecorder.onstop = () => {
             const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            window.lastRecordedAudioBlob = audioBlob;
             recordedAudioUrl = URL.createObjectURL(audioBlob);
 
             document.getElementById("elderVoicePreviewAudio").src = recordedAudioUrl;
@@ -2458,12 +3244,13 @@
       document.getElementById("recordVoiceBtn").innerText = "🔴 開始錄音";
       document.getElementById("recordVoiceBtn").style.background = "#2563EB";
       recordedAudioUrl = null;
+      window.lastRecordedAudioBlob = null;
     };
 
     window.confirmAndSendVoiceReply = function() {
-      if (!recordedAudioUrl) return;
+      if (!window.lastRecordedAudioBlob) return;
       if (window.uploadElderVoiceReply) {
-        window.uploadElderVoiceReply(recordedAudioUrl);
+        window.uploadElderVoiceReply(window.lastRecordedAudioBlob);
       }
       discardRecordedVoice();
     };
@@ -2481,11 +3268,11 @@
         if (curHM === reminderTime && now.getSeconds() < 10) {
           if (Notification.permission === "granted") {
             new Notification("LOHAS TV 樂活健康電視", {
-              body: "婆婆/伯伯，夠鐘做一分鐘抬腿防跌操喇！",
+              body: "婆婆/伯伯，夠鐘做一分鐘健康操喇！",
               icon: "https://img.icons8.com/color/192/elderly-person.png"
             });
           }
-          speak("婆婆伯伯，夠鐘做一分鐘抬腿防跌運動喇，一齊郁動下啦！");
+          speak("婆婆伯伯，夠鐘做一分鐘微運動喇，一齊郁動下啦！");
         }
       }, 10000);
     }
@@ -2494,6 +3281,8 @@
     function openFamilyHubModal() { document.getElementById("familyHubModal").style.display = "flex"; }
     function openSettingsModal() {
       document.getElementById("settingFontSize").value = localStorage.getItem("lohas_font_scale") || "1";
+      document.getElementById("settingHighContrast").value = localStorage.getItem("lohas_high_contrast") || "OFF";
+      document.getElementById("settingSpeechLang").value = localStorage.getItem("lohas_speech_lang") || "zh-HK";
       document.getElementById("settingSpeechRate").value = localStorage.getItem("lohas_speech_rate") || "0.85";
       document.getElementById("settingSosPhone").value = localStorage.getItem("lohas_sos_phone") || "";
       document.getElementById("settingReminderTime").value = localStorage.getItem("lohas_reminder_time") || "10:00";
@@ -2507,6 +3296,12 @@
       document.documentElement.style.setProperty("--font-scale", val);
       localStorage.setItem("lohas_font_scale", val);
     }
+    function applyHighContrast(val) {
+      if (val === "ON") document.body.classList.add("high-contrast");
+      else document.body.classList.remove("high-contrast");
+      localStorage.setItem("lohas_high_contrast", val);
+    }
+    function saveSpeechLang(val) { localStorage.setItem("lohas_speech_lang", val); }
     function saveSpeechRate(val) { localStorage.setItem("lohas_speech_rate", val); }
     function saveSosPhone(val) { localStorage.setItem("lohas_sos_phone", val.trim()); }
     function saveReminderTime(val) { localStorage.setItem("lohas_reminder_time", val); }
@@ -2522,18 +3317,19 @@
       if (!('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(txt);
-      u.lang = "zh-HK";
+      u.lang = localStorage.getItem("lohas_speech_lang") || "zh-HK";
       u.rate = parseFloat(localStorage.getItem("lohas_speech_rate") || "0.85");
 
       const voices = window.speechSynthesis.getVoices();
-      const hkVoice = voices.find(v => (v.lang === 'zh-HK' || v.lang.includes('yue')) && (v.name.includes('Sin-Ji') || v.name.includes('Siri') || v.name.includes('Premium')))
-                     || voices.find(v => v.lang === 'zh-HK' || v.lang.includes('yue'));
-      if (hkVoice) u.voice = hkVoice;
+      const matchedVoice = voices.find(v => v.lang === u.lang && (v.name.includes('Sin-Ji') || v.name.includes('Siri') || v.name.includes('Natural') || v.name.includes('Premium')))
+                        || voices.find(v => v.lang === u.lang);
+      if (matchedVoice) u.voice = matchedVoice;
       window.speechSynthesis.speak(u);
     }
 
     const cachedScale = localStorage.getItem("lohas_font_scale");
     if (cachedScale) applyFontScale(cachedScale);
+    if (localStorage.getItem("lohas_high_contrast") === "ON") document.body.classList.add("high-contrast");
 
     (function initPipGestures() {
       const pip = document.getElementById("cameraPipBox");
