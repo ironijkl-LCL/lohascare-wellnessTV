@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#064E3B">
-  <title>LOHAS TV - 樂活智能長者健康系統 (v10 臨床閉環完整版)</title>
+  <title>LOHAS TV - 樂活智能長者健康系統 (v11 臨床閉環旗艦版)</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/elderly-person.png">
@@ -22,11 +22,11 @@
     :root {
       --primary-green: #064E3B;
       --accent-jade: #10B981;
-      --warm-amber: #F59E0B;
+      --warm-amber: #D97706;
       --bg-cream: #F8FAFC;
       --card-white: #FFFFFF;
       --text-main: #0F172A;
-      --text-muted: #475569;
+      --text-muted: #334155; /* 提升對比度至 10:1 以上，符合長者眼力需求 */
       --danger-red: #DC2626;
 
       --font-scale: 1;
@@ -40,11 +40,11 @@
     body.high-contrast {
       --primary-green: #000000;
       --accent-jade: #00875A;
-      --warm-amber: #D97706;
+      --warm-amber: #B45309;
       --bg-cream: #FFFFFF;
       --card-white: #FFFFFF;
       --text-main: #000000;
-      --text-muted: #1F2937;
+      --text-muted: #0F172A;
       --danger-red: #990000;
       filter: contrast(1.15);
     }
@@ -70,44 +70,22 @@
       padding-top: var(--sat);
       padding-left: var(--sal);
       padding-right: var(--sar);
-      padding-bottom: calc(110px + var(--sab));
+      padding-bottom: calc(115px + var(--sab));
     }
 
     #networkStatusBar {
       background: #FEF3C7;
       color: #92400E;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: 800;
       text-align: center;
-      padding: 6px 12px;
+      padding: 8px 12px;
       display: none;
       position: sticky;
       top: 0;
       z-index: 60;
       border-bottom: 1px solid #F59E0B;
     }
-
-    #loadingOverlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.85);
-      z-index: 3000;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: white;
-    }
-    .spinner {
-      width: 48px;
-      height: 48px;
-      border: 5px solid #334155;
-      border-top-color: var(--accent-jade);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 12px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
     header {
       background: linear-gradient(135deg, var(--primary-green), #047857);
@@ -138,14 +116,15 @@
       background: rgba(255,255,255,0.18);
       border: 1px solid rgba(255,255,255,0.35);
       color: white;
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 700;
+      font-size: 0.88rem;
+      font-weight: 800;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 4px;
+      min-height: 44px;
     }
     .btn-header-sos {
       background: var(--danger-red);
@@ -163,8 +142,8 @@
     .greeting-card {
       background: var(--card-white);
       border-radius: 24px;
-      padding: 20px 24px;
-      margin-bottom: 16px;
+      padding: 22px 24px;
+      margin-bottom: 18px;
       box-shadow: 0 8px 20px rgba(6,78,59,0.06);
       border: 2px solid #E2E8F0;
       display: flex;
@@ -182,23 +161,24 @@
     .greeting-text p {
       font-size: 0.95rem;
       color: var(--text-muted);
+      font-weight: 700;
     }
     .streak-pill {
       background: #FEF3C7;
       color: #92400E;
       border: 2px solid var(--warm-amber);
       border-radius: 16px;
-      padding: 8px 16px;
+      padding: 10px 18px;
       font-size: 1.05rem;
       font-weight: 900;
       white-space: nowrap;
     }
 
-    /* 一分鐘微運動卡片與動作選擇器 */
+    /* 一分鐘微運動卡片 */
     .micro-workout-banner {
       background: linear-gradient(135deg, #1E293B, #0F172A);
       border-radius: 22px;
-      padding: 18px 20px;
+      padding: 20px;
       margin-bottom: 20px;
       color: white;
       border: 2px solid #38BDF8;
@@ -208,10 +188,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     .micro-workout-info h3 {
-      font-size: 1.2rem;
+      font-size: 1.25rem;
       font-weight: 900;
       color: #38BDF8;
       display: flex;
@@ -219,13 +199,14 @@
       gap: 6px;
     }
     .micro-workout-info p {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       color: #CBD5E1;
-      margin-top: 3px;
+      margin-top: 4px;
+      font-weight: 700;
     }
     .micro-action-selector {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       overflow-x: auto;
       padding-bottom: 6px;
       scrollbar-width: none;
@@ -233,31 +214,33 @@
     .micro-action-selector::-webkit-scrollbar { display: none; }
     .btn-micro-chip {
       background: #334155;
-      color: #E2E8F0;
-      border: 1px solid #475569;
-      border-radius: 14px;
-      padding: 8px 14px;
-      font-size: 0.85rem;
+      color: #F8FAFC;
+      border: 1.5px solid #475569;
+      border-radius: 16px;
+      padding: 12px 18px;
+      font-size: 0.95rem;
       font-weight: 800;
       cursor: pointer;
       white-space: nowrap;
+      min-height: 54px; /* 符合長者防震大觸控區標準 */
       transition: all 0.2s ease;
     }
     .btn-micro-chip.active {
       background: #0284C7;
       color: white;
       border-color: #38BDF8;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
     }
     .btn-launch-micro {
       background: #0284C7;
       color: white;
       border: none;
-      padding: 12px 18px;
-      border-radius: 14px;
-      font-size: 1rem;
+      padding: 14px 22px;
+      border-radius: 16px;
+      font-size: 1.05rem;
       font-weight: 900;
       cursor: pointer;
+      min-height: 54px;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -274,6 +257,7 @@
       border: 2px solid #CBD5E1;
       outline: none;
       background: white;
+      font-weight: 700;
     }
     .search-input:focus { border-color: var(--accent-jade); }
     .tag-container {
@@ -287,14 +271,15 @@
     .tag-btn {
       background: #E2E8F0;
       color: var(--text-main);
-      padding: 8px 16px;
+      padding: 10px 18px;
       border-radius: 30px;
       border: none;
       font-size: 0.92rem;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
       white-space: nowrap;
       flex-shrink: 0;
+      min-height: 48px;
     }
     .tag-btn.active {
       background: var(--primary-green);
@@ -347,12 +332,12 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      background: rgba(6, 78, 59, 0.9);
+      background: rgba(6, 78, 59, 0.92);
       color: #A7F3D0;
       padding: 4px 10px;
       border-radius: 8px;
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 800;
     }
     .done-today-badge {
       position: absolute;
@@ -374,17 +359,17 @@
       justify-content: space-between;
     }
     .workout-title {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 900;
       margin-bottom: 6px;
       color: var(--primary-green);
       line-height: 1.35;
     }
     .workout-meta {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       color: var(--text-muted);
       margin-bottom: 10px;
-      font-weight: 700;
+      font-weight: 800;
     }
     .start-btn {
       width: 100%;
@@ -394,8 +379,9 @@
       font-size: 1.05rem;
       font-weight: 900;
       border: none;
-      border-radius: 12px;
+      border-radius: 14px;
       cursor: pointer;
+      min-height: 52px;
     }
     .start-btn.re-do { background: #047857; }
 
@@ -408,16 +394,16 @@
       box-shadow: 0 -5px 25px rgba(0,0,0,0.08);
       display: flex;
       justify-content: space-around;
-      padding: 10px max(14px, var(--sal)) calc(10px + var(--sab)) max(14px, var(--sar));
+      padding: 12px max(14px, var(--sal)) calc(12px + var(--sab)) max(14px, var(--sar));
       z-index: 90;
-      border-top: 1px solid #E2E8F0;
+      border-top: 1.5px solid #E2E8F0;
     }
     .action-btn {
       flex: 1;
       margin: 0 4px;
-      padding: 12px 6px;
+      padding: 10px 4px;
       border-radius: 14px;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       font-weight: 900;
       border: none;
       cursor: pointer;
@@ -426,16 +412,15 @@
       justify-content: center;
       gap: 5px;
       white-space: nowrap;
+      min-height: 52px;
     }
     .btn-voice { background: #2563EB; color: white; flex: 1.3; }
     .btn-tug-tab { background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; }
     .btn-history-tab { background: #F1F5F9; color: #1E293B; border: 1.5px solid #CBD5E1; }
     .btn-family-tab { background: #ECFDF5; color: #065F46; border: 1.5px solid #A7F3D0; }
-    .btn-settings { background: #F8FAFC; color: #475569; border: 1.5px solid #CBD5E1; }
+    .btn-settings { background: #F8FAFC; color: #334155; border: 1.5px solid #CBD5E1; }
 
-    /* ======================================================== */
-    /* 一分鐘微運動 HUD 視窗                                     */
-    /* ======================================================== */
+    /* 一分鐘微運動 HUD 視窗 */
     #microWorkoutRoomModal {
       display: none;
       position: fixed;
@@ -463,7 +448,7 @@
       background: #374151;
       color: #F87171;
       border: 1px solid #4B5563;
-      padding: 7px 12px;
+      padding: 8px 14px;
       border-radius: 10px;
       font-weight: 800;
       cursor: pointer;
@@ -515,8 +500,8 @@
       border: 1px solid #334155;
     }
     .leg-col { flex: 1; }
-    .leg-label { font-size: 10px; color: #94A3B8; font-weight: 800; margin-bottom: 2px; }
-    .leg-bar-bg { height: 6px; background: #334155; border-radius: 4px; overflow: hidden; }
+    .leg-label { font-size: 11px; color: #CBD5E1; font-weight: 800; margin-bottom: 2px; }
+    .leg-bar-bg { height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
     .leg-bar-fill { height: 100%; background: #10B981; width: 0%; transition: width 0.15s ease; }
 
     .micro-voice-instruction {
@@ -568,10 +553,10 @@
       padding: 8px;
       text-align: center;
     }
-    .micro-stat-label { font-size: 0.7rem; color: #94A3B8; font-weight: 700; }
-    .micro-stat-val { font-size: 1.15rem; font-weight: 900; color: #38BDF8; margin-top: 2px; }
+    .micro-stat-label { font-size: 0.72rem; color: #CBD5E1; font-weight: 800; }
+    .micro-stat-val { font-size: 1.18rem; font-weight: 900; color: #38BDF8; margin-top: 2px; }
 
-    /* 原有 YouTube 訓練室 */
+    /* YouTube 訓練室 */
     #exerciseRoomModal {
       display: none;
       position: fixed;
@@ -604,9 +589,9 @@
       background: #334155;
       color: #FEF08A;
       border: 1px solid #64748B;
-      padding: 6px 10px;
+      padding: 8px 12px;
       border-radius: 10px;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       font-weight: 800;
       cursor: pointer;
     }
@@ -614,14 +599,14 @@
       background: var(--danger-red);
       color: white;
       border: none;
-      padding: 8px 12px;
+      padding: 8px 14px;
       border-radius: 12px;
-      font-size: 0.88rem;
+      font-size: 0.92rem;
       font-weight: 900;
       cursor: pointer;
     }
     .room-progress-track {
-      height: 4px;
+      height: 5px;
       background: #334155;
       width: 100%;
     }
@@ -746,8 +731,8 @@
 
     .speech-interim-box {
       position: fixed;
-      bottom: 85px; left: 5%; right: 5%;
-      background: rgba(15, 23, 42, 0.95);
+      bottom: 90px; left: 5%; right: 5%;
+      background: rgba(15, 23, 42, 0.96);
       color: #FEF08A;
       padding: 14px 20px;
       border-radius: 16px;
@@ -789,14 +774,15 @@
     .choice-btns { display: flex; gap: 12px; margin-top: 20px; }
     .choice-btn {
       flex: 1; padding: 15px; font-size: 1.05rem; font-weight: 900; border-radius: 14px; border: none; cursor: pointer;
+      min-height: 52px;
     }
     .btn-safe { background: #D1FAE5; color: #065F46; }
     .btn-warn { background: #FEE2E2; color: #991B1B; }
 
     .rpe-options { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
     .rpe-btn {
-      background: #F1F5F9; border: 2px solid #CBD5E1; padding: 12px 16px; font-size: 1rem; font-weight: 700;
-      border-radius: 14px; cursor: pointer; text-align: left;
+      background: #F1F5F9; border: 2px solid #CBD5E1; padding: 12px 16px; font-size: 1rem; font-weight: 800;
+      border-radius: 14px; cursor: pointer; text-align: left; min-height: 50px;
     }
     .rpe-btn:hover { background: #ECFDF5; border-color: var(--accent-jade); }
 
@@ -827,7 +813,7 @@
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      height: 125px;
+      height: 120px;
       margin: 14px 0;
       padding: 10px;
       background: #F8FAFC;
@@ -850,8 +836,8 @@
       transition: height 0.5s ease;
     }
     .chart-bar-label {
-      font-size: 10px;
-      color: #64748B;
+      font-size: 11px;
+      color: #334155;
       margin-top: 4px;
       font-weight: bold;
     }
@@ -865,7 +851,32 @@
       margin-left: 6px;
     }
 
-    /* 創新點：TUG 姿態序列自動偵測專用全屏 Modal */
+    /* 長者白話文溫暖轉譯卡片 */
+    .vernacular-translation-card {
+      background: #EFF6FF;
+      border: 1.5px solid #3B82F6;
+      border-radius: 16px;
+      padding: 14px;
+      margin-top: 10px;
+      text-align: left;
+    }
+    .vernacular-title {
+      font-size: 0.88rem;
+      font-weight: 900;
+      color: #1D4ED8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .vernacular-body {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #1E293B;
+      line-height: 1.5;
+    }
+
+    /* TUG 姿態序列自動偵測全屏視窗 */
     #tugAutoTestModal {
       display: none;
       position: fixed;
@@ -894,7 +905,7 @@
       text-align: center;
       background: #1C2541;
       color: #94A3B8;
-      font-size: 0.72rem;
+      font-size: 0.75rem;
       font-weight: 800;
       border-radius: 8px;
       border: 1px solid #3A506B;
@@ -956,11 +967,6 @@
   </style>
 </head>
 <body>
-
-  <div id="loadingOverlay">
-    <div class="spinner"></div>
-    <div style="font-weight:900; font-size:1.1rem;" id="loadingText">雲端安全連線中...</div>
-  </div>
 
   <div id="networkStatusBar">⚠️ 網絡連線中斷，系統已切換至「本機離線安全模式」，數據將於連線後自動同步。</div>
 
@@ -1079,7 +1085,7 @@
     </div>
   </div>
 
-  <!-- 原有 YouTube 運動室 -->
+  <!-- YouTube 運動室 -->
   <div id="exerciseRoomModal">
     <div class="room-header">
       <div class="room-title" id="roomWorkoutTitle">運動進行中</div>
@@ -1134,7 +1140,7 @@
     </div>
   </div>
 
-  <!-- Modal 2: 運動後 RPE 評估與縱向臨床成績表 -->
+  <!-- Modal 2: 運動後 RPE 評估與白話轉譯臨床成績表 -->
   <div class="modal-overlay" id="rpeModal">
     <div class="modal-card">
       <div class="modal-title">👏 運動完成！</div>
@@ -1147,12 +1153,17 @@
             🛡️ 臨床跌倒防護指數 (CFRS)：<span id="poseCfrsValue">--</span> 分
             <span class="cfrs-badge" id="poseCfrsBadge">良好</span>
           </div>
-          <div style="font-size:0.78rem; color:#0f766e; margin-top:3px;" id="poseCfrsAdvice">評估中...</div>
         </div>
 
-        <div style="font-size:0.82rem; color:#0f766e; margin-top:6px; font-weight:700;" id="poseLongitudinalCompare">📈 對比上次：計算中...</div>
+        <!-- 創新點：長者專屬白話文轉譯卡片 -->
+        <div class="vernacular-translation-card">
+          <div class="vernacular-title">💬 物理治療師白話叮囑</div>
+          <div class="vernacular-body" id="vernacularReportText">評估中...</div>
+        </div>
+
+        <div style="font-size:0.82rem; color:#0f766e; margin-top:8px; font-weight:700;" id="poseLongitudinalCompare">📈 對比上次：計算中...</div>
       </div>
-      <p style="font-size: 0.95rem; color: var(--text-muted);">話畀 AI 知剛才運動感覺：</p>
+      <p style="font-size: 0.95rem; color: var(--text-muted); font-weight:700;">話畀 AI 知剛才運動感覺：</p>
       <div class="rpe-options">
         <button class="rpe-btn" onclick="submitRPE(1)">😊 1. 好輕鬆 (完全唔索氣)</button>
         <button class="rpe-btn" onclick="submitRPE(2)">😃 2. 幾輕鬆 (微暖舒適)</button>
@@ -1178,7 +1189,7 @@
     </div>
   </div>
 
-  <!-- Modal 4: 歷史趨勢視覺化 (含 TUG 趨勢與角速度下降預警) -->
+  <!-- Modal 4: 歷史趨勢視覺化 (含 Canvas 五維雷達圖、柱狀圖與角速度下降預警) -->
   <div class="modal-overlay" id="historyTrendModal" onclick="closeModalOnBackdrop(event, 'historyTrendModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-title">📊 運動表現與臨床趨勢</div>
@@ -1187,22 +1198,28 @@
         ⚠️ 臨床預警：偵測到近 7 日爆發角速度持續衰退，建議物理治療師介入評估肌少狀況。
       </div>
 
-      <div style="font-size:0.8rem; font-weight:700; color:#64748B; text-align:left;">📈 近 7 日達標率（柱狀）與防跌走勢：</div>
+      <!-- 創新點：Canvas 五維臨床健康雷達圖 -->
+      <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:18px; padding:12px; margin-bottom:14px;">
+        <div style="font-size:0.85rem; font-weight:900; color:#1E293B; margin-bottom:6px;">🕸️ 五維機能平衡雷達圖</div>
+        <canvas id="clinicalRadarCanvas" width="280" height="240" style="margin: 0 auto; display: block;"></canvas>
+      </div>
+
+      <div style="font-size:0.82rem; font-weight:800; color:#334155; text-align:left;">📈 近 7 日達標率（柱狀）與防跌走勢：</div>
       <div class="visual-chart-wrap" id="chartBarContainer"></div>
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
         <div style="background:#ECFDF5; padding:12px; border-radius:12px;">
-          <div style="font-size:12px; color:#065F46;">近 7 日總達標</div>
+          <div style="font-size:12px; color:#065F46; font-weight:800;">近 7 日總達標</div>
           <div style="font-size:22px; font-weight:900; color:#047857;" id="trendRepsSummary">-- 次</div>
         </div>
         <div style="background:#FEF3C7; padding:12px; border-radius:12px;">
-          <div style="font-size:12px; color:#92400E;">最近 TUG 自測</div>
+          <div style="font-size:12px; color:#92400E; font-weight:800;">最近 TUG 自測</div>
           <div style="font-size:17px; font-weight:900; color:#B45309; margin-top:4px;" id="trendTugSummary">-- 秒</div>
         </div>
       </div>
 
       <div style="text-align:left; font-size:14px; font-weight:800; margin-bottom:8px;">📋 臨床打卡與 TUG 記錄：</div>
-      <div id="historyListContainer" style="max-height:170px; overflow-y:auto; text-align:left; font-size:13px;">
+      <div id="historyListContainer" style="max-height:160px; overflow-y:auto; text-align:left; font-size:13px;">
         載入中...
       </div>
       <button class="start-btn" onclick="document.getElementById('historyTrendModal').style.display='none'" style="margin-top:16px;">關閉</button>
@@ -1215,14 +1232,14 @@
       <div class="modal-title">👨‍👩‍👧 連結家人手機 (免輸密碼)</div>
 
       <div style="background:#F8FAFC; border:2px dashed #10B981; border-radius:20px; padding:16px; margin:10px 0;">
-        <p style="font-size:0.9rem; color:#475569; margin-bottom:10px;">
+        <p style="font-size:0.9rem; color:#334155; font-weight:700; margin-bottom:10px;">
           仔女用手機相機<strong>直接掃描此二維碼</strong>即可自動連線：
         </p>
         <canvas id="elderQrCanvas" style="border-radius:12px; background:#fff; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);"></canvas>
         <div style="font-size:0.8rem; color:#059669; font-weight:800; margin-top:8px;">✅ 掃描後永久綁定，日後毋須再掃</div>
         <div style="display:flex; justify-content:center; gap:10px; margin-top:8px;">
-          <button onclick="downloadQrCodeImage()" style="background:#E2E8F0; border:none; padding:5px 10px; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">💾 下載 QR 圖</button>
-          <button onclick="printQrCode()" style="background:#E2E8F0; border:none; padding:5px 10px; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">🖨️ 列印貼雪櫃</button>
+          <button onclick="downloadQrCodeImage()" style="background:#E2E8F0; border:none; padding:8px 12px; border-radius:8px; font-size:0.8rem; font-weight:bold; cursor:pointer;">💾 下載 QR 圖</button>
+          <button onclick="printQrCode()" style="background:#E2E8F0; border:none; padding:8px 12px; border-radius:8px; font-size:0.8rem; font-weight:bold; cursor:pointer;">🖨️ 列印貼雪櫃</button>
         </div>
       </div>
 
@@ -1234,18 +1251,18 @@
       </div>
 
       <div style="background:#F1F5F9; border-radius:16px; padding:12px; margin-bottom:12px; text-align:left;">
-        <div style="font-size:0.82rem; font-weight:800; color:#334155; margin-bottom:6px;">🎙️ 錄低把聲回覆仔女：</div>
+        <div style="font-size:0.85rem; font-weight:800; color:#334155; margin-bottom:6px;">🎙️ 錄低把聲回覆仔女：</div>
         <div style="display:flex; gap:8px; align-items:center;">
-          <button id="recordVoiceBtn" onclick="toggleVoiceReplyRecord()" style="background:#2563EB; color:white; border:none; padding:8px 14px; border-radius:10px; font-weight:800; cursor:pointer; font-size:0.85rem;">
+          <button id="recordVoiceBtn" onclick="toggleVoiceReplyRecord()" style="background:#2563EB; color:white; border:none; padding:10px 16px; border-radius:10px; font-weight:800; cursor:pointer; font-size:0.9rem; min-height:46px;">
             🔴 開始錄音
           </button>
-          <button id="cancelRecordBtn" onclick="discardRecordedVoice()" style="background:#E2E8F0; color:#475569; border:none; padding:8px 12px; border-radius:10px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:none;">
+          <button id="cancelRecordBtn" onclick="discardRecordedVoice()" style="background:#E2E8F0; color:#334155; border:none; padding:10px 14px; border-radius:10px; font-size:0.85rem; font-weight:bold; cursor:pointer; display:none; min-height:46px;">
             放棄重錄
           </button>
         </div>
         <div id="voicePreviewArea" style="display:none; margin-top:10px;">
-          <audio id="elderVoicePreviewAudio" controls style="width:100%; height:36px;"></audio>
-          <button onclick="confirmAndSendVoiceReply()" style="width:100%; margin-top:6px; background:#059669; color:white; border:none; padding:8px; border-radius:10px; font-weight:800; font-size:0.85rem; cursor:pointer;">
+          <audio id="elderVoicePreviewAudio" controls style="width:100%; height:40px;"></audio>
+          <button onclick="confirmAndSendVoiceReply()" style="width:100%; margin-top:8px; background:#059669; color:white; border:none; padding:10px; border-radius:12px; font-weight:800; font-size:0.9rem; cursor:pointer; min-height:48px;">
             ✅ 聽過無問題，確認發送畀仔女 (永久儲存)
           </button>
         </div>
@@ -1258,13 +1275,13 @@
         <button class="start-btn" onclick="sendQuickFamilyPing('DONE')" style="background:#10B981;">
           👍 快速發送「我今日做咗運動喇」畀仔女
         </button>
-        <button class="start-btn" onclick="callKidFromHub()" style="background:#475569;">📞 一鍵打電話畀仔女</button>
+        <button class="start-btn" onclick="callKidFromHub()" style="background:#334155;">📞 一鍵打電話畀仔女</button>
         <button class="start-btn" onclick="document.getElementById('familyHubModal').style.display='none'" style="background:#E2E8F0; color:#334155;">關閉</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal 6: 設定 (包含高對比與無障礙) -->
+  <!-- Modal 6: 設定 -->
   <div class="modal-overlay" id="settingsModal" onclick="closeModalOnBackdrop(event, 'settingsModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-title">⚙️ 系統設定</div>
@@ -1326,13 +1343,13 @@
       <hr style="border:0; border-top:1px solid #E2E8F0; margin:14px 0;">
 
       <div style="display:flex; flex-direction:column; gap:8px;">
-        <button onclick="exportClinicalDataForPT('CSV')" style="background:#334155; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; cursor:pointer;">
+        <button onclick="exportClinicalDataForPT('CSV')" style="background:#334155; color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer;">
           📊 匯出物理治療師評估表 (含 TUG 與 ω)
         </button>
-        <button onclick="openMedicalDisclaimer()" style="background:#F1F5F9; color:#475569; border:none; padding:10px; border-radius:10px; font-weight:800; cursor:pointer;">
+        <button onclick="openMedicalDisclaimer()" style="background:#F1F5F9; color:#334155; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer;">
           🩺 臨床醫療免責聲明與私隱政策
         </button>
-        <button onclick="clearAllUserDataAppStore()" style="background:#FEE2E2; color:#991B1B; border:1px solid #EF4444; padding:10px; border-radius:10px; font-weight:800; cursor:pointer;">
+        <button onclick="clearAllUserDataAppStore()" style="background:#FEE2E2; color:#991B1B; border:1px solid #EF4444; padding:12px; border-radius:10px; font-weight:800; cursor:pointer;">
           🗑️ 清除所有本機資料 (Apple 帳戶權利合規)
         </button>
       </div>
@@ -1347,21 +1364,20 @@
   <div class="modal-overlay" id="disclaimerModal">
     <div class="modal-card">
       <div class="modal-title">🩺 臨床免責聲明</div>
-      <p style="font-size:13px; color:#475569; text-align:left; line-height:1.6; margin-bottom:14px;">
+      <p style="font-size:13px; color:#334155; text-align:left; line-height:1.6; margin-bottom:14px;">
         LOHAS TV 系統旨在提供長者體能輔助指導與運動數據量測，並非醫療診斷設備。跌倒防護指數（CFRS）乃基於 FSM 姿態感測運算之估算參考，並非取代正式之醫療 Timed Up and Go (TUG) 臨床測試。若運動過程中出現頭暈、胸悶、關節刺痛或嚴重呼吸急促，請立即停止運動並尋求專業物理治療師或醫師協助。
       </p>
       <button class="start-btn" onclick="document.getElementById('disclaimerModal').style.display='none'">明白並同意</button>
     </div>
   </div>
 
-  <!-- 創新點 1 實裝：真正的 TUG 姿態序列自動偵測全屏視窗 -->
+  <!-- TUG 姿態序列自動偵測全屏視窗 -->
   <div id="tugAutoTestModal">
     <div class="tug-modal-header">
       <div style="color:#38BDF8; font-weight:900; font-size:1.1rem;">⏱️ CDC STEADI TUG 姿態自動偵測</div>
-      <button onclick="exitAutoTugSession()" style="background:#374151; color:#F87171; border:1px solid #4B5563; padding:6px 12px; border-radius:8px; font-weight:800; cursor:pointer;">✕ 離開</button>
+      <button onclick="exitAutoTugSession()" style="background:#374151; color:#F87171; border:1px solid #4B5563; padding:8px 14px; border-radius:10px; font-weight:800; cursor:pointer;">✕ 離開</button>
     </div>
 
-    <!-- 臨床 4 階段推進器 -->
     <div class="tug-phase-track">
       <div class="tug-phase-step active" id="tugStep1">1. 穩坐校準</div>
       <div class="tug-phase-step" id="tugStep2">2. 起身計時</div>
@@ -1377,7 +1393,7 @@
     </div>
 
     <div style="margin-top:12px; display:flex; justify-content:center;">
-      <button onclick="forceManualTugStop()" style="background:transparent; border:1px dashed #64748B; color:#94A3B8; font-size:0.75rem; padding:6px 12px; border-radius:8px; cursor:pointer;">
+      <button onclick="forceManualTugStop()" style="background:transparent; border:1px dashed #64748B; color:#CBD5E1; font-size:0.8rem; padding:8px 14px; border-radius:8px; cursor:pointer;">
         如鏡頭角度受限，可點此手動結束
       </button>
     </div>
@@ -1566,7 +1582,7 @@
     initSession();
   </script>
 
-  <!-- 業務邏輯、TUG 姿態序列辨識、多樣化微運動、自適應降速與完整姿態 FSM 引擎 -->
+  <!-- 業務邏輯、語音痛感熔斷、五維雷達圖、白話轉譯與多模態 FSM 引擎 -->
   <script>
     let audioCtx = null;
     function playMetronomeTick(isAccent = false) {
@@ -1609,11 +1625,11 @@
 
     function getCFRSClassification(score) {
       if (score >= 80) {
-        return { label: "低跌倒風險 (健康)", color: "#059669", bg: "#D1FAE5", advice: "步態肌力對稱，TUG預估 < 12秒，表現極佳！" };
+        return { label: "低跌倒風險 (健康)", color: "#059669", bg: "#D1FAE5" };
       } else if (score >= 50) {
-        return { label: "中度風險 (需留意)", color: "#D97706", bg: "#FEF3C7", advice: "TUG預估 12~15秒，下肢稍見單側代償，建議扶椅訓練。" };
+        return { label: "中度風險 (需留意)", color: "#D97706", bg: "#FEF3C7" };
       } else {
-        return { label: "高危跌倒風險 ⚠️", color: "#DC2626", bg: "#FEE2E2", advice: "TUG預估 > 15秒，雙側肌力顯著失衡，建議物理治療師跟進！" };
+        return { label: "高危跌倒風險 ⚠️", color: "#DC2626", bg: "#FEE2E2" };
       }
     }
 
@@ -1621,6 +1637,191 @@
       const avg = 0.5 * (leftVal + rightVal);
       if (avg === 0) return 0;
       return Math.round((Math.abs(leftVal - rightVal) / avg) * 100);
+    }
+
+    /* ======================================================== */
+    /* 核心亮點 1：長者道地廣東話白話轉譯層 (Vernacular Translation) */
+    /* ======================================================== */
+    function translateKinematicsToVernacular(data) {
+      let adviceLines = [];
+
+      // 1. 雙側平衡 (SI%) 轉譯
+      if (data.si <= 10) {
+        adviceLines.push("好犀利！雙腿發力好平均，行路步態好穩陣！");
+      } else if (data.si <= 20) {
+        const side = data.weakerSide === "LEFT" ? "左邊" : "右邊";
+        adviceLines.push(`留意到${side}腳發力稍弱少少，平時起步轉身唔好急，等陣可以幫${side}腳多練兩下！`);
+      } else {
+        adviceLines.push("雙腿發力差異稍大，行路容易借力代償，坐低起身記得扶穩椅柄！");
+      }
+
+      // 2. 爆發角速度 (ω) 轉譯
+      if (data.omega >= 135) {
+        adviceLines.push("踢腿爆發力十足，關節反應好敏捷！");
+      } else if (data.omega < 80) {
+        adviceLines.push("今日動作反應稍慢，係咪有啲攰或者唔夠瞓？飲啖溫水慢慢嚟。");
+      }
+
+      // 3. TUG 與 CFRS 整體跌倒重心轉譯
+      if (data.fallRiskIndex >= 80) {
+        adviceLines.push("重心四平八穩，防跌能力極佳，繼續保持！");
+      } else if (data.fallRiskIndex < 50) {
+        adviceLines.push("今日整體重心有少少飄，轉身行路切勿太急，安全第一！");
+      }
+
+      return adviceLines.join(" ");
+    }
+
+    /* ======================================================== */
+    /* 核心亮點 2：語音痛感斷路器 (Pain Circuit Breaker)         */
+    /* ======================================================== */
+    let painRecognitionInstance = null;
+    let isPainListeningActive = false;
+
+    function startPainListening() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) return;
+
+      try {
+        if (!painRecognitionInstance) {
+          painRecognitionInstance = new SR();
+          painRecognitionInstance.lang = "zh-HK";
+          painRecognitionInstance.continuous = true;
+          painRecognitionInstance.interimResults = false;
+
+          const painPattern = /(好痛|好酸|痛啊|膝頭痛|整親|頂唔順|好麻|好痺|痛死)/i;
+
+          painRecognitionInstance.onresult = (event) => {
+            const transcript = event.results[event.results.length - 1][0].transcript;
+            if (painPattern.test(transcript)) {
+              triggerPainCircuitBreaker(transcript);
+            }
+          };
+
+          painRecognitionInstance.onerror = () => {};
+          painRecognitionInstance.onend = () => {
+            if (isPainListeningActive) {
+              try { painRecognitionInstance.start(); } catch (e) {}
+            }
+          };
+        }
+        isPainListeningActive = true;
+        painRecognitionInstance.start();
+      } catch (e) {}
+    }
+
+    function stopPainListening() {
+      isPainListeningActive = false;
+      if (painRecognitionInstance) {
+        try { painRecognitionInstance.stop(); } catch (e) {}
+      }
+    }
+
+    function triggerPainCircuitBreaker(heardWord) {
+      stopPainListening();
+      if (microMetronomeInterval) clearTimeout(microMetronomeInterval);
+      if (microCountdownInterval) clearInterval(microCountdownInterval);
+
+      speak("收到！婆婆唔舒服就停一停，千祈唔好勉強！我哋坐低休息飲啖溫水先。");
+      document.getElementById("microVoiceGuide").innerText = "⚠️ 偵測到身體痛感不適，運動已即時熔斷終止！";
+      document.getElementById("microVoiceGuide").style.color = "#EF4444";
+
+      if (sessionTelemetry) {
+        sessionTelemetry.painReported = {
+          word: heardWord,
+          time: new Date().toISOString(),
+          action: selectedMicroAction?.name || currentWorkout?.title
+        };
+      }
+
+      currentEffectiveTarget = Math.max(95, currentEffectiveTarget - 15);
+
+      setTimeout(() => {
+        exitMicroWorkout();
+        alert(`⚠️ 系統已即時記錄痛點（「${heardWord}」），並自動為下次降低難度。\n若關節持續刺痛，請尋求物理治療師協助！`);
+      }, 2500);
+    }
+
+    /* ======================================================== */
+    /* 核心亮點 3：Canvas 五維臨床健康雷達圖 (Clinical Radar)    */
+    /* ======================================================== */
+    function drawClinicalRadar(canvasId, stats) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const width = canvas.width;
+      const height = canvas.height;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(centerX, centerY) - 28;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const metrics = [
+        { label: "爆發速度", value: Math.min(100, (stats.omega / 160) * 100) },
+        { label: "雙側平衡", value: Math.max(15, 100 - (stats.si * 2)) },
+        { label: "核心耐力", value: Math.min(100, (stats.holdSec / 3) * 100) },
+        { label: "關節伸展", value: Math.min(100, (stats.rom / 150) * 100) },
+        { label: "TUG敏捷", value: stats.tugSec ? Math.max(15, 100 - ((stats.tugSec - 10) * 8)) : 75 }
+      ];
+
+      const totalAxes = metrics.length;
+      const angleStep = (Math.PI * 2) / totalAxes;
+
+      // 1. 繪製同心環背景
+      for (let level = 1; level <= 4; level++) {
+        const r = (radius / 4) * level;
+        ctx.beginPath();
+        for (let i = 0; i < totalAxes; i++) {
+          const angle = i * angleStep - Math.PI / 2;
+          const x = centerX + r * Math.cos(angle);
+          const y = centerY + r * Math.sin(angle);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = "#CBD5E1";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // 2. 繪製雷達輻射軸線
+      for (let i = 0; i < totalAxes; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+        ctx.strokeStyle = "#E2E8F0";
+        ctx.stroke();
+      }
+
+      // 3. 繪製長者真實指標多邊形
+      ctx.beginPath();
+      metrics.forEach((m, i) => {
+        const angle = i * angleStep - Math.PI / 2;
+        const r = radius * (Math.max(10, m.value) / 100);
+        const x = centerX + r * Math.cos(angle);
+        const y = centerY + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = "rgba(16, 185, 129, 0.35)";
+      ctx.fill();
+      ctx.strokeStyle = "#10B981";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // 4. 繪製座標標籤
+      ctx.font = "bold 11px sans-serif";
+      ctx.fillStyle = "#1E293B";
+      ctx.textAlign = "center";
+      metrics.forEach((m, i) => {
+        const angle = i * angleStep - Math.PI / 2;
+        const x = centerX + (radius + 16) * Math.cos(angle);
+        const y = centerY + (radius + 16) * Math.sin(angle) + 4;
+        ctx.fillText(m.label, x, y);
+      });
     }
 
     function getMicroWorkoutProgression() {
@@ -1834,7 +2035,7 @@
             <div>
               <div class="workout-title">${w.title}</div>
               <div class="workout-meta">⏱️ ${w.duration} ｜ 🎯 ${w.level}</div>
-              <p style="font-size:0.88rem; color:#64748B; margin-bottom:12px; line-height:1.4;">${w.desc}</p>
+              <p style="font-size:0.88rem; color:#334155; margin-bottom:12px; line-height:1.4; font-weight:700;">${w.desc}</p>
             </div>
             <button class="start-btn ${isDoneToday ? 're-do' : ''}" onclick="startScreening('${w.id}')">
               ${isDoneToday ? '🔄 再次重溫跟練' : '跟教練做 (AI 姿態守護)'}
@@ -1912,18 +2113,18 @@
     }
 
     /* ========================================================================= */
-    /* 創新點 1 實裝：TUG 姿態序列自動偵測 FSM (Auto-TUG FSM)                     */
+    /* TUG 姿態序列自動偵測 FSM                                                  */
     /* ========================================================================= */
     let tugCameraStream = null;
     let tugPoseInstance = null;
     let tugAnimId = null;
 
     const TUG_STATES = {
-      CALIBRATING: "CALIBRATING",     // 校準基準坐姿
-      WAITING_STAND: "WAITING_STAND", // 等候長者站立 (準備計時)
-      TIMING: "TIMING",               // 已站起，長者走向3米並轉身中
-      SITTING_DOWN: "SITTING_DOWN",   // 長者返回椅前開始坐下
-      COMPLETE: "COMPLETE"            // 坐下判定完畢，自動終止計時
+      CALIBRATING: "CALIBRATING",
+      WAITING_STAND: "WAITING_STAND",
+      TIMING: "TIMING",
+      SITTING_DOWN: "SITTING_DOWN",
+      COMPLETE: "COMPLETE"
     };
 
     let tugCurrentState = TUG_STATES.CALIBRATING;
@@ -1976,13 +2177,11 @@
             const lm = results.poseLandmarks;
             const now = performance.now();
 
-            // 提取關鍵節點：肩(11,12)、髖(23,24)、膝(25,26)、踝(27,28)
             const hipY = (lm[23].y + lm[24].y) / 2;
             const leftKneeAngle = calculateAngle(lm[23], lm[25], lm[27]);
             const rightKneeAngle = calculateAngle(lm[24], lm[26], lm[28]);
             const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
 
-            // 繪製人體骨架
             drawBone(ctx, lm[11], lm[23], canvasEl.width, canvasEl.height, "#10B981");
             drawBone(ctx, lm[12], lm[24], canvasEl.width, canvasEl.height, "#10B981");
             drawBone(ctx, lm[23], lm[25], canvasEl.width, canvasEl.height, "#38BDF8");
@@ -1990,10 +2189,9 @@
             drawBone(ctx, lm[25], lm[27], canvasEl.width, canvasEl.height, "#38BDF8");
             drawBone(ctx, lm[26], lm[28], canvasEl.width, canvasEl.height, "#38BDF8");
 
-            // TUG 序列 FSM 核心判定
             switch (tugCurrentState) {
               case TUG_STATES.CALIBRATING:
-                if (avgKneeAngle < 115) { // 穩坐狀態
+                if (avgKneeAngle < 115) {
                   baselineSittingHipY += hipY;
                   tugCalibrationFrames++;
                   if (tugCalibrationFrames >= 20) {
@@ -2008,7 +2206,6 @@
                 break;
 
               case TUG_STATES.WAITING_STAND:
-                // 當長者站起：膝關節伸展 > 145° 且 髖部上升 (y 值顯著變小)
                 if (avgKneeAngle > 145 && (baselineSittingHipY - hipY) > 0.08) {
                   tugStartTime = performance.now();
                   tugCurrentState = TUG_STATES.TIMING;
@@ -2022,7 +2219,6 @@
                 finalTugElapsed = (now - tugStartTime) / 1000;
                 document.getElementById("tugTimerDisplay").innerText = finalTugElapsed.toFixed(2);
 
-                // 轉身並返回坐下：膝關節重新彎曲 < 115° 且 髖部回到基準線高度
                 if (finalTugElapsed > 2.5 && avgKneeAngle < 115 && Math.abs(hipY - baselineSittingHipY) < 0.09) {
                   tugCurrentState = TUG_STATES.COMPLETE;
                   updateTugPhaseUI(4);
@@ -2078,7 +2274,6 @@
         msg = `用時 ${finalSec.toFixed(2)} 秒，TUG 評定為【高跌倒風險】，建議物理治療師諮詢！`;
       }
 
-      // 儲存 TUG 結果並存入 LocalStorage 供 CFRS 校準
       localStorage.setItem("lohas_last_tug_sec", finalSec.toFixed(2));
       localStorage.setItem("lohas_last_tug_risk", riskLevel);
 
@@ -2122,7 +2317,7 @@
     };
 
     /* ========================================================================= */
-    /* 一分鐘微運動：補齊深呼吸(擴胸)與手指伸展 + 軌跡漸變透明度               */
+    /* 一分鐘微運動：整合語音痛感監聽、擴胸、手指伸展與漸變透明度               */
     /* ========================================================================= */
     let microCameraStream = null;
     let microPoseInstance = null;
@@ -2173,6 +2368,9 @@
       guideEl.innerText = `準備開始：${selectedMicroAction.name}！`;
       speak(`坐穩，我哋依家開始${selectedMicroAction.name}，跟隨節奏進行！`);
 
+      // 啟動痛感監聽保護
+      startPainListening();
+
       const videoEl = document.getElementById("microCameraFeed");
       const canvasEl = document.getElementById("microPoseCanvas");
       const ctx = canvasEl.getContext("2d");
@@ -2205,7 +2403,6 @@
             const lm = results.poseLandmarks;
             const now = Date.now();
 
-            // 1. 角度型微運動 (抬腿 / 腳踝 / 頸部)
             if (selectedMicroAction.type === "angle") {
               const jl = selectedMicroAction.jointLeft;
               const jr = selectedMicroAction.jointRight;
@@ -2223,7 +2420,6 @@
               const activeAngle = microTargetSide === "RIGHT" ? angleR : angleL;
               const activeJoint = microTargetSide === "RIGHT" ? lm[jr[1]] : lm[jl[1]];
 
-              // 軌跡漸變透明度動態渲染
               if (activeJoint) {
                 microTrajectoryPoints.push({ x: activeJoint.x * canvasEl.width, y: activeJoint.y * canvasEl.height });
                 if (microTrajectoryPoints.length > 20) microTrajectoryPoints.shift();
@@ -2261,9 +2457,7 @@
               drawJoint(ctx, lm[joints[1]], canvasEl.width, canvasEl.height, "#F59E0B");
 
               if (activeAngle > 60) microSideMaxAngles[microTargetSide].push(activeAngle);
-            }
-            // 2. 擴胸深呼吸微運動 (BREATHE 實裝)
-            else if (selectedMicroAction.type === "chest_expand") {
+            } else if (selectedMicroAction.type === "chest_expand") {
               const shoulderDist = Math.hypot(lm[11].x - lm[12].x, lm[11].y - lm[12].y);
               const wristDist = Math.hypot(lm[15].x - lm[16].x, lm[15].y - lm[16].y);
               const expansionRatio = Math.round((wristDist / (shoulderDist + 0.001)) * 100);
@@ -2276,9 +2470,7 @@
               drawBone(ctx, lm[11], lm[12], canvasEl.width, canvasEl.height, "#10B981");
               drawBone(ctx, lm[11], lm[15], canvasEl.width, canvasEl.height, "#38BDF8");
               drawBone(ctx, lm[12], lm[16], canvasEl.width, canvasEl.height, "#38BDF8");
-            }
-            // 3. 手指手腕舒緩微運動 (FINGER_STRETCH 實裝)
-            else if (selectedMicroAction.type === "wrist_flex") {
+            } else if (selectedMicroAction.type === "wrist_flex") {
               const wristSpread = Math.hypot(lm[19].x - lm[21].x, lm[19].y - lm[21].y);
               const palmSize = Math.hypot(lm[15].x - lm[19].x, lm[15].y - lm[19].y);
               const stretchRatio = Math.round((wristSpread / (palmSize + 0.001)) * 100);
@@ -2410,15 +2602,10 @@
         : 140;
       const finalSI = calculateSymmetryIndex(avgMaxL, avgMaxR);
 
-      if (Math.abs(avgMaxL - avgMaxR) > 18) {
-        speak(`留意到${avgMaxL < avgMaxR ? '左邊' : '右邊'}稍有肌力不對稱，稍後可加強單側鍛鍊。`);
-      }
-
       const allV = [...microSideVelocities.LEFT, ...microSideVelocities.RIGHT];
       const avgOmega = allV.length > 0 ? Math.round(allV.reduce((a, b) => a + b, 0) / allV.length) : 115;
       const peakOmega = allV.length > 0 ? Math.max(...allV) : 140;
 
-      // CFRS 與 TUG 校準
       const lastTugSec = parseFloat(localStorage.getItem("lohas_last_tug_sec") || "0");
       let tugAdjustment = 0;
       if (lastTugSec > 0) {
@@ -2438,6 +2625,7 @@
         accuracyScore: 100,
         avgHoldSec: 2.0,
         asymmetry: finalSI,
+        weakerSide: avgMaxL < avgMaxR ? "LEFT" : "RIGHT",
         avgOmega: avgOmega,
         peakOmega: peakOmega,
         fallRiskIndex: baseScore,
@@ -2448,22 +2636,32 @@
         date: new Date().toISOString().split("T")[0]
       };
 
+      // 生成廣東話白話轉譯
+      const vernacularAdvice = translateKinematicsToVernacular({
+        si: finalSI,
+        weakerSide: sessionTelemetry.weakerSide,
+        omega: avgOmega,
+        fallRiskIndex: baseScore
+      });
+
       document.getElementById("poseScoreText").innerText = `🎯 微運動完成！達標 ${microRepsDone} 次`;
-      document.getElementById("poseSubDetails").innerText = `雙側不對稱度：${finalSI}% ｜ 動作角速度：${avgOmega}°/s`;
+      document.getElementById("poseSubDetails").innerText = `雙側平衡良好 ｜ 動作節奏敏捷`;
       document.getElementById("poseCfrsValue").innerText = baseScore;
       
       const badgeEl = document.getElementById("poseCfrsBadge");
       badgeEl.innerText = cfrsMeta.label;
       badgeEl.style.color = cfrsMeta.color;
       badgeEl.style.background = cfrsMeta.bg;
-      document.getElementById("poseCfrsAdvice").innerText = cfrsMeta.advice;
+
+      document.getElementById("vernacularReportText").innerText = vernacularAdvice;
       document.getElementById("poseLongitudinalCompare").innerText = "📈 碎片時間運動已同步至雲端與家人關懷端。";
 
       document.getElementById("rpeModal").style.display = "flex";
-      speak(`微運動完成！達標${microRepsDone}次，防跌指數為${cfrsMeta.label}！`);
+      speak(`微運動完成！${vernacularAdvice}`);
     }
 
     window.exitMicroWorkout = function() {
+      stopPainListening();
       if (microMetronomeInterval) clearTimeout(microMetronomeInterval);
       if (microCountdownInterval) clearInterval(microCountdownInterval);
       if (microAnimFrameId) cancelAnimationFrame(microAnimFrameId);
@@ -2475,7 +2673,7 @@
     };
 
     /* ========================================================================= */
-    /* 常規跟練模式：多模態 FSM 完整矩陣 (動態角速度 + 吞嚥 V 波 + 真方差靜止)   */
+    /* 常規跟練模式                                                              */
     /* ========================================================================= */
     let cameraStream = null;
     let poseInstance = null;
@@ -2530,6 +2728,7 @@
       iframe.src = `https://www.youtube.com/embed/${workout.youtubeId}?autoplay=1&playsinline=1&rel=0`;
 
       speak("坐穩椅子，挺直腰背，跟隨教練動作。");
+      startPainListening();
 
       const pipBox = document.getElementById("cameraPipBox");
       const videoElement = document.getElementById("cameraFeed");
@@ -2756,6 +2955,7 @@
     let cooldownRemain = 20;
 
     function initiateWorkoutCompletion() {
+      stopPainListening();
       document.getElementById("trainerVideoFrame").src = "";
       if (animFrameId) cancelAnimationFrame(animFrameId);
       if (cameraStream) {
@@ -2805,8 +3005,8 @@
         ? Math.round(fullVelocities.reduce((a, b) => a + b, 0) / fullVelocities.length) 
         : 120;
       const peakOmega = fullPeakVelocity > 0 ? fullPeakVelocity : 150;
+      const peakRom = repPeakAngles.length > 0 ? Math.max(...repPeakAngles) : 145;
 
-      // 創新點 2 實裝：TUG 實測校準 CFRS
       const lastTugSec = parseFloat(localStorage.getItem("lohas_last_tug_sec") || "0");
       let tugAdjustment = 0;
       if (lastTugSec > 0) {
@@ -2833,6 +3033,13 @@
         compareText = `比上次（${prevData.date}）：達標 ${deltaSymbol} 次 ｜ ${asymMsg}`;
       }
 
+      const vernacularAdvice = translateKinematicsToVernacular({
+        si: avgAsymmetry,
+        weakerSide: "LEFT",
+        omega: avgOmega,
+        fallRiskIndex: fallRiskIndex
+      });
+
       document.getElementById("poseScoreText").innerText = `🎯 動作達標率：${accuracyScore}%（${validRepCount} / ${activeFsmConfig.targetReps} 次）`;
       document.getElementById("poseSubDetails").innerText = `平均鎖定：${avgHoldSec} 秒 ｜ 雙側不對稱度：${avgAsymmetry}% ｜ 角速度：${avgOmega}°/s`;
       
@@ -2841,8 +3048,8 @@
       badgeEl.innerText = cfrsMeta.label;
       badgeEl.style.color = cfrsMeta.color;
       badgeEl.style.background = cfrsMeta.bg;
-      document.getElementById("poseCfrsAdvice").innerText = cfrsMeta.advice;
 
+      document.getElementById("vernacularReportText").innerText = vernacularAdvice;
       document.getElementById("poseLongitudinalCompare").innerText = `📈 ${compareText}`;
 
       sessionTelemetry = {
@@ -2857,6 +3064,7 @@
         asymmetry: avgAsymmetry,
         avgOmega: avgOmega,
         peakOmega: peakOmega,
+        peakRom: peakRom,
         fallRiskIndex: fallRiskIndex,
         tugSeconds: lastTugSec > 0 ? lastTugSec : null,
         isFatigued: isFatiguedNotified,
@@ -2868,7 +3076,7 @@
       };
 
       document.getElementById("rpeModal").style.display = "flex";
-      speak(`今日目標${activeFsmConfig.targetReps}次，成功達標${validRepCount}次！防跌評估為${cfrsMeta.label}。剛才運動感覺辛苦嗎？`);
+      speak(`今日運動完成！${vernacularAdvice}。剛才運動感覺辛苦嗎？`);
     }
 
     async function submitRPE(rpeScore) {
@@ -2886,26 +3094,25 @@
         const asymTrend = history.map(h => `${h.asymmetry || 0}%`).reverse().join(" → ");
         const omegaTrend = history.map(h => `${h.avgOmega || 120}°/s`).reverse().join(" → ");
 
-        // 創新點 2 實裝：TUG 與 CFRS 一致性分析餵入 Dify
         const lastTugSec = parseFloat(localStorage.getItem("lohas_last_tug_sec") || "0");
         const estimatedTug = (10 + (100 - sessionTelemetry.fallRiskIndex) * 0.08).toFixed(1);
         const consistencyText = lastTugSec > 0 
-          ? `實測 TUG: ${lastTugSec}秒 vs CFRS預估 TUG: ${estimatedTug}秒 (差額: ${Math.abs(lastTugSec - estimatedTug).toFixed(1)}秒)`
+          ? `實測 TUG: ${lastTugSec}秒 vs CFRS預估: ${estimatedTug}秒`
           : `尚無 TUG 實測數據`;
 
         const difyPayload = `
-【LOHAS TV v10 長者運動臨床遙測數據】
-- 訓練型態：${sessionTelemetry.workoutType} (MICRO: 1分鐘微運動 / FULL: 常規訓練)
-- 運動項目：${sessionTelemetry.workoutTitle}
-- 今日達標：${sessionTelemetry.successReps} / ${sessionTelemetry.targetReps} 次
-- 雙側對稱指數 (SI)：${sessionTelemetry.asymmetry}%
+【LOHAS TV v11 臨床遙測報告】
+- 訓練型態：${sessionTelemetry.workoutType}
+- 項目：${sessionTelemetry.workoutTitle}
+- 達標：${sessionTelemetry.successReps} / ${sessionTelemetry.targetReps} 次
+- 對稱指數 (SI)：${sessionTelemetry.asymmetry}%
 - 關節角速度 (ω)：平均 ${sessionTelemetry.avgOmega} °/s ｜ 峰值 ${sessionTelemetry.peakOmega} °/s
 - 臨床跌倒防護指數 (CFRS)：${sessionTelemetry.fallRiskIndex} / 100
 - TUG 臨床實測校準：${consistencyText}
-- 疲勞中斷 / 自適應降級：${sessionTelemetry.isFatigued ? '是' : '否'} / ${sessionTelemetry.isAdaptiveReduced ? '是' : '否'}
+- 痛感熔斷事件：${sessionTelemetry.painReported ? JSON.stringify(sessionTelemetry.painReported) : '無'}
 - 長者自評辛苦度 (RPE)：${sessionTelemetry.rpeScore} / 5
 - 近 7 日時序走勢：CFRS(${cfrsTrend}) ｜ SI(${asymTrend}) ｜ ω(${omegaTrend})
-請綜合 TUG 實測與 CFRS 姿態數據，給予具臨床嚴謹度與溫暖關懷的廣東話總結。
+請綜合臨床指標給予一段溫暖易懂的廣東話總結。
         `.trim();
 
         const report = await callDifyChatflow(difyPayload);
@@ -2933,7 +3140,6 @@
       if (confirm("🎉 今日運動記錄成功！想唔想順便發送 WhatsApp 話畀仔女知？")) {
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
       }
-      speak("運動記錄已儲存！今日做得好棒，記得飲啖溫水休息下。");
     }
 
     const DIFY_CONFIG = {
@@ -3103,9 +3309,11 @@
 
       if (history.length === 0) {
         document.getElementById("trendRepsSummary").innerText = "0 次";
-        barContainer.innerHTML = "<div style='color:#94A3B8; margin:auto;'>暫無趨勢數據</div>";
-        listEl.innerHTML = "<div style='color:#94A3B8; text-align:center; padding:16px;'>尚無運動記錄</div>";
+        barContainer.innerHTML = "<div style='color:#334155; margin:auto;'>暫無趨勢數據</div>";
+        listEl.innerHTML = "<div style='color:#334155; text-align:center; padding:16px;'>尚無運動記錄</div>";
         warningBox.style.display = "none";
+        // 繪製空雷達圖
+        drawClinicalRadar("clinicalRadarCanvas", { omega: 50, si: 10, holdSec: 1, rom: 80, tugSec: 14 });
       } else {
         const recent7 = history.slice(0, 7);
         const totalReps = recent7.reduce((a, b) => a + (b.successReps || 0), 0);
@@ -3130,13 +3338,23 @@
           </div>
         `).join("");
 
+        // 提取最新數據繪製五維雷達圖
+        const latest = history[0];
+        drawClinicalRadar("clinicalRadarCanvas", {
+          omega: latest.avgOmega || 120,
+          si: latest.asymmetry || 8,
+          holdSec: latest.avgHoldSec || 2.0,
+          rom: latest.peakRom || 140,
+          tugSec: latest.tugSeconds || (parseFloat(lastTug) || null)
+        });
+
         listEl.innerHTML = recent7.map(h => {
           if (h.workoutType === "TUG_TEST") {
             return `
               <div style="padding:8px 0; border-bottom:1px solid #F1F5F9; display:flex; justify-content:space-between; background:#FFFBEB;">
                 <div>
                   <div style="font-weight:900; color:#92400E;">⏱️ ${h.date} - TUG 姿態自測</div>
-                  <div style="color:#B45309; font-size:11px;">實測秒數: ${h.tugSeconds} 秒 (${h.riskLevel === 'LOW' ? '低風險' : '需留意'})</div>
+                  <div style="color:#B45309; font-size:11px; font-weight:700;">實測秒數: ${h.tugSeconds} 秒 (${h.riskLevel === 'LOW' ? '低風險' : '需留意'})</div>
                 </div>
                 <div style="text-align:right;">
                   <span class="cfrs-badge" style="background:#FEF3C7; color:#92400E;">實測合格</span>
@@ -3149,11 +3367,11 @@
             <div style="padding:8px 0; border-bottom:1px solid #F1F5F9; display:flex; justify-content:space-between;">
               <div>
                 <div style="font-weight:800;">${h.date} - ${h.workoutTitle}</div>
-                <div style="color:#64748B; font-size:11px;">達標: ${h.successReps || 0}/${h.targetReps || 0} ｜ 不對稱: ${h.asymmetry || 0}% ｜ 角速度: ${h.avgOmega || '--'}°/s</div>
+                <div style="color:#334155; font-size:11px; font-weight:700;">達標: ${h.successReps || 0}/${h.targetReps || 0} ｜ 不對稱: ${h.asymmetry || 0}% ｜ 角速度: ${h.avgOmega || '--'}°/s</div>
               </div>
               <div style="text-align:right;">
                 <span class="cfrs-badge" style="color:${meta.color}; background:${meta.bg};">${h.fallRiskIndex || 80}分 (${meta.label})</span>
-                <div style="font-size:11px; color:#64748B; margin-top:2px;">RPE: ${h.rpeScore || '--'}/5</div>
+                <div style="font-size:11px; color:#334155; margin-top:2px; font-weight:700;">RPE: ${h.rpeScore || '--'}/5</div>
               </div>
             </div>
           `;
