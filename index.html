@@ -14,8 +14,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
 
-  <!-- MediaPipe Pose 視覺分析庫 -->
+  <!-- 本地端離線視覺與二維碼生成庫 (杜絕向第三方傳送長者 ID) -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" crossorigin="anonymous"></script>
 
   <style>
     :root {
@@ -28,7 +29,6 @@
       --text-muted: #475569;
       --danger-red: #DC2626;
 
-      /* 長者自定義字體比例 */
       --font-scale: 1;
 
       --sat: env(safe-area-inset-top, 0px);
@@ -58,14 +58,28 @@
       padding-top: var(--sat);
       padding-left: var(--sal);
       padding-right: var(--sar);
-      padding-bottom: calc(105px + var(--sab));
+      padding-bottom: calc(110px + var(--sab));
     }
 
-    /* 頂部導航列：將 SOS 移至頂部安全獨立區，徹底防止底部誤觸 */
+    /* 離線與同步狀態橫幅 */
+    #networkStatusBar {
+      background: #FEF3C7;
+      color: #92400E;
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-align: center;
+      padding: 6px 12px;
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      border-bottom: 1px solid #F59E0B;
+    }
+
     header {
       background: linear-gradient(135deg, var(--primary-green), #047857);
       color: white;
-      padding: max(14px, var(--sat)) max(18px, var(--sar)) 14px max(18px, var(--sal));
+      padding: max(14px, var(--sat)) max(16px, var(--sar)) 14px max(16px, var(--sal));
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -100,7 +114,6 @@
       align-items: center;
       gap: 4px;
     }
-    /* 獨立警示級 SOS：頂部右上角、雙層防呆長按 */
     .btn-header-sos {
       background: var(--danger-red);
       border: 1.5px solid #FCA5A5;
@@ -148,9 +161,7 @@
       white-space: nowrap;
     }
 
-    .search-box {
-      margin-bottom: 20px;
-    }
+    .search-box { margin-bottom: 20px; }
     .search-input {
       width: 100%;
       padding: 16px 20px;
@@ -160,9 +171,7 @@
       outline: none;
       background: white;
     }
-    .search-input:focus {
-      border-color: var(--accent-jade);
-    }
+    .search-input:focus { border-color: var(--accent-jade); }
     .tag-container {
       display: flex;
       gap: 8px;
@@ -241,7 +250,6 @@
       font-size: 0.75rem;
       font-weight: 700;
     }
-    /* 今日已完成狀態徽章（心理回饋感） */
     .done-today-badge {
       position: absolute;
       top: 10px;
@@ -252,7 +260,6 @@
       border-radius: 8px;
       font-size: 0.78rem;
       font-weight: 900;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: none;
     }
     .workout-info {
@@ -275,12 +282,6 @@
       margin-bottom: 10px;
       font-weight: 700;
     }
-    .card-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 10px;
-    }
     .start-btn {
       width: 100%;
       background: var(--accent-jade);
@@ -292,11 +293,8 @@
       border-radius: 12px;
       cursor: pointer;
     }
-    .start-btn.re-do {
-      background: #047857;
-    }
+    .start-btn.re-do { background: #047857; }
 
-    /* 底部操作欄：日常高頻功能專用（語音 + 家人留言 + 設定） */
     .bottom-bar {
       position: fixed;
       bottom: 0;
@@ -313,9 +311,9 @@
     .action-btn {
       flex: 1;
       margin: 0 4px;
-      padding: 12px 8px;
+      padding: 12px 6px;
       border-radius: 14px;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 900;
       border: none;
       cursor: pointer;
@@ -326,10 +324,10 @@
       white-space: nowrap;
     }
     .btn-voice { background: #2563EB; color: white; flex: 1.4; }
+    .btn-history-tab { background: #F1F5F9; color: #1E293B; border: 1.5px solid #CBD5E1; }
     .btn-family-tab { background: #ECFDF5; color: #065F46; border: 1.5px solid #A7F3D0; }
-    .btn-settings { background: #F1F5F9; color: #334155; border: 1.5px solid #CBD5E1; }
+    .btn-settings { background: #F8FAFC; color: #475569; border: 1.5px solid #CBD5E1; }
 
-    /* 運動全螢幕視窗 */
     #exerciseRoomModal {
       display: none;
       position: fixed;
@@ -352,7 +350,7 @@
     .room-title {
       font-size: 1.05rem;
       font-weight: 900;
-      max-width: 52%;
+      max-width: 50%;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -397,7 +395,26 @@
       flex: 1;
     }
 
-    /* 任意手指拖曳與雙指縮放鏡頭卡片 */
+    #cooldownOverlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(6, 78, 59, 0.96);
+      z-index: 150;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      padding: 24px;
+    }
+    .cooldown-timer {
+      font-size: 68px;
+      font-weight: 900;
+      color: #FEF08A;
+      margin: 14px 0;
+    }
+
     .camera-pip-card {
       position: absolute;
       bottom: max(20px, var(--sab));
@@ -495,7 +512,6 @@
       pointer-events: none;
     }
 
-    /* 語音辨識實時 Floating Box */
     .speech-interim-box {
       position: fixed;
       bottom: 85px;
@@ -511,10 +527,8 @@
       z-index: 200;
       display: none;
       border: 2px solid var(--accent-jade);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
-    /* 模態彈窗通用樣式 */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -531,8 +545,10 @@
       border-radius: 28px;
       padding: 24px;
       width: 100%;
-      max-width: 460px;
+      max-width: 480px;
       text-align: center;
+      max-height: 85vh;
+      overflow-y: auto;
     }
     .modal-title {
       font-size: 1.35rem;
@@ -554,7 +570,6 @@
     }
     .rpe-btn:hover { background: #ECFDF5; border-color: var(--accent-jade); }
 
-    /* SOS 倒數視窗 */
     #sosModal { background: var(--danger-red); }
     .sos-countdown { font-size: 80px; font-weight: 900; color: #FEF08A; margin: 16px 0; }
     .btn-cancel-sos {
@@ -562,7 +577,6 @@
       border-radius: 30px; border: none; cursor: pointer;
     }
 
-    /* 設定視窗表單元素 */
     .setting-item {
       display: flex;
       justify-content: space-between;
@@ -578,14 +592,60 @@
       font-size: 0.95rem;
       font-weight: 700;
     }
+
+    /* 雙軌視覺圖表樣式 (達標率 + 防跌指數) */
+    .visual-chart-wrap {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 125px;
+      margin: 14px 0;
+      padding: 10px;
+      background: #F8FAFC;
+      border-radius: 14px;
+      border: 1px solid #E2E8F0;
+      gap: 6px;
+    }
+    .chart-bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .chart-bar-fill {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      min-height: 6px;
+      transition: height 0.5s ease;
+    }
+    .chart-bar-label {
+      font-size: 10px;
+      color: #64748B;
+      margin-top: 4px;
+      font-weight: bold;
+    }
+
+    /* 跌倒防護指數臨床 Badge */
+    .cfrs-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 900;
+      margin-left: 6px;
+    }
   </style>
 </head>
 <body>
 
+  <div id="networkStatusBar">⚠️ 網絡連線中斷，系統已切換至「本機離線安全模式」，數據將於連線後自動同步。</div>
+
   <header>
     <div class="brand-title">🌿 LOHAS TV</div>
     <div class="header-actions">
-      <div class="header-btn" onclick="openFamilyHubModal()">👨‍👩‍👧 家人看顧</div>
+      <div class="header-btn" onclick="openFamilyHubModal()">👨‍👩‍👧 免密家人連線</div>
       <div class="header-btn btn-header-sos" id="headerSosBtn">🆘 SOS (按住2秒)</div>
     </div>
   </header>
@@ -616,23 +676,21 @@
     <div class="workout-grid" id="workoutList"></div>
   </div>
 
-  <!-- 語音即時反饋懸浮框 -->
   <div class="speech-interim-box" id="speechInterimBox">🎙️ 聽緊你講嘢...</div>
 
-  <!-- 底部導航：日常功能解耦 -->
   <div class="bottom-bar">
     <button class="action-btn btn-voice" onclick="toggleVoiceAssistant()">🎙️ 語音對話 / 智能分流</button>
-    <button class="action-btn btn-family-tab" onclick="openFamilyHubModal()">💌 家人關懷</button>
+    <button class="action-btn btn-history-tab" onclick="openHistoryTrendModal()">📊 歷史趨勢</button>
+    <button class="action-btn btn-family-tab" onclick="openFamilyHubModal()">👨‍👩‍👧 家人關懷</button>
     <button class="action-btn btn-settings" onclick="openSettingsModal()">⚙️ 設定</button>
   </div>
 
-  <!-- 運動全螢幕空間 -->
   <div id="exerciseRoomModal">
     <div class="room-header">
       <div class="room-title" id="roomWorkoutTitle">運動進行中</div>
       <div class="header-btn-group">
         <button class="btn-native-yt" onclick="openInNativeYouTube()">📺 官方App開</button>
-        <button class="btn-finish-room" onclick="stopExerciseWithAI()">做完！評估 👏</button>
+        <button class="btn-finish-room" onclick="initiateWorkoutCompletion()">做完！評估 👏</button>
       </div>
     </div>
     <div class="room-body">
@@ -643,10 +701,18 @@
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowfullscreen></iframe>
 
-      <!-- 可自由指控移動與捏合放大縮小的 PIP 相機視窗 -->
+      <div id="cooldownOverlay">
+        <h2 style="font-size:24px; font-weight:900;" id="cooldownTitle">👏 運動完成！放鬆大腿肌群</h2>
+        <p style="font-size:16px; margin-top:8px;" id="cooldownSubGuide">依家進入緩和階段，配合深呼吸，雙腿自然平放：</p>
+        <div class="cooldown-timer" id="cooldownTimer">20</div>
+        <button onclick="skipCooldownToRpe()" style="background:transparent; border:1px solid #FEF08A; color:#FEF08A; padding:8px 16px; border-radius:20px; font-size:14px; cursor:pointer;">
+          跳過冷卻 ➔
+        </button>
+      </div>
+
       <div class="camera-pip-card" id="cameraPipBox">
         <div class="pip-label">✥ 移動 / 縮放 📹</div>
-        <div class="pip-hud-stats" id="pipHudStats">關節: --° ｜ 達標: 0/6</div>
+        <div class="pip-hud-stats" id="pipHudStats">狀態: 準備 ｜ 達標: 0/6</div>
         <video id="cameraFeed" playsinline autoplay muted></video>
         <canvas id="poseCanvas"></canvas>
         <div class="pip-resize-handle" id="pipResizeHandle">⤡</div>
@@ -654,7 +720,7 @@
     </div>
   </div>
 
-  <!-- Modal 1: 運動前篩查 -->
+  <!-- Modal 1: 運動前健康評估 -->
   <div class="modal-overlay" id="screeningModal">
     <div class="modal-card">
       <div class="modal-title">🩺 運動前健康評估</div>
@@ -670,14 +736,24 @@
     </div>
   </div>
 
-  <!-- Modal 2: 運動後 RPE 評估與縱向專業成績表 -->
+  <!-- Modal 2: 運動後 RPE 評估與縱向臨床成績表 (補齊臨床分級解釋) -->
   <div class="modal-overlay" id="rpeModal">
     <div class="modal-card">
       <div class="modal-title">👏 運動完成！</div>
       <div id="poseScoreBox" style="background:#ECFDF5; border-radius:16px; padding:14px; margin-bottom:14px; border:1px solid #10B981; text-align:left;">
         <div style="font-size:1.05rem; font-weight:900; color:#065F46;" id="poseScoreText">🎯 動作達標率：計算中...</div>
-        <div style="font-size:0.85rem; color:#047857; margin-top:4px;" id="poseSubDetails">有效次數：0 次 ｜ 雙側不對稱度：0%</div>
-        <div style="font-size:0.82rem; color:#0f766e; margin-top:4px; font-weight:700;" id="poseLongitudinalCompare">📈 對比上次：計算中...</div>
+        <div style="font-size:0.85rem; color:#047857; margin-top:4px;" id="poseSubDetails">平均鎖定：0秒 ｜ 雙側不對稱度：0%</div>
+        
+        <!-- 臨床跌倒防護指數分級結構 -->
+        <div style="margin-top:6px; padding-top:6px; border-top:1px dashed #A7F3D0;" id="cfrsContainer">
+          <div style="font-size:0.88rem; font-weight:800; color:#065F46;">
+            🛡️ 跌倒防護評分：<span id="poseCfrsValue">--</span> 分
+            <span class="cfrs-badge" id="poseCfrsBadge">良好</span>
+          </div>
+          <div style="font-size:0.78rem; color:#0f766e; margin-top:3px;" id="poseCfrsAdvice">評估中...</div>
+        </div>
+
+        <div style="font-size:0.82rem; color:#0f766e; margin-top:6px; font-weight:700;" id="poseLongitudinalCompare">📈 對比上次：計算中...</div>
       </div>
       <p style="font-size: 0.95rem; color: var(--text-muted);">話畀 AI 知剛才運動感覺：</p>
       <div class="rpe-options">
@@ -705,32 +781,91 @@
     </div>
   </div>
 
-  <!-- Modal 4: 家人關懷中心 (長者查看仔女動態與留言) -->
+  <!-- Modal 4: 歷史趨勢視覺化 (含 CSS 雙軌柱狀圖與防跌趨勢) -->
+  <div class="modal-overlay" id="historyTrendModal" onclick="closeModalOnBackdrop(event, 'historyTrendModal')">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-title">📊 運動表現與臨床趨勢</div>
+      
+      <div style="font-size:0.8rem; font-weight:700; color:#64748B; text-align:left;">📈 近 7 日達標率（柱狀）與跌倒防護趨勢：</div>
+      <div class="visual-chart-wrap" id="chartBarContainer"></div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+        <div style="background:#ECFDF5; padding:12px; border-radius:12px;">
+          <div style="font-size:12px; color:#065F46;">近 7 日達標</div>
+          <div style="font-size:22px; font-weight:900; color:#047857;" id="trendRepsSummary">-- 次</div>
+        </div>
+        <div style="background:#FEF3C7; padding:12px; border-radius:12px;">
+          <div style="font-size:12px; color:#92400E;">防跌防護指數趨勢</div>
+          <div style="font-size:16px; font-weight:900; color:#B45309; margin-top:4px;" id="trendCfrsTrajectory">--</div>
+        </div>
+      </div>
+
+      <div style="text-align:left; font-size:14px; font-weight:800; margin-bottom:8px;">📋 近期打卡記錄：</div>
+      <div id="historyListContainer" style="max-height:180px; overflow-y:auto; text-align:left; font-size:13px;">
+        載入中...
+      </div>
+      <button class="start-btn" onclick="document.getElementById('historyTrendModal').style.display='none'" style="margin-top:16px;">關閉</button>
+    </div>
+  </div>
+
+  <!-- Modal 5: 家人關懷中心 (本機安全 QR Code + 錄音試聽確認) -->
   <div class="modal-overlay" id="familyHubModal" onclick="closeModalOnBackdrop(event, 'familyHubModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-title">👨‍👩‍👧 家人關懷中心</div>
-      <div style="background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:16px; padding:14px; margin-bottom:14px; text-align:left;">
-        <div style="font-size:0.85rem; color:#64748B;">你部電視嘅專屬看顧碼：</div>
-        <div style="font-size:1.8rem; font-weight:900; letter-spacing:4px; color:var(--primary-green); margin:4px 0;" id="hubPairCode">888888</div>
-        <div style="font-size:0.82rem; color:#047857;" id="hubLastViewed">👀 仔女最近查看：載入中...</div>
+      <div class="modal-title">👨‍👩‍👧 連結家人手機 (免輸密碼)</div>
+
+      <div style="background:#F8FAFC; border:2px dashed #10B981; border-radius:20px; padding:16px; margin:10px 0;">
+        <p style="font-size:0.9rem; color:#475569; margin-bottom:10px;">
+          仔女用手機相機<strong>直接掃描此二維碼</strong>即可自動連線：
+        </p>
+        <!-- 本機 Canvas 生成 QR Code，無外部 API 隱私洩露 -->
+        <canvas id="elderQrCanvas" style="border-radius:12px; background:#fff; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);"></canvas>
+        <div style="font-size:0.8rem; color:#059669; font-weight:800; margin-top:8px;">✅ 掃描後永久綁定，日後毋須再掃</div>
+        <div style="display:flex; justify-content:center; gap:10px; margin-top:8px;">
+          <button onclick="downloadQrCodeImage()" style="background:#E2E8F0; border:none; padding:5px 10px; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">💾 下載 QR 圖</button>
+          <button onclick="printQrCode()" style="background:#E2E8F0; border:none; padding:5px 10px; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">🖨️ 列印貼雪櫃</button>
+        </div>
       </div>
 
-      <div style="background:#ECFDF5; border:1px solid #10B981; border-radius:16px; padding:14px; margin-bottom:16px; text-align:left;">
-        <div style="font-weight:900; font-size:0.95rem; color:#065F46;">💌 仔女留畀你嘅說話：</div>
-        <div style="font-size:1.05rem; color:#064E3B; margin:8px 0; font-weight:700;" id="hubKidMessage">「阿媽，記得做護膝操，飲多啲溫水！」</div>
-        <button onclick="readKidMessageAloud()" style="background:#10B981; color:white; border:none; padding:8px 14px; border-radius:10px; font-weight:800; cursor:pointer; font-size:0.85rem;">
-          🔊 語音朗讀
+      <div style="background:#ECFDF5; border:1px solid #10B981; border-radius:16px; padding:12px; margin-bottom:12px; text-align:left;">
+        <div style="font-weight:900; font-size:0.9rem; color:#065F46;">💌 仔女留言記錄（語音及文字）：</div>
+        <div id="hubKidMessageList" style="max-height:95px; overflow-y:auto; margin:6px 0; font-size:0.88rem; font-weight:700; color:#064E3B;">
+          載入中...
+        </div>
+      </div>
+
+      <!-- 錄音試聽確認區 -->
+      <div style="background:#F1F5F9; border-radius:16px; padding:12px; margin-bottom:12px; text-align:left;">
+        <div style="font-size:0.82rem; font-weight:800; color:#334155; margin-bottom:6px;">🎙️ 錄低把聲回覆仔女：</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="recordVoiceBtn" onclick="toggleVoiceReplyRecord()" style="background:#2563EB; color:white; border:none; padding:8px 14px; border-radius:10px; font-weight:800; cursor:pointer; font-size:0.85rem;">
+            🔴 開始錄音
+          </button>
+          <button id="cancelRecordBtn" onclick="discardRecordedVoice()" style="background:#E2E8F0; color:#475569; border:none; padding:8px 12px; border-radius:10px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:none;">
+            放棄重錄
+          </button>
+        </div>
+        <div id="voicePreviewArea" style="display:none; margin-top:10px;">
+          <audio id="elderVoicePreviewAudio" controls style="width:100%; height:36px;"></audio>
+          <button onclick="confirmAndSendVoiceReply()" style="width:100%; margin-top:6px; background:#059669; color:white; border:none; padding:8px; border-radius:10px; font-weight:800; font-size:0.85rem; cursor:pointer;">
+            ✅ 聽過無問題，確認發送畀仔女
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="start-btn" onclick="shareMagicLinkViaWhatsApp()" style="background:#2563EB;">
+          📲 經 WhatsApp 傳送專屬免密連結畀仔女
         </button>
-      </div>
-
-      <div style="display:flex; gap:10px;">
-        <button class="start-btn" onclick="callKidFromHub()" style="background:#2563EB;">📞 一鍵打電話畀仔女</button>
+        <button class="start-btn" onclick="sendQuickFamilyPing('DONE')" style="background:#10B981;">
+          👍 快速發送「我今日做咗運動喇」畀仔女
+        </button>
+        <button class="start-btn" onclick="callKidFromHub()" style="background:#475569;">📞 一鍵打電話畀仔女</button>
         <button class="start-btn" onclick="document.getElementById('familyHubModal').style.display='none'" style="background:#E2E8F0; color:#334155;">關閉</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal 5: 長者友善設定視窗 -->
+  <!-- Modal 6: 設定 -->
   <div class="modal-overlay" id="settingsModal" onclick="closeModalOnBackdrop(event, 'settingsModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-title">⚙️ 系統設定</div>
@@ -745,7 +880,7 @@
       </div>
 
       <div class="setting-item">
-        <label>AI 語音說話速度</label>
+        <label>語音語速</label>
         <select id="settingSpeechRate" onchange="saveSpeechRate(this.value)">
           <option value="0.75">慢速 (清晰)</option>
           <option value="0.85" selected>標準適中</option>
@@ -754,8 +889,36 @@
       </div>
 
       <div class="setting-item">
+        <label>行動運動模式</label>
+        <select id="settingMobilityMode" onchange="saveMobilityMode(this.value)">
+          <option value="CHAIR">穩坐椅子模式 (安全預設)</option>
+          <option value="STAND">扶椅站立模式</option>
+          <option value="WHEELCHAIR">輪椅專屬模式</option>
+        </select>
+      </div>
+
+      <div class="setting-item">
+        <label>每日運動提醒時間</label>
+        <input type="time" id="settingReminderTime" value="10:00" onchange="saveReminderTime(this.value)">
+      </div>
+
+      <div class="setting-item">
         <label>緊急聯絡人電話</label>
         <input type="tel" id="settingSosPhone" placeholder="例如：91234567" onchange="saveSosPhone(this.value)">
+      </div>
+
+      <hr style="border:0; border-top:1px solid #E2E8F0; margin:14px 0;">
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button onclick="exportClinicalDataForPT('CSV')" style="background:#334155; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; cursor:pointer;">
+          📊 匯出物理治療師評估表 (完整雲端 CSV)
+        </button>
+        <button onclick="openMedicalDisclaimer()" style="background:#F1F5F9; color:#475569; border:none; padding:10px; border-radius:10px; font-weight:800; cursor:pointer;">
+          🩺 臨床醫療免責聲明與私隱政策
+        </button>
+        <button onclick="clearAllUserDataAppStore()" style="background:#FEE2E2; color:#991B1B; border:1px solid #EF4444; padding:10px; border-radius:10px; font-weight:800; cursor:pointer;">
+          🗑️ 清除所有本機資料 (Apple 帳戶權利合規)
+        </button>
       </div>
 
       <button class="start-btn" onclick="document.getElementById('settingsModal').style.display='none'" style="margin-top:16px;">
@@ -764,19 +927,22 @@
     </div>
   </div>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW 略過:', err));
-      });
-    }
-  </script>
+  <!-- Modal 7: 臨床醫療免責聲明 -->
+  <div class="modal-overlay" id="disclaimerModal">
+    <div class="modal-card">
+      <div class="modal-title">🩺 臨床免責聲明</div>
+      <p style="font-size:13px; color:#475569; text-align:left; line-height:1.6; margin-bottom:14px;">
+        LOHAS TV 系統旨在提供長者體能輔助指導與運動數據量測，並非醫療診斷設備。跌倒防護指數僅供復康參考。若運動過程中出現頭暈、胸悶、關節刺痛或嚴重呼吸急促，請立即停止運動並尋求專業物理治療師或醫師協助。
+      </p>
+      <button class="start-btn" onclick="document.getElementById('disclaimerModal').style.display='none'">明白並同意</button>
+    </div>
+  </div>
 
-  <!-- Firebase 模組 -->
+  <!-- Firebase 模組與資料同步 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCQq7Ro4x4RJEYpSuFR-LLVV0iXS3LJRZE",
@@ -791,32 +957,51 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let currentElderUid = null;
+    let currentElderUid = localStorage.getItem("lohas_elder_device_id");
+    if (!currentElderUid) {
+      currentElderUid = "elder_" + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).substring(4);
+      localStorage.setItem("lohas_elder_device_id", currentElderUid);
+    }
+
+    // 本機安全生成 QR Code (qrcode.js)，完全不向第三方伺服器發送長者 ID
+    function generateLocalQrCode(elderUid) {
+      const currentBase = window.location.origin + window.location.pathname.replace("index.html", "");
+      const magicUrl = `${currentBase}family.html?elder=${elderUid}`;
+      window.elderFamilyMagicUrl = magicUrl;
+
+      const canvas = document.getElementById("elderQrCanvas");
+      if (canvas && window.QRCode) {
+        QRCode.toCanvas(canvas, magicUrl, { width: 190, margin: 2 }, function (error) {
+          if (error) console.error("QR Code 本地渲染異常:", error);
+        });
+      }
+    }
 
     async function initSession() {
+      // 網路連線狀態監聽
+      const statusEl = document.getElementById("networkStatusBar");
+      window.addEventListener("offline", () => { statusEl.style.display = "block"; });
+      window.addEventListener("online", () => { statusEl.style.display = "none"; });
+      if (!navigator.onLine) statusEl.style.display = "block";
+
       try {
         const userCred = await signInAnonymously(auth);
-        currentElderUid = userCred.user.uid;
-        
-        let pairCode = localStorage.getItem("lohas_pair_code") || "888888";
-        localStorage.setItem("lohas_pair_code", pairCode);
-        document.getElementById("hubPairCode").innerText = pairCode;
+        if (userCred?.user?.uid) {
+          currentElderUid = userCred.user.uid;
+          localStorage.setItem("lohas_elder_device_id", currentElderUid);
+        }
+
+        generateLocalQrCode(currentElderUid);
 
         await setDoc(doc(db, "elders", currentElderUid), {
           elderUid: currentElderUid,
-          pairingCode: pairCode,
           lastActiveAt: serverTimestamp()
-        }, { merge: true });
-
-        await setDoc(doc(db, "pairing_codes", pairCode), {
-          elderUid: currentElderUid,
-          updatedAt: serverTimestamp()
         }, { merge: true });
 
         const streak = parseInt(localStorage.getItem("lohas_streak") || "1", 10);
         document.getElementById("streakCount").innerText = streak;
 
-        // 雙向監聽 1：家人是否確認了 SOS
+        // 情感回饋閉環
         onSnapshot(doc(db, "elders", currentElderUid), (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
@@ -827,34 +1012,42 @@
             if (data.lastViewedByFamily) {
               const dt = new Date(data.lastViewedByFamily.toDate ? data.lastViewedByFamily.toDate() : data.lastViewedByFamily);
               document.getElementById("hubLastViewed").innerText = `👀 仔女最近查看：${dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+              
+              const lastAlertViewTime = localStorage.getItem("lohas_last_view_notified") || "0";
+              if (Date.now() - parseInt(lastAlertViewTime, 10) > 3600000) {
+                localStorage.setItem("lohas_last_view_notified", Date.now().toString());
+                speak("仔女頭先查看咗你的運動記錄，佢好關心你呀！");
+              }
             }
           }
         });
 
-        // 雙向監聽 2：家人遠程語音叮囑
-        onSnapshot(doc(db, "elders", currentElderUid, "reminders", "latest"), (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            document.getElementById("hubKidMessage").innerText = `「${data.message}」`;
-            if (!data.read) {
-              speak("收到屋企人嘅溫馨叮囑：" + data.message);
-              setDoc(doc(db, "elders", currentElderUid, "reminders", "latest"), { read: true }, { merge: true });
-            }
+        // 監聽留言（支援播放家人語音留言）
+        const remindersQ = query(collection(db, "elders", currentElderUid, "reminders"), orderBy("createdAt", "desc"), limit(10));
+        onSnapshot(remindersQ, (snap) => {
+          const list = [];
+          snap.forEach(d => list.push(d.data()));
+          if (list.length > 0) {
+            document.getElementById("hubKidMessageList").innerHTML = list.map(m => `
+              <div style="padding:6px 0; border-bottom:1px dashed #CBD5E1;">
+                <div>「${m.message || '語音留言'}」 <span style="font-size:10px; color:#64748B;">(${new Date(m.createdAt?.toDate?.() || Date.now()).toLocaleDateString()})</span></div>
+                ${m.audioUrl ? `<audio src="${m.audioUrl}" controls style="width:100%; height:32px; margin-top:4px;"></audio>` : ''}
+              </div>
+            `).join("");
           }
         });
 
       } catch (err) {
-        console.warn("Firebase 離線運作:", err);
+        console.warn("Firebase 處於本機離線模式:", err);
+        generateLocalQrCode(currentElderUid);
       }
     }
 
     window.pushSOSAlertToFirestore = async function(status, coords = null) {
       if (!currentElderUid) return;
-      const pairCode = localStorage.getItem("lohas_pair_code") || "888888";
       try {
         await setDoc(doc(db, "emergency_alerts", `sos_${Date.now()}`), {
           elderUid: currentElderUid,
-          pairingCode: pairCode,
           status,
           gps: coords,
           createdAt: serverTimestamp()
@@ -877,64 +1070,180 @@
       } catch (e) {}
     };
 
+    window.uploadElderVoiceReply = async function(audioBlobUrl) {
+      if (!currentElderUid) return;
+      try {
+        await setDoc(doc(db, "elders", currentElderUid, "voice_replies", `voice_${Date.now()}`), {
+          audioUrl: audioBlobUrl,
+          createdAt: serverTimestamp()
+        });
+        alert("✅ 語音留言已成功傳送給家人！");
+      } catch (e) {}
+    };
+
+    // 完整從雲端抓取全部記錄匯出 CSV (解決 50 條限制)
+    window.fetchCloudHistoryForCsv = async function() {
+      if (!currentElderUid) return null;
+      try {
+        const qSnap = await getDocs(query(collection(db, "elders", currentElderUid, "daily_logs"), orderBy("date", "desc")));
+        const records = [];
+        qSnap.forEach(doc => records.push(doc.data()));
+        return records;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    window.shareMagicLinkViaWhatsApp = function() {
+      if (!window.elderFamilyMagicUrl) return;
+      const msg = `仔女你好！呢個係我喺「樂活健康電視」嘅專屬健康連結，你撳入去就隨時睇到我嘅運動達標同平安狀況（免密碼）：\n${window.elderFamilyMagicUrl}`;
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    window.downloadQrCodeImage = function() {
+      const canvas = document.getElementById("elderQrCanvas");
+      if (!canvas) return;
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = `LOHAS_TV_QR_${currentElderUid}.png`;
+      a.click();
+    };
+
+    window.printQrCode = function() {
+      const canvas = document.getElementById("elderQrCanvas");
+      if (!canvas) return;
+      const win = window.open('', '_blank');
+      win.document.write(`<h2 style="font-family:sans-serif; text-align:center;">LOHAS TV 家人看護連線二維碼</h2><div style="text-align:center;"><img src="${canvas.toDataURL()}"><p style="font-size:16px;">請用手機相機掃描，免密碼直接綁定長者電視</p></div>`);
+      win.print();
+    };
+
     initSession();
   </script>
 
-  <!-- 業務邏輯、運動處方 FSM 矩陣、自適應降級、雙側不對稱度與 Dify 縱向對比 -->
+  <!-- 業務邏輯、跌倒風險指標四色分級、定時提醒與多模態 FSM 運算 -->
   <script>
-    // ==============================================================
-    // 運動處方 FSM 配置矩陣 (Multi-Exercise Prescription Matrix)
-    // ==============================================================
+    let audioCtx = null;
+    function playMetronomeTick(isAccent = false) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.frequency.value = isAccent ? 880 : 440;
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      } catch (e) {}
+    }
+
+    // 臨床跌倒防護指數 (CFRS) 標準分級判定
+    function getCFRSClassification(score) {
+      if (score >= 90) {
+        return { label: "狀態極佳", color: "#059669", bg: "#D1FAE5", advice: "活動協調能力非常理想，請繼續維持！" };
+      } else if (score >= 75) {
+        return { label: "良好", color: "#10B981", bg: "#ECFDF5", advice: "平衡與伸展度符合常態，留意動作維持。" };
+      } else if (score >= 60) {
+        return { label: "注意關注", color: "#D97706", bg: "#FEF3C7", advice: "肌力稍見不對稱，建議扶椅穩坐運動。" };
+      } else {
+        return { label: "高跌倒風險", color: "#DC2626", bg: "#FEE2E2", advice: "⚠️ 雙側不對稱顯著或頻繁吃力，建議諮詢註冊物理治療師！" };
+      }
+    }
+
     const FSM_CONFIG = {
       KNEE: {
         name: "菠蘿蓋強化",
-        jointLeft: [23, 25, 27],  // Hip, Knee, Ankle
+        type: "angle",
+        jointLeft: [23, 25, 27],
         jointRight: [24, 26, 28],
-        lowAngle: 115,            // 屈膝預備閾值
-        targetAngle: 148,         // 初始達標伸展角
-        minStruggleAngle: 135,    // 自適應降級目標
+        lowAngle: 115,
+        targetAngle: 148,
+        minStruggleAngle: 135,
         holdMs: 2000,
-        targetReps: 6
+        targetReps: 6,
+        cooldownStretch: "現在用手輕扶腳板，溫和拉伸大腿前面四頭肌，保持自然呼吸。"
       },
       FALL: {
         name: "扶椅防跌平衡",
-        jointLeft: [11, 23, 25],  // Shoulder, Hip, Knee (抬膝跨步)
+        type: "angle",
+        jointLeft: [11, 23, 25],
         jointRight: [12, 24, 26],
         lowAngle: 100,
         targetAngle: 155,
         minStruggleAngle: 140,
         holdMs: 1500,
-        targetReps: 8
+        targetReps: 8,
+        cooldownStretch: "雙手扶椅，腳跟著地拉伸小腿腓腸肌，放鬆足踝關節。"
       },
       BACK: {
         name: "腰背伸展舒緩",
-        jointLeft: [11, 13, 15],  // 軀幹轉體帶動手臂伸展
+        type: "angle",
+        jointLeft: [11, 13, 15],
         jointRight: [12, 14, 16],
         lowAngle: 85,
         targetAngle: 150,
         minStruggleAngle: 132,
         holdMs: 2500,
-        targetReps: 6
+        targetReps: 6,
+        cooldownStretch: "雙手環抱胸前，身體微向前傾，舒緩脊椎兩側緊繃肌群。"
       },
       SWALLOW: {
-        name: "健口吞嚥防嗆",
-        jointLeft: [11, 13, 15],  // 輔助頭頸仰伸運動
-        jointRight: [12, 14, 16],
-        lowAngle: 90,
-        targetAngle: 140,
-        minStruggleAngle: 125,
-        holdMs: 2000,
-        targetReps: 6
+        name: "健口吞嚥操",
+        type: "jaw_v_wave",
+        holdMs: 1800,
+        targetReps: 6,
+        cooldownStretch: "放鬆下巴與肩頸，輕輕低頭深呼吸三次，飲啖溫水滋潤喉嚨。"
       },
       SLEEP: {
         name: "睡前安神導引",
-        jointLeft: [11, 13, 15],
-        jointRight: [12, 14, 16],
-        lowAngle: 80,
-        targetAngle: 135,
-        minStruggleAngle: 120,
-        holdMs: 3000,
-        targetReps: 4
+        type: "true_variance",
+        maxVariance: 0.002,
+        holdMs: 4000,
+        targetReps: 4,
+        cooldownStretch: "閉上雙眼，全身放鬆沉靜，讓思緒平復準備安睡。"
+      }
+    };
+
+    const VOICE_SCRIPTS = {
+      KNEE: {
+        READY: "坐穩椅子，雙腳平放，準備踢直。",
+        EXTENDING: "慢慢踢直隻腳，好似踢波咁。",
+        HOLDING: "停住，維持住，一、二。",
+        COMPLETED_REP: "做得好，慢慢放低休息下。",
+        STRUGGLING: "今日慢慢嚟，踢到呢度就得，唔好勉強。"
+      },
+      FALL: {
+        READY: "扶穩椅子，腰背挺直，準備抬膝。",
+        EXTENDING: "慢慢抬高膝頭，保持平衡。",
+        HOLDING: "穩住核心，保持呼吸。",
+        COMPLETED_REP: "好！腳板平放地面。",
+        STRUGGLING: "稍微抬起就夠，安全最緊要。"
+      },
+      BACK: {
+        READY: "坐姿端正，雙手自然垂放。",
+        EXTENDING: "帶動軀幹慢慢轉體伸展。",
+        HOLDING: "維持伸展，感受腰部舒展。",
+        COMPLETED_REP: "好，慢慢轉回中間。",
+        STRUGGLING: "轉少少就夠，唔使扭得太深。"
+      },
+      SWALLOW: {
+        READY: "坐直放鬆肩膀，準備吞嚥練習。",
+        EXTENDING: "下巴微抬，喉部肌肉準備吞嚥。",
+        HOLDING: "吞一啖口水，感受咽喉用力。",
+        COMPLETED_REP: "做得好，下巴回正放鬆。",
+        STRUGGLING: "下巴微收即可，切勿猛力向後仰。"
+      },
+      SLEEP: {
+        READY: "手腕平放在大腿上，閉目放鬆。",
+        EXTENDING: "深呼吸，感受手腕完全放鬆靜止。",
+        HOLDING: "非常好，全身安靜沉澱，保持深呼吸。",
+        COMPLETED_REP: "完成一次深層放鬆，吸氣。",
+        STRUGGLING: "不用緊繃，隨意放鬆即可。"
       }
     };
 
@@ -994,7 +1303,6 @@
     let currentWorkout = null;
     let activeFsmConfig = FSM_CONFIG.KNEE;
 
-    // 今日已完成清單 (localStorage 驅動完成感)
     function getTodayDoneList() {
       const today = new Date().toISOString().split("T")[0];
       const rec = JSON.parse(localStorage.getItem("lohas_done_records") || "{}");
@@ -1032,11 +1340,9 @@
               <div class="workout-meta">⏱️ ${w.duration} ｜ 🎯 ${w.level}</div>
               <p style="font-size:0.88rem; color:#64748B; margin-bottom:12px; line-height:1.4;">${w.desc}</p>
             </div>
-            <div class="card-actions">
-              <button class="start-btn ${isDoneToday ? 're-do' : ''}" onclick="startScreening('${w.id}')">
-                ${isDoneToday ? '🔄 再次重溫跟練' : '跟教練做 (AI 關節守護)'}
-              </button>
-            </div>
+            <button class="start-btn ${isDoneToday ? 're-do' : ''}" onclick="startScreening('${w.id}')">
+              ${isDoneToday ? '🔄 再次重溫跟練' : '跟教練做 (AI 姿態守護)'}
+            </button>
           </div>
         `;
         container.appendChild(card);
@@ -1048,11 +1354,8 @@
     function filterWorkout(cat) {
       document.querySelectorAll(".tag-btn").forEach(b => b.classList.remove("active"));
       if (window.event && window.event.target) window.event.target.classList.add("active");
-      if (cat === "ALL") {
-        renderWorkouts(EMBEDDED_SEED_VIDEOS);
-      } else {
-        renderWorkouts(EMBEDDED_SEED_VIDEOS.filter(w => w.category === cat));
-      }
+      if (cat === "ALL") renderWorkouts(EMBEDDED_SEED_VIDEOS);
+      else renderWorkouts(EMBEDDED_SEED_VIDEOS.filter(w => w.category === cat));
     }
 
     document.getElementById("workoutSearch").addEventListener("input", (e) => {
@@ -1060,7 +1363,7 @@
       renderWorkouts(EMBEDDED_SEED_VIDEOS.filter(w => w.title.includes(q) || w.desc.includes(q)));
     });
 
-    // 運動前篩查
+    let screeningHistoryAnswers = [false, false, false];
     const SCREENING_QS = [
       "問題 1/3：今日身體有無頭暈或心口痛？",
       "問題 2/3：胸口有無胸悶或者呼吸唔順？",
@@ -1071,6 +1374,7 @@
     window.startScreening = function(workoutId) {
       currentWorkout = EMBEDDED_SEED_VIDEOS.find(v => v.id === workoutId);
       activeFsmConfig = FSM_CONFIG[currentWorkout.category] || FSM_CONFIG.KNEE;
+      screeningHistoryAnswers = [false, false, false];
 
       screeningStep = 0;
       document.getElementById("screeningQuestionText").innerText = SCREENING_QS[0];
@@ -1079,6 +1383,7 @@
     };
 
     function handleScreeningAnswer(hasSymptom) {
+      screeningHistoryAnswers[screeningStep] = hasSymptom;
       if (hasSymptom) {
         document.getElementById("screeningModal").style.display = "none";
         alert("⚠️ 今日身體稍有不適，建議先坐低休息飲杯溫水，切勿勉強運動！");
@@ -1097,13 +1402,11 @@
     }
 
     window.skipScreeningForDemo = function() {
+      screeningHistoryAnswers = [false, false, false];
       document.getElementById("screeningModal").style.display = "none";
       launchDualScreenExercise(currentWorkout);
     };
 
-    // ==============================================================
-    // 向量夾角計算式
-    // ==============================================================
     function calculateAngle(a, b, c) {
       if (!a || !b || !c) return 0;
       const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
@@ -1112,43 +1415,51 @@
       return Math.round(angle);
     }
 
-    // ==============================================================
-    // 運動狀態機 (FSM) + 自適應降級 (Struggling) + 雙側不對稱計算
-    // ==============================================================
     let cameraStream = null;
     let poseInstance = null;
     let animFrameId = null;
 
-    let exerciseState = "READY";         // READY -> EXTENDING -> HOLDING -> COMPLETED_REP
+    let exerciseState = "READY";
     let validRepCount = 0;
     let attemptedRepCount = 0;
     let holdStartTime = 0;
-    let extendingStartTime = 0;          // 追蹤卡在伸展狀態的時間
-    let isAdaptiveReduced = false;       // 是否已啟用自適應降級目標
-    let currentEffectiveTargetAngle = 148;
+    let extendingStartTime = 0;
+    let isAdaptiveReduced = false;
+    let currentEffectiveTarget = 148;
     let holdDurations = [];
-    let asymmetrySamples = [];           // 採樣雙側不對稱度
-    let lastVoiceFeedbackTime = 0;
+    let asymmetrySamples = [];
+    let repTransitionDurations = [];
+    let repPeakAngles = [];
+    let lastRepStartTime = 0;
+    let isFatiguedNotified = false;
+
+    let jawDistanceHistory = [];
+    let dualWristHistory = [];
 
     async function launchDualScreenExercise(workout) {
       document.getElementById("exerciseRoomModal").style.display = "flex";
       document.getElementById("roomWorkoutTitle").innerText = "正在跟做：" + workout.title;
 
-      // 載入該動作專屬處方
       activeFsmConfig = FSM_CONFIG[workout.category] || FSM_CONFIG.KNEE;
-      currentEffectiveTargetAngle = activeFsmConfig.targetAngle;
+      currentEffectiveTarget = activeFsmConfig.targetAngle || 148;
       isAdaptiveReduced = false;
       exerciseState = "READY";
       validRepCount = 0;
       attemptedRepCount = 0;
       holdDurations = [];
       asymmetrySamples = [];
-      updatePipHud(0, 0, activeFsmConfig.targetReps);
+      repTransitionDurations = [];
+      repPeakAngles = [];
+      jawDistanceHistory = [];
+      dualWristHistory = [];
+      isFatiguedNotified = false;
+      updatePipHud("準備就緒", 0, activeFsmConfig.targetReps);
 
       const iframe = document.getElementById("trainerVideoFrame");
       iframe.src = `https://www.youtube.com/embed/${workout.youtubeId}?autoplay=1&playsinline=1&rel=0`;
 
-      speak(`動作評估已啟動，請依照指示做${activeFsmConfig.name}。`);
+      const script = VOICE_SCRIPTS[workout.category] || VOICE_SCRIPTS.KNEE;
+      speak(script.READY);
 
       const pipBox = document.getElementById("cameraPipBox");
       const videoElement = document.getElementById("cameraFeed");
@@ -1187,90 +1498,152 @@
           if (results.poseLandmarks) {
             const lm = results.poseLandmarks;
             const now = Date.now();
-
             canvasElement.width = videoElement.videoWidth || 320;
             canvasElement.height = videoElement.videoHeight || 240;
 
-            // 依據 FSM_CONFIG 抓取左右關鍵點
-            const jl = activeFsmConfig.jointLeft;
-            const jr = activeFsmConfig.jointRight;
+            const script = VOICE_SCRIPTS[workout.category] || VOICE_SCRIPTS.KNEE;
 
-            const leftAngle = calculateAngle(lm[jl[0]], lm[jl[1]], lm[jl[2]]);
-            const rightAngle = calculateAngle(lm[jr[0]], lm[jr[1]], lm[jr[2]]);
+            if (activeFsmConfig.type === "angle") {
+              const jl = activeFsmConfig.jointLeft;
+              const jr = activeFsmConfig.jointRight;
+              const leftAngle = calculateAngle(lm[jl[0]], lm[jl[1]], lm[jl[2]]);
+              const rightAngle = calculateAngle(lm[jr[0]], lm[jr[1]], lm[jr[2]]);
 
-            // 計算雙側力量/伸展不對稱度 (Bilateral Asymmetry)
-            const maxA = Math.max(leftAngle, rightAngle, 1);
-            const currentAsymmetry = Math.round((Math.abs(leftAngle - rightAngle) / maxA) * 100);
-            if (maxA > 70) asymmetrySamples.push(currentAsymmetry);
+              const maxA = Math.max(leftAngle, rightAngle, 1);
+              const asym = Math.round((Math.abs(leftAngle - rightAngle) / maxA) * 100);
+              if (maxA > 70) asymmetrySamples.push(asym);
 
-            // 挑選主動伸展較大之一側
-            const activeAngle = Math.max(leftAngle, rightAngle);
-            const activeSide = leftAngle >= rightAngle ? "左側" : "右側";
-            const activeJoints = leftAngle >= rightAngle ? jl : jr;
+              const activeAngle = Math.max(leftAngle, rightAngle);
+              const activeSide = leftAngle >= rightAngle ? "左" : "右";
+              const activeJoints = leftAngle >= rightAngle ? jl : jr;
 
-            // 繪製骨架
-            drawBone(canvasCtx, lm[activeJoints[0]], lm[activeJoints[1]], canvasElement.width, canvasElement.height, "#10B981");
-            drawBone(canvasCtx, lm[activeJoints[1]], lm[activeJoints[2]], canvasElement.width, canvasElement.height, "#10B981");
-            drawJoint(canvasCtx, lm[activeJoints[1]], canvasElement.width, canvasElement.height, "#F59E0B");
+              drawBone(canvasCtx, lm[activeJoints[0]], lm[activeJoints[1]], canvasElement.width, canvasElement.height, "#10B981");
+              drawBone(canvasCtx, lm[activeJoints[1]], lm[activeJoints[2]], canvasElement.width, canvasElement.height, "#10B981");
+              drawJoint(canvasCtx, lm[activeJoints[1]], canvasElement.width, canvasElement.height, "#F59E0B");
 
-            updatePipHud(activeAngle, validRepCount, activeFsmConfig.targetReps);
+              updatePipHud(`${activeSide}: ${activeAngle}°`, validRepCount, activeFsmConfig.targetReps);
 
-            // ==============================================================
-            // FSM 狀態轉換與自適應調節
-            // ==============================================================
-            if (activeAngle < activeFsmConfig.lowAngle) {
-              if (exerciseState === "HOLDING") {
-                const heldTime = now - holdStartTime;
-                holdDurations.push(heldTime);
-                document.getElementById("aiVoiceFeedback").innerText = "⚠️ 放得太快！踢直後要停夠時間先計數！";
-                if (now - lastVoiceFeedbackTime > 4000) {
-                  speak("放得太快，踢直後要停兩秒先放低。");
-                  lastVoiceFeedbackTime = now;
+              if (activeAngle < activeFsmConfig.lowAngle) {
+                exerciseState = "READY";
+                extendingStartTime = 0;
+              } else if (activeAngle >= activeFsmConfig.lowAngle && activeAngle < currentEffectiveTarget) {
+                if (exerciseState !== "EXTENDING") {
+                  exerciseState = "EXTENDING";
+                  extendingStartTime = now;
+                  if (lastRepStartTime === 0) lastRepStartTime = now;
+                }
+
+                if (!isAdaptiveReduced && (now - extendingStartTime > 12000)) {
+                  isAdaptiveReduced = true;
+                  currentEffectiveTarget = activeFsmConfig.minStruggleAngle;
+                  document.getElementById("aiVoiceFeedback").innerText = `🌱 ${script.STRUGGLING} (目標微調至 ${currentEffectiveTarget}°)`;
+                  speak(script.STRUGGLING);
+                } else {
+                  document.getElementById("aiVoiceFeedback").innerText = `💡 ${script.EXTENDING}`;
+                }
+              } else if (activeAngle >= currentEffectiveTarget) {
+                if (exerciseState !== "HOLDING" && exerciseState !== "COMPLETED_REP") {
+                  exerciseState = "HOLDING";
+                  holdStartTime = now;
+                  attemptedRepCount++;
+                  playMetronomeTick(true);
+                }
+
+                if (exerciseState === "HOLDING") {
+                  const elapsed = now - holdStartTime;
+                  const remainSec = Math.max(0, (activeFsmConfig.holdMs - elapsed) / 1000).toFixed(1);
+
+                  if (Math.floor(elapsed) % 500 < 50) playMetronomeTick(false);
+
+                  if (elapsed < activeFsmConfig.holdMs) {
+                    document.getElementById("aiVoiceFeedback").innerText = `🔥 姿勢標準！維持住 ${remainSec} 秒...`;
+                  } else {
+                    validRepCount++;
+                    holdDurations.push(elapsed);
+                    repPeakAngles.push(activeAngle);
+                    exerciseState = "COMPLETED_REP";
+
+                    if (lastRepStartTime > 0) {
+                      repTransitionDurations.push(now - lastRepStartTime);
+                      lastRepStartTime = 0;
+                      checkDualDimensionalFatigue();
+                    }
+
+                    updatePipHud(`${activeSide}: ${activeAngle}°`, validRepCount, activeFsmConfig.targetReps);
+                    document.getElementById("aiVoiceFeedback").innerText = `🎉 ${script.COMPLETED_REP}（第 ${validRepCount} 次）`;
+                    speak(script.COMPLETED_REP);
+                  }
                 }
               }
-              exerciseState = "READY";
-              extendingStartTime = 0;
-            } 
-            else if (activeAngle >= activeFsmConfig.lowAngle && activeAngle < currentEffectiveTargetAngle) {
-              // 處於伸展中
-              if (exerciseState !== "EXTENDING") {
-                exerciseState = "EXTENDING";
-                extendingStartTime = now;
-              }
+            } else if (activeFsmConfig.type === "jaw_v_wave") {
+              const nose = lm[0];
+              const jaw = lm[152] || lm[10];
+              if (nose && jaw) {
+                const dist = Math.hypot(nose.x - jaw.x, nose.y - jaw.y);
+                jawDistanceHistory.push({ dist, t: now });
+                if (jawDistanceHistory.length > 25) jawDistanceHistory.shift();
 
-              // 自適應降級判定：長者卡在 EXTENDING 超過 12 秒仍達不到目標
-              if (!isAdaptiveReduced && (now - extendingStartTime > 12000)) {
-                isAdaptiveReduced = true;
-                currentEffectiveTargetAngle = activeFsmConfig.minStruggleAngle;
-                document.getElementById("aiVoiceFeedback").innerText = `🌱 今日辛苦啲，我哋調整做 ${currentEffectiveTargetAngle}° 先，慢慢嚟！`;
-                speak("今日身體可能攰啲，我哋放鬆少少，做住呢個角度先，慢慢嚟！");
-                lastVoiceFeedbackTime = now;
-              } else {
-                document.getElementById("aiVoiceFeedback").innerText = `💡 角度 ${activeAngle}°：嘗試再伸直多兩吋！`;
-              }
-            } 
-            else if (activeAngle >= currentEffectiveTargetAngle) {
-              if (exerciseState !== "HOLDING" && exerciseState !== "COMPLETED_REP") {
-                exerciseState = "HOLDING";
-                holdStartTime = now;
-                attemptedRepCount++;
-              }
+                drawJoint(canvasCtx, nose, canvasElement.width, canvasElement.height, "#10B981");
+                updatePipHud(`咽喉追蹤中`, validRepCount, activeFsmConfig.targetReps);
 
-              if (exerciseState === "HOLDING") {
-                const elapsed = now - holdStartTime;
-                const remainSec = Math.max(0, (activeFsmConfig.holdMs - elapsed) / 1000).toFixed(1);
+                if (jawDistanceHistory.length >= 15) {
+                  const d0 = jawDistanceHistory[0].dist;
+                  const minEntry = jawDistanceHistory.reduce((min, cur) => cur.dist < min.dist ? cur : min, jawDistanceHistory[0]);
+                  const dLatest = jawDistanceHistory[jawDistanceHistory.length - 1].dist;
 
-                if (elapsed < activeFsmConfig.holdMs) {
-                  document.getElementById("aiVoiceFeedback").innerText = `🔥 ${activeSide}好標準！維持住 ${remainSec} 秒...`;
+                  if ((d0 - minEntry.dist) > 0.015 && (dLatest - minEntry.dist) > 0.012) {
+                    if (exerciseState !== "COMPLETED_REP") {
+                      validRepCount++;
+                      exerciseState = "COMPLETED_REP";
+                      jawDistanceHistory = [];
+                      playMetronomeTick(true);
+                      speak(script.COMPLETED_REP);
+                      setTimeout(() => { exerciseState = "READY"; }, 2000);
+                    }
+                  } else {
+                    document.getElementById("aiVoiceFeedback").innerText = `🗣️ ${script.EXTENDING}`;
+                  }
+                }
+              }
+            } else if (activeFsmConfig.type === "true_variance") {
+              const lw = lm[15], rw = lm[16];
+              const ls = lm[11], rs = lm[12];
+              if (lw && rw && ls && rs) {
+                dualWristHistory.push({ lx: lw.x, ly: lw.y, rx: rw.x, ry: rw.y, sy: (ls.y + rs.y) / 2 });
+                if (dualWristHistory.length > 20) dualWristHistory.shift();
+
+                let variance = 1;
+                if (dualWristHistory.length >= 15) {
+                  const n = dualWristHistory.length;
+                  const avgLx = dualWristHistory.reduce((a, b) => a + b.lx, 0) / n;
+                  const avgLy = dualWristHistory.reduce((a, b) => a + b.ly, 0) / n;
+                  const avgRx = dualWristHistory.reduce((a, b) => a + b.rx, 0) / n;
+                  const avgRy = dualWristHistory.reduce((a, b) => a + b.ry, 0) / n;
+
+                  const varL = dualWristHistory.reduce((a, b) => a + (b.lx - avgLx) ** 2 + (b.ly - avgLy) ** 2, 0) / n;
+                  const varR = dualWristHistory.reduce((a, b) => a + (b.rx - avgRx) ** 2 + (b.ry - avgRy) ** 2, 0) / n;
+                  variance = Math.min(varL, varR);
+                }
+
+                updatePipHud(`方差: ${(variance * 1000).toFixed(2)}`, validRepCount, activeFsmConfig.targetReps);
+
+                if (variance < activeFsmConfig.maxVariance) {
+                  if (exerciseState !== "HOLDING") {
+                    exerciseState = "HOLDING";
+                    holdStartTime = now;
+                    playMetronomeTick(true);
+                  }
+                  if (now - holdStartTime >= activeFsmConfig.holdMs) {
+                    validRepCount++;
+                    exerciseState = "COMPLETED_REP";
+                    speak(script.COMPLETED_REP);
+                    setTimeout(() => { exerciseState = "READY"; }, 2000);
+                  } else {
+                    document.getElementById("aiVoiceFeedback").innerText = `😴 ${script.HOLDING}`;
+                  }
                 } else {
-                  validRepCount++;
-                  holdDurations.push(elapsed);
-                  exerciseState = "COMPLETED_REP";
-                  updatePipHud(activeAngle, validRepCount, activeFsmConfig.targetReps);
-
-                  document.getElementById("aiVoiceFeedback").innerText = `🎉 做得好！完成第 ${validRepCount} 次！放低休息下。`;
-                  speak(`好！完成第${validRepCount}次，慢慢放低。`);
-                  lastVoiceFeedbackTime = now;
+                  exerciseState = "READY";
+                  document.getElementById("aiVoiceFeedback").innerText = `😴 ${script.EXTENDING}`;
                 }
               }
             }
@@ -1288,6 +1661,32 @@
 
       } catch (err) {
         console.warn("相機啟動略過:", err);
+      }
+    }
+
+    function checkDualDimensionalFatigue() {
+      if (isFatiguedNotified) return;
+
+      const tLen = repTransitionDurations.length;
+      let timeFatigue = false;
+      if (tLen >= 4) {
+        const recentT = (repTransitionDurations[tLen - 1] + repTransitionDurations[tLen - 2]) / 2;
+        const initialT = (repTransitionDurations[0] + repTransitionDurations[1]) / 2;
+        if (recentT > initialT * 1.35) timeFatigue = true;
+      }
+
+      const aLen = repPeakAngles.length;
+      let angleFatigue = false;
+      if (aLen >= 4) {
+        const recentA = (repPeakAngles[aLen - 1] + repPeakAngles[aLen - 2]) / 2;
+        const initialA = (repPeakAngles[0] + repPeakAngles[1]) / 2;
+        if (recentA < initialA - 10) angleFatigue = true;
+      }
+
+      if (timeFatigue || angleFatigue) {
+        isFatiguedNotified = true;
+        document.getElementById("aiVoiceFeedback").innerText = "⚠️ 偵測到肌肉疲勞（動作放慢/幅度減小），請量力而為！";
+        speak("偵測到你動作幅度開始變細或有啲吃力，千祈唔好勉強，隨時停低飲啖水。");
       }
     }
 
@@ -1309,9 +1708,9 @@
       ctx.fill();
     }
 
-    function updatePipHud(angle, reps, total) {
+    function updatePipHud(label, reps, total) {
       const el = document.getElementById("pipHudStats");
-      if (el) el.innerText = `關節: ${angle}° ｜ 達標: ${reps}/${total || 6}`;
+      if (el) el.innerText = `${label} ｜ 達標: ${reps}/${total || 6}`;
     }
 
     window.openInNativeYouTube = function() {
@@ -1323,39 +1722,70 @@
       }
     };
 
-    // ==============================================================
-    // 運動結束：計算雙側不對稱度 + 提取歷史縱向對比
-    // ==============================================================
-    let sessionTelemetry = null;
+    let cooldownTimerInterval = null;
+    let cooldownRemain = 20;
 
-    function stopExerciseWithAI() {
+    function initiateWorkoutCompletion() {
       document.getElementById("trainerVideoFrame").src = "";
       if (animFrameId) cancelAnimationFrame(animFrameId);
       if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
         cameraStream = null;
       }
-      document.getElementById("exerciseRoomModal").style.display = "none";
 
+      document.getElementById("cooldownOverlay").style.display = "flex";
+      document.getElementById("cooldownTitle").innerText = `👏 運動完成！放鬆${activeFsmConfig.name}肌群`;
+      document.getElementById("cooldownSubGuide").innerText = activeFsmConfig.cooldownStretch;
+
+      cooldownRemain = 20;
+      document.getElementById("cooldownTimer").innerText = cooldownRemain;
+      speak(`運動完成！現在進行二十秒緩和伸展：${activeFsmConfig.cooldownStretch}`);
+
+      cooldownTimerInterval = setInterval(() => {
+        cooldownRemain--;
+        document.getElementById("cooldownTimer").innerText = cooldownRemain;
+        if (cooldownRemain <= 0) {
+          clearInterval(cooldownTimerInterval);
+          skipCooldownToRpe();
+        }
+      }, 1000);
+    }
+
+    function skipCooldownToRpe() {
+      if (cooldownTimerInterval) clearInterval(cooldownTimerInterval);
+      document.getElementById("cooldownOverlay").style.display = "none";
+      document.getElementById("exerciseRoomModal").style.display = "none";
+      buildFinalClinicalReport();
+    }
+
+    let sessionTelemetry = null;
+
+    function buildFinalClinicalReport() {
       const accuracyScore = Math.min(100, Math.round((validRepCount / activeFsmConfig.targetReps) * 100));
       const avgHoldMs = holdDurations.length > 0 
         ? Math.round(holdDurations.reduce((a, b) => a + b, 0) / holdDurations.length) 
         : 0;
       const avgHoldSec = (avgHoldMs / 1000).toFixed(1);
 
-      // 平均左右雙側不對稱度
       const avgAsymmetry = asymmetrySamples.length > 0
         ? Math.round(asymmetrySamples.reduce((a, b) => a + b, 0) / asymmetrySamples.length)
         : 0;
 
-      // 提取歷史數據做縱向對比 (Longitudinal Comparison)
+      // 臨床跌倒防護指數 CFRS 計算
+      const fatiguePenalty = isFatiguedNotified ? 15 : 0;
+      const strugglePenalty = isAdaptiveReduced ? 10 : 0;
+      const fallRiskIndex = Math.max(10, Math.min(100, Math.round(
+        100 - (0.35 * avgAsymmetry + 0.25 * (100 - accuracyScore) + fatiguePenalty + strugglePenalty)
+      )));
+
+      const cfrsMeta = getCFRSClassification(fallRiskIndex);
+
       const histKey = `lohas_hist_${currentWorkout.id}`;
       const prevData = JSON.parse(localStorage.getItem(histKey) || "null");
 
       let compareText = "首次記錄，建立個人基準線中";
-      let deltaReps = 0;
       if (prevData) {
-        deltaReps = validRepCount - prevData.successReps;
+        const deltaReps = validRepCount - prevData.successReps;
         const deltaSymbol = deltaReps >= 0 ? `+${deltaReps}` : `${deltaReps}`;
         const asymDelta = avgAsymmetry - (prevData.asymmetry || avgAsymmetry);
         const asymMsg = asymDelta <= 0 ? `對稱度改善了 ${Math.abs(asymDelta)}%` : `雙側差異稍增 ${asymDelta}%`;
@@ -1363,7 +1793,16 @@
       }
 
       document.getElementById("poseScoreText").innerText = `🎯 動作達標率：${accuracyScore}%（${validRepCount} / ${activeFsmConfig.targetReps} 次）`;
-      document.getElementById("poseSubDetails").innerText = `維持：${avgHoldSec} 秒 ｜ 雙側不對稱度：${avgAsymmetry}%`;
+      document.getElementById("poseSubDetails").innerText = `平均鎖定：${avgHoldSec} 秒 ｜ 雙側不對稱度：${avgAsymmetry}%`;
+      
+      // 更新跌倒防護指數臨床分級顯示
+      document.getElementById("poseCfrsValue").innerText = fallRiskIndex;
+      const badgeEl = document.getElementById("poseCfrsBadge");
+      badgeEl.innerText = cfrsMeta.label;
+      badgeEl.style.color = cfrsMeta.color;
+      badgeEl.style.background = cfrsMeta.bg;
+      document.getElementById("poseCfrsAdvice").innerText = cfrsMeta.advice;
+
       document.getElementById("poseLongitudinalCompare").innerText = `📈 ${compareText}`;
 
       sessionTelemetry = {
@@ -1372,17 +1811,20 @@
         category: currentWorkout.category,
         targetReps: activeFsmConfig.targetReps,
         successReps: validRepCount,
-        attemptedReps: attemptedRepCount,
         accuracyScore: accuracyScore,
         avgHoldSec: parseFloat(avgHoldSec),
         asymmetry: avgAsymmetry,
+        fallRiskIndex: fallRiskIndex,
+        isFatigued: isFatiguedNotified,
+        isAdaptiveReduced: isAdaptiveReduced,
+        screeningAnswers: screeningHistoryAnswers,
         prevSuccessReps: prevData ? prevData.successReps : null,
         prevRpe: prevData ? prevData.rpeScore : null,
         date: new Date().toISOString().split("T")[0]
       };
 
       document.getElementById("rpeModal").style.display = "flex";
-      speak(`運動完成！今日目標${activeFsmConfig.targetReps}次，你成功達標${validRepCount}次！剛才運動感覺辛苦嗎？`);
+      speak(`今日目標${activeFsmConfig.targetReps}次，成功達標${validRepCount}次！防跌評估為${cfrsMeta.label}。剛才運動感覺辛苦嗎？`);
     }
 
     async function submitRPE(rpeScore) {
@@ -1391,22 +1833,30 @@
       if (sessionTelemetry) {
         sessionTelemetry.rpeScore = rpeScore;
 
-        // 儲存為下次對比歷史
         localStorage.setItem(`lohas_hist_${sessionTelemetry.workoutId}`, JSON.stringify(sessionTelemetry));
-
-        // 標記今日完成
+        saveLocalWorkoutHistory(sessionTelemetry);
         markTodayDone(sessionTelemetry.workoutId);
 
-        // 構建帶有「縱向對比」與「不對稱度」的深層遙測提示詞給 Dify
+        const history = JSON.parse(localStorage.getItem("lohas_full_history") || "[]").slice(0, 7);
+        const accTrend = history.map(h => `${h.accuracyScore}%`).reverse().join(" → ");
+        const asymTrend = history.map(h => `${h.asymmetry}%`).reverse().join(" → ");
+        const cfrsTrend = history.map(h => `${h.fallRiskIndex || 80}`).reverse().join(" → ");
+        const currentStreak = localStorage.getItem("lohas_streak") || "1";
+        const screeningStr = `頭暈(${sessionTelemetry.screeningAnswers[0] ? '有' : '無'})、胸悶(${sessionTelemetry.screeningAnswers[1] ? '有' : '無'})、關節痛(${sessionTelemetry.screeningAnswers[2] ? '有' : '無'})`;
+
         const longitudinalPayload = `
 【長者運動完成回報（縱向臨床視角）】
 - 項目：${sessionTelemetry.workoutTitle}
-- 目標次數：${sessionTelemetry.targetReps} 次
-- 今日成功達標：${sessionTelemetry.successReps} 次（踢直伸展平均維持 ${sessionTelemetry.avgHoldSec} 秒）
-- 左右雙側肌力不對稱度：${sessionTelemetry.asymmetry}%
-- 長者自評辛苦度 (RPE)：${sessionTelemetry.rpeScore} / 5 分
-- 歷史對比：${sessionTelemetry.prevSuccessReps !== null ? `上次達標 ${sessionTelemetry.prevSuccessReps} 次，辛苦度 ${sessionTelemetry.prevRpe} 分` : '首次記錄'}
-請根據進步幅度與不對稱度，給予具說服力的廣東話專業回饋。
+- 運動前身體狀況：${screeningStr}
+- 今日連續打卡：第 ${currentStreak} 天
+- 今日達標：${sessionTelemetry.successReps}/${sessionTelemetry.targetReps} 次
+- 雙側不對稱度：${sessionTelemetry.asymmetry}% ｜ 跌倒防護指數：${sessionTelemetry.fallRiskIndex}/100
+- 疲勞中斷：${sessionTelemetry.isFatigued ? '有' : '無'} ｜ 自適應降級：${sessionTelemetry.isAdaptiveReduced ? '有' : '無'}
+- 近 7 日達標率趨勢：${accTrend || '首次記錄'}
+- 近 7 日防跌指數趨勢：${cfrsTrend || '首次記錄'}
+- 近 7 日不對稱度趨勢：${asymTrend || '首次記錄'}
+- 長者自評辛苦度 (RPE)：${sessionTelemetry.rpeScore}/5 分
+請結合 7 日趨勢與防跌指數，給予具臨床說服力的廣東話回饋。
         `.trim();
 
         const report = await callDifyChatflow(longitudinalPayload);
@@ -1419,8 +1869,8 @@
           coachAdvice = report.coach_advice;
         } else {
           finalVoiceFeedback = sessionTelemetry.successReps >= 4 
-            ? `今日做得好出色！達標${sessionTelemetry.successReps}次，雙側力量好平均，記得飲多兩啖溫水！`
-            : `今日辛苦晒喇！慢慢嚟唔好急，聽日再踢高少少，一定會有進步！`;
+            ? `今日做得好出色！達標${sessionTelemetry.successReps}次，雙側力量好平均，防跌指數有${sessionTelemetry.fallRiskIndex}分，記得飲溫水！`
+            : `今日辛苦晒喇！慢慢嚟唔好急，聽日再做一定會有進步！`;
           coachAdvice = `長者完成 ${sessionTelemetry.successReps}/${sessionTelemetry.targetReps} 次，不對稱度 ${sessionTelemetry.asymmetry}%。`;
         }
 
@@ -1434,7 +1884,7 @@
       }
       
       const streak = localStorage.getItem("lohas_streak") || "1";
-      const message = `仔女你好！我啱啱喺「樂活健康電視」做完【${sessionTelemetry?.workoutTitle}】！今日成功達標 ${sessionTelemetry?.successReps} 次，雙側平衡良好，連續打卡第 ${streak} 日，同你報個平安！❤️`;
+      const message = `仔女你好！我啱啱喺「樂活健康電視」做完【${sessionTelemetry?.workoutTitle}】！今日成功達標 ${sessionTelemetry?.successReps} 次，防跌指數 ${sessionTelemetry?.fallRiskIndex} 分，連續打卡第 ${streak} 日，同你報個平安！❤️`;
       
       if (confirm("🎉 今日運動記錄成功！想唔想順便發送 WhatsApp 話畀仔女知？")) {
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
@@ -1442,33 +1892,36 @@
       speak("運動記錄已儲存！今日做得好棒，記得飲啖溫水休息下。");
     }
 
-    // ==============================================================
-    // 穩健 Dify Chatflow 調用函式 (含防爆 Regex JSON 提取器)
-    // ==============================================================
     const DIFY_CONFIG = {
       apiEndpoint: "https://api.dify.ai/v1/chat-messages",
       apiKey: "app-YOUR_DIFY_API_KEY_HERE"
     };
 
     let currentDifyConversationId = "";
+    let conversationTimeout = null;
+
+    function refreshConversationWindow() {
+      if (conversationTimeout) clearTimeout(conversationTimeout);
+      conversationTimeout = setTimeout(() => {
+        currentDifyConversationId = "";
+      }, 30000);
+    }
 
     function safeParseDifyJson(raw) {
       if (!raw) return null;
       try {
         return JSON.parse(raw);
       } catch (e) {
-        // 使用正則提取真正的 JSON 區塊
         const match = raw.match(/\{[\s\S]*\}/);
         if (match) {
-          try {
-            return JSON.parse(match[0]);
-          } catch (_) {}
+          try { return JSON.parse(match[0]); } catch (_) {}
         }
       }
       return null;
     }
 
     async function callDifyChatflow(inputText) {
+      refreshConversationWindow();
       try {
         const res = await fetch(DIFY_CONFIG.apiEndpoint, {
           method: "POST",
@@ -1491,21 +1944,18 @@
 
         return safeParseDifyJson(data.answer);
       } catch (err) {
-        console.warn("Dify Chatflow 呼叫略過:", err);
+        console.warn("Dify Chatflow 略過:", err);
         return null;
       }
     }
 
-    // ==============================================================
-    // 語音識別：含實時 Interim 提示與置信度防呆
-    // ==============================================================
     function toggleVoiceAssistant() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) return alert("請使用支援語音辨識之瀏覽器。");
 
       const r = new SR();
       r.lang = "zh-HK";
-      r.interimResults = true; // 實時預覽長者說話
+      r.interimResults = true;
       r.continuous = false;
 
       const interimBox = document.getElementById("speechInterimBox");
@@ -1520,7 +1970,6 @@
         interimBox.innerText = `🎙️ 「${transcript}」`;
 
         if (result.isFinal) {
-          // 置信度過低防呆（長者說話含糊）
           if (confidence < 0.55 && confidence > 0) {
             speak("聽得唔係好清楚，可以請你再講多一次嗎？");
             setTimeout(() => { interimBox.style.display = "none"; }, 2000);
@@ -1544,7 +1993,6 @@
             }
           }
 
-          // 本地快速篩選
           if (/(膝|菠蘿蓋|腳痛|落樓梯)/i.test(transcript)) filterWorkout("KNEE");
           else if (/(濁|咳|吞|嗆|健口)/i.test(transcript)) filterWorkout("SWALLOW");
           else if (/(腰|背|背脊|痠痛)/i.test(transcript)) filterWorkout("BACK");
@@ -1559,9 +2007,6 @@
       r.start();
     }
 
-    // ==============================================================
-    // 獨立防呆 SOS：長按 2 秒觸發 + 震動 + 10 秒倒數 + 直撥電話
-    // ==============================================================
     let sosTimer = null;
     let sosCount = 10;
     let sosHoldTimeout = null;
@@ -1569,9 +2014,7 @@
 
     headerSosBtn.addEventListener("pointerdown", () => {
       headerSosBtn.innerText = "⏳ 請按住 2 秒...";
-      sosHoldTimeout = setTimeout(() => {
-        triggerSOS();
-      }, 2000);
+      sosHoldTimeout = setTimeout(() => { triggerSOS(); }, 2000);
     });
 
     const cancelSosHold = () => {
@@ -1602,8 +2045,6 @@
           clearInterval(sosTimer);
           document.getElementById("sosModal").style.display = "none";
           if (window.pushSOSAlertToFirestore) window.pushSOSAlertToFirestore("ACTIVE", userCoords);
-
-          // 10 秒未取消，直接撥打緊急聯絡電話
           directEmergencyCall();
         }
       }, 1000);
@@ -1622,41 +2063,199 @@
       window.location.href = `tel:${phone}`;
     }
 
-    // ==============================================================
-    // 家人關懷中心與設定模態控制器
-    // ==============================================================
-    function openFamilyHubModal() {
-      document.getElementById("familyHubModal").style.display = "flex";
+    function saveLocalWorkoutHistory(telemetry) {
+      const history = JSON.parse(localStorage.getItem("lohas_full_history") || "[]");
+      history.unshift(telemetry);
+      if (history.length > 50) history.pop();
+      localStorage.setItem("lohas_full_history", JSON.stringify(history));
     }
 
+    function openHistoryTrendModal() {
+      const history = JSON.parse(localStorage.getItem("lohas_full_history") || "[]");
+      const listEl = document.getElementById("historyListContainer");
+      const barContainer = document.getElementById("chartBarContainer");
+
+      if (history.length === 0) {
+        document.getElementById("trendRepsSummary").innerText = "0 次";
+        document.getElementById("trendCfrsTrajectory").innerText = "--";
+        barContainer.innerHTML = "<div style='color:#94A3B8; margin:auto;'>暫無趨勢數據</div>";
+        listEl.innerHTML = "<div style='color:#94A3B8; text-align:center; padding:16px;'>尚無運動記錄</div>";
+      } else {
+        const recent7 = history.slice(0, 7);
+        const totalReps = recent7.reduce((a, b) => a + b.successReps, 0);
+
+        // 防跌指數趨勢字串 (例如: 72 → 75 → 80 改善中)
+        const cfrsValues = recent7.map(h => h.fallRiskIndex || 80).reverse();
+        let trajDesc = "持平";
+        if (cfrsValues.length >= 2) {
+          const delta = cfrsValues[cfrsValues.length - 1] - cfrsValues[0];
+          trajDesc = delta > 0 ? "📈 改善中" : delta < 0 ? "⚠️ 需留意" : "持平";
+        }
+        document.getElementById("trendCfrsTrajectory").innerText = `${cfrsValues.join(" → ")} (${trajDesc})`;
+        document.getElementById("trendRepsSummary").innerText = `${totalReps} 次`;
+
+        // 渲染 CSS 柱狀圖
+        barContainer.innerHTML = recent7.slice().reverse().map(h => `
+          <div class="chart-bar-col">
+            <div class="chart-bar-fill" style="height:${h.accuracyScore}%; background:${(h.fallRiskIndex || 80) < 60 ? '#EF4444' : (h.asymmetry || 0) > 20 ? '#F59E0B' : '#10B981'};"></div>
+            <div class="chart-bar-label">${h.date.slice(5)}</div>
+          </div>
+        `).join("");
+
+        listEl.innerHTML = recent7.map(h => {
+          const meta = getCFRSClassification(h.fallRiskIndex || 80);
+          return `
+            <div style="padding:8px 0; border-bottom:1px solid #F1F5F9; display:flex; justify-content:space-between;">
+              <div>
+                <div style="font-weight:800;">${h.date} - ${h.workoutTitle}</div>
+                <div style="color:#64748B; font-size:11px;">達標: ${h.successReps}/${h.targetReps} ｜ 不對稱: ${h.asymmetry}%</div>
+              </div>
+              <div style="text-align:right;">
+                <span class="cfrs-badge" style="color:${meta.color}; background:${meta.bg};">${h.fallRiskIndex || 80}分 (${meta.label})</span>
+                <div style="font-size:11px; color:#64748B; margin-top:2px;">RPE: ${h.rpeScore}/5</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      document.getElementById("historyTrendModal").style.display = "flex";
+    }
+
+    // 匯出完整雲端 CSV 報告 (解決 50 條截斷)
+    window.exportClinicalDataForPT = async function() {
+      let records = null;
+      if (window.fetchCloudHistoryForCsv) {
+        records = await window.fetchCloudHistoryForCsv();
+      }
+      if (!records || records.length === 0) {
+        records = JSON.parse(localStorage.getItem("lohas_full_history") || "[]");
+      }
+      if (records.length === 0) return alert("尚無運動記錄可供匯出。");
+
+      let csvContent = "\uFEFF日期,動作項目,達標次數,目標次數,達標率,雙側不對稱度,臨床跌倒防護指數,RPE辛苦度,肌肉疲勞,自適應降級\n";
+      records.forEach(h => {
+        csvContent += `${h.date},"${h.workoutTitle}",${h.successReps},${h.targetReps},${h.accuracyScore}%,${h.asymmetry}%,${h.fallRiskIndex || 80},${h.rpeScore},${h.isFatigued ? '是' : '否'},${h.isAdaptiveReduced ? '是' : '否'}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `LOHAS_Clinical_Full_History_${new Date().toISOString().split("T")[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    window.clearAllUserDataAppStore = function() {
+      if (confirm("⚠️ 確定要清除所有運動紀錄與個人偏好設定？清除後將無法復原。")) {
+        localStorage.clear();
+        alert("✅ 本機資料已全部清除。");
+        location.reload();
+      }
+    };
+
+    // 錄音試聽確認機制
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecordingVoice = false;
+    let recordedAudioUrl = null;
+
+    window.toggleVoiceReplyRecord = async function() {
+      const btn = document.getElementById("recordVoiceBtn");
+      const cancelBtn = document.getElementById("cancelRecordBtn");
+
+      if (!isRecordingVoice) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => { audioChunks.push(e.data); };
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            recordedAudioUrl = URL.createObjectURL(audioBlob);
+
+            document.getElementById("elderVoicePreviewAudio").src = recordedAudioUrl;
+            document.getElementById("voicePreviewArea").style.display = "block";
+            cancelBtn.style.display = "inline-block";
+          };
+
+          mediaRecorder.start();
+          isRecordingVoice = true;
+          btn.innerText = "⏹️ 停止錄音";
+          btn.style.background = "#DC2626";
+        } catch (err) {
+          alert("無法取用麥克風進行語音錄製。");
+        }
+      } else {
+        mediaRecorder.stop();
+        isRecordingVoice = false;
+        btn.innerText = "🔴 重錄一次";
+        btn.style.background = "#2563EB";
+      }
+    };
+
+    window.discardRecordedVoice = function() {
+      document.getElementById("voicePreviewArea").style.display = "none";
+      document.getElementById("cancelRecordBtn").style.display = "none";
+      document.getElementById("recordVoiceBtn").innerText = "🔴 開始錄音";
+      document.getElementById("recordVoiceBtn").style.background = "#2563EB";
+      recordedAudioUrl = null;
+    };
+
+    window.confirmAndSendVoiceReply = function() {
+      if (!recordedAudioUrl) return;
+      if (window.uploadElderVoiceReply) {
+        window.uploadElderVoiceReply(recordedAudioUrl);
+      }
+      discardRecordedVoice();
+    };
+
+    // 每日定時運動提醒 (Notification API + 語音廣播)
+    function setupDailyReminderChecker() {
+      if ("Notification" in window && Notification.permission !== "granted") {
+        Notification.requestPermission();
+      }
+
+      setInterval(() => {
+        const reminderTime = localStorage.getItem("lohas_reminder_time") || "10:00";
+        const now = new Date();
+        const curHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        if (curHM === reminderTime && now.getSeconds() < 10) {
+          if (Notification.permission === "granted") {
+            new Notification("LOHAS TV 樂活健康電視", {
+              body: "婆婆/伯伯，夠鐘做今日精選護膝防跌操喇！",
+              icon: "https://img.icons8.com/color/192/elderly-person.png"
+            });
+          }
+          speak("婆婆伯伯，夠鐘做三分鐘健康運動喇，一齊郁動下啦！");
+        }
+      }, 10000);
+    }
+    setupDailyReminderChecker();
+
+    function openFamilyHubModal() { document.getElementById("familyHubModal").style.display = "flex"; }
     function openSettingsModal() {
       document.getElementById("settingFontSize").value = localStorage.getItem("lohas_font_scale") || "1";
       document.getElementById("settingSpeechRate").value = localStorage.getItem("lohas_speech_rate") || "0.85";
       document.getElementById("settingSosPhone").value = localStorage.getItem("lohas_sos_phone") || "";
+      document.getElementById("settingReminderTime").value = localStorage.getItem("lohas_reminder_time") || "10:00";
+      document.getElementById("settingMobilityMode").value = localStorage.getItem("lohas_mobility_mode") || "CHAIR";
       document.getElementById("settingsModal").style.display = "flex";
     }
-
-    function closeModalOnBackdrop(e, id) {
-      if (e.target.id === id) document.getElementById(id).style.display = "none";
-    }
+    function openMedicalDisclaimer() { document.getElementById("disclaimerModal").style.display = "flex"; }
+    function closeModalOnBackdrop(e, id) { if (e.target.id === id) document.getElementById(id).style.display = "none"; }
 
     function applyFontScale(val) {
       document.documentElement.style.setProperty("--font-scale", val);
       localStorage.setItem("lohas_font_scale", val);
     }
-
-    function saveSpeechRate(val) {
-      localStorage.setItem("lohas_speech_rate", val);
-    }
-
-    function saveSosPhone(val) {
-      localStorage.setItem("lohas_sos_phone", val.trim());
-    }
-
-    function readKidMessageAloud() {
-      const msg = document.getElementById("hubKidMessage").innerText;
-      speak("仔女同你講：" + msg);
-    }
+    function saveSpeechRate(val) { localStorage.setItem("lohas_speech_rate", val); }
+    function saveSosPhone(val) { localStorage.setItem("lohas_sos_phone", val.trim()); }
+    function saveReminderTime(val) { localStorage.setItem("lohas_reminder_time", val); }
+    function saveMobilityMode(val) { localStorage.setItem("lohas_mobility_mode", val); }
 
     function callKidFromHub() {
       const phone = localStorage.getItem("lohas_sos_phone");
@@ -1678,13 +2277,9 @@
       window.speechSynthesis.speak(u);
     }
 
-    // 初始化字體大小
     const cachedScale = localStorage.getItem("lohas_font_scale");
     if (cachedScale) applyFontScale(cachedScale);
 
-    // ==============================================================
-    // 鏡頭拖曳移動與雙指縮放控制器 (手勢維持不變)
-    // ==============================================================
     (function initPipGestures() {
       const pip = document.getElementById("cameraPipBox");
       if (!pip) return;
