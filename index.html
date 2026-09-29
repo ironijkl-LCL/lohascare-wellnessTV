@@ -1117,7 +1117,7 @@
     <button class="action-btn btn-settings" onclick="openSettingsModal()">⚙️ 設定</button>
   </div>
 
-  <!-- 一分鐘微運動全屏 HUD 視窗 -->
+  <!-- 一分鐘微運動全屏 HUD 視窗 (含實體痛感中斷大掣) -->
   <div id="microWorkoutRoomModal">
     <div class="micro-hud-header">
       <div class="micro-hud-title" id="microActiveActionTitle">⚡ 1分鐘微運動 • 坐姿抬腿防跌</div>
@@ -1172,7 +1172,7 @@
     </div>
   </div>
 
-  <!-- YouTube 與 MP4 雙模運動室 -->
+  <!-- YouTube 與 MP4 雙模運動室 (含實體痛感中斷大掣) -->
   <div id="exerciseRoomModal">
     <div class="room-header">
       <div class="room-title" id="roomWorkoutTitle">運動進行中</div>
@@ -1462,34 +1462,6 @@
         LOHAS TV 系統旨在提供長者體能輔助指導與運動數據量測，並非醫療診斷設備。跌倒防護指數（CFRS）乃基於 FSM 姿態感測運算之估算參考，並非取代正式之醫療 Timed Up and Go (TUG) 臨床測試。若運動過程中出現頭暈、胸悶、關節刺痛或嚴重呼吸急促，請立即停止運動並尋求專業物理治療師或醫師協助。
       </p>
       <button class="start-btn" onclick="document.getElementById('disclaimerModal').style.display='none'">明白並同意</button>
-    </div>
-  </div>
-
-  <!-- TUG 姿態序列自動偵測全屏視窗 -->
-  <div id="tugAutoTestModal">
-    <div class="tug-modal-header">
-      <div style="color:#38BDF8; font-weight:900; font-size:1.1rem;">⏱️ CDC STEADI TUG 姿態自動偵測</div>
-      <button onclick="exitAutoTugSession()" style="background:#374151; color:#F87171; border:1px solid #4B5563; padding:8px 14px; border-radius:10px; font-weight:800; cursor:pointer;">✕ 離開</button>
-    </div>
-
-    <div class="tug-phase-track">
-      <div class="tug-phase-step active" id="tugStep1">1. 穩坐校準</div>
-      <div class="tug-phase-step" id="tugStep2">2. 起身計時</div>
-      <div class="tug-phase-step" id="tugStep3">3. 行走轉身</div>
-      <div class="tug-phase-step" id="tugStep4">4. 坐低完成</div>
-    </div>
-
-    <div class="tug-viewport-card">
-      <video id="tugCameraFeed" playsinline autoplay muted></video>
-      <canvas id="tugPoseCanvas"></canvas>
-      <div class="tug-timer-overlay" id="tugTimerDisplay">00.00</div>
-      <div class="tug-hud-prompt" id="tugPromptText">正在對準全身，請穩坐椅子上...</div>
-    </div>
-
-    <div style="margin-top:12px; display:flex; justify-content:center;">
-      <button onclick="forceManualTugStop()" style="background:transparent; border:1px dashed #64748B; color:#CBD5E1; font-size:0.8rem; padding:8px 14px; border-radius:8px; cursor:pointer;">
-        如鏡頭角度受限，可點此手動結束
-      </button>
     </div>
   </div>
 
@@ -2100,61 +2072,6 @@
       }
     };
 
-    /* 影片清單：自建 MP4 直播 + 公開 YouTube 雙模備援 */
-    const EMBEDDED_SEED_VIDEOS = [
-      {
-        id: "knee_leung_1",
-        title: "坐姿膝關節強化運動（改善菠蘿蓋痛）",
-        category: "KNEE",
-        duration: "1 分鐘",
-        level: "臨床認證",
-        // 直連 Firebase Storage 雲端 MP4，徹底杜絕模擬器與 iOS 153 錯誤
-        videoUrl: "https://firebasestorage.googleapis.com/v0/b/lohascare-wellnesstv.firebasestorage.app/o/video%2Fsquat_proper_form_01.mp4?alt=media",
-        badge: "⚡ 雲端秒開 / 零廣告",
-        desc: "坐在穩陣椅子上伸展大腿四頭肌，免受膝關節刺痛折磨，強化下肢力量。"
-      },
-      {
-        id: "swallow_hospital_1",
-        title: "長者健口吞嚥操（預防進食濁親嗆咳）",
-        category: "SWALLOW",
-        duration: "3 分鐘",
-        level: "醫院復康指引",
-        youtubeId: "gkKbsoXetf8",
-        badge: "🏥 醫院權威指引",
-        desc: "鍛鍊口腔與咽喉肌力，強化吞嚥安全，有效預防長者食飯飲水濁親。"
-      },
-      {
-        id: "fall_balance_1",
-        title: "五分鐘扶椅防跌平衡運動（改善步態不穩）",
-        category: "FALL",
-        duration: "6 分鐘",
-        level: "防跌必練",
-        youtubeId: "YfWmJpWkj_0",
-        badge: "🛡️ 防跌平衡認證",
-        desc: "雙手扶椅做抬踵與核心平衡，提升下肢穩定度，減低長者跌倒受傷風險。"
-      },
-      {
-        id: "back_stretch_1",
-        title: "4分鐘長者腰部溫和伸展操（舒緩腰痛）",
-        category: "BACK",
-        duration: "4 分鐘",
-        level: "初階安全",
-        youtubeId: "Kj7CjmXj1X0",
-        badge: "✅ 物理治療推薦",
-        desc: "坐姿軀幹溫和旋轉，放鬆緊繃腰肌與下背關節，改善久坐起身痠痛。"
-      },
-      {
-        id: "sleep_acupressure_1",
-        title: "睡前安神助眠穴位按壓（神門與內關穴）",
-        category: "SLEEP",
-        duration: "11 分鐘",
-        level: "安神助眠",
-        youtubeId: "SgPZ6RPQ7fc",
-        badge: "🩺 護理學會認證",
-        desc: "放鬆神經、調和氣息，針對長者夜不能寐、易醒失眠提供臨床指引。"
-      }
-    ];
-
     let currentWorkout = null;
     let activeFsmConfig = FSM_CONFIG.KNEE;
 
@@ -2263,8 +2180,16 @@
       launchDualScreenExercise(currentWorkout);
     };
 
+    function calculateAngle(a, b, c) {
+      if (!a || !b || !c) return 0;
+      const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+      let angle = Math.abs((radians * 180.0) / Math.PI);
+      if (angle > 180.0) angle = 360.0 - angle;
+      return Math.round(angle);
+    }
+
     /* ========================================================================= */
-    /* 常規跟練模式：雙模播放器 (YouTube / MP4) 自動分流與姿態 FSM              */
+    /* 常規跟練模式                                                              */
     /* ========================================================================= */
     let cameraStream = null;
     let poseInstance = null;
@@ -2318,7 +2243,7 @@
       const iframe = document.getElementById("trainerVideoFrame");
       const localVideo = document.getElementById("trainerLocalVideo");
 
-      // 雙模播放分流：徹底消滅錯誤 153
+      // 雙模播放分流
       if (workout.videoUrl) {
         iframe.style.display = "none";
         iframe.src = "";
