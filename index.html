@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="referrer" content="no-referrer-when-downgrade">
   <meta name="theme-color" content="#064E3B">
-  <title>LOHAS TV - 樂活智能長者健康系統 (v12 商業旗艦版)</title>
+  <title>LOHAS TV - 樂活智能長者健康系統 (v12 商業閉環旗艦版)</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/elderly-person.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
 
   <!-- 本地端離線視覺與二維碼生成庫 -->
@@ -420,13 +420,11 @@
     .btn-family-tab { background: #ECFDF5; color: #065F46; border: 1.5px solid #A7F3D0; }
     .btn-settings { background: #F8FAFC; color: #334155; border: 1.5px solid #CBD5E1; }
 
-    /* ======================================================== */
-    /* 致命傷 1 解決方案：實體痛感懸浮大掣（iOS Safari 零阻力）   */
-    /* ======================================================== */
+    /* 實體痛感中斷懸浮大掣 */
     .btn-floating-pain {
       position: absolute;
-      top: 12px;
-      left: 12px;
+      top: 14px;
+      left: 14px;
       background: #DC2626;
       color: white;
       border: 2px solid #FCA5A5;
@@ -436,11 +434,11 @@
       font-weight: 900;
       box-shadow: 0 4px 15px rgba(220, 38, 38, 0.6);
       cursor: pointer;
-      z-index: 20;
+      z-index: 40;
       display: flex;
       align-items: center;
       gap: 6px;
-      min-height: 48px;
+      min-height: 50px;
     }
     .btn-floating-pain:active {
       transform: scale(0.95);
@@ -583,7 +581,7 @@
     .micro-stat-label { font-size: 0.72rem; color: #CBD5E1; font-weight: 800; }
     .micro-stat-val { font-size: 1.18rem; font-weight: 900; color: #38BDF8; margin-top: 2px; }
 
-    /* YouTube 訓練室 */
+    /* YouTube 與 自建 MP4 雙模運動室 */
     #exerciseRoomModal {
       display: none;
       position: fixed;
@@ -651,7 +649,12 @@
       background: #000;
       overflow: hidden;
     }
-    .trainer-iframe { width: 100%; height: 100%; border: none; flex: 1; }
+    .trainer-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      flex: 1;
+    }
 
     #cooldownOverlay {
       position: absolute;
@@ -771,9 +774,7 @@
       border: 2px solid var(--accent-jade);
     }
 
-    /* ======================================================== */
-    /* 致命傷 2 解決方案：適老化 In-App 提示與確認 Modal        */
-    /* ======================================================== */
+    /* 適老化非阻塞 In-App 彈窗 */
     .in-app-dialog-card {
       background: white;
       border-radius: 28px;
@@ -958,7 +959,7 @@
       line-height: 1.5;
     }
 
-    /* TUG 姿態序列自動偵測全屏視窗 */
+    /* TUG 姿態自動偵測全屏視窗 */
     #tugAutoTestModal {
       display: none;
       position: fixed;
@@ -1116,7 +1117,7 @@
     <button class="action-btn btn-settings" onclick="openSettingsModal()">⚙️ 設定</button>
   </div>
 
-  <!-- 一分鐘微運動全屏 HUD 視窗 (含實體痛感中斷大掣) -->
+  <!-- 一分鐘微運動全屏 HUD 視窗 -->
   <div id="microWorkoutRoomModal">
     <div class="micro-hud-header">
       <div class="micro-hud-title" id="microActiveActionTitle">⚡ 1分鐘微運動 • 坐姿抬腿防跌</div>
@@ -1125,7 +1126,6 @@
     </div>
 
     <div class="micro-hud-body">
-      <!-- 致命傷 1 實裝：實體痛感中斷大掣 -->
       <button class="btn-floating-pain" onclick="triggerPainCircuitBreaker('長者按下「好痛」大掣')">
         🚨 好痛！即刻暫停
       </button>
@@ -1172,7 +1172,7 @@
     </div>
   </div>
 
-  <!-- YouTube 運動室 (含實體痛感中斷大掣) -->
+  <!-- YouTube 與 MP4 雙模運動室 -->
   <div id="exerciseRoomModal">
     <div class="room-header">
       <div class="room-title" id="roomWorkoutTitle">運動進行中</div>
@@ -1185,17 +1185,21 @@
       <div class="room-progress-fill" id="roomProgressFill"></div>
     </div>
     <div class="room-body">
-      <!-- 致命傷 1 實裝：實體痛感中斷大掣 -->
       <button class="btn-floating-pain" onclick="triggerPainCircuitBreaker('長者按下「好痛」大掣')">
         🚨 好痛！即刻暫停
       </button>
 
       <div class="ai-live-prompt" id="aiVoiceFeedback">💡 請坐在穩陣椅子上，保持呼吸！</div>
       
-      <iframe class="trainer-iframe" id="trainerVideoFrame"
-        referrerpolicy="strict-origin-when-cross-origin"
+      <!-- YouTube 播放器 -->
+      <iframe class="trainer-iframe" id="trainerVideoFrame" style="display:none;"
+        referrerpolicy="no-referrer-when-downgrade"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowfullscreen></iframe>
+
+      <!-- 本機/Firebase Storage MP4 播放器 (100% 避開 153 錯誤) -->
+      <video class="trainer-iframe" id="trainerLocalVideo" playsinline autoplay loop muted controls
+        style="display:none; width:100%; height:100%; object-fit:contain; background:#000;"></video>
 
       <div id="cooldownOverlay">
         <h2 style="font-size:24px; font-weight:900;" id="cooldownTitle">👏 運動完成！放鬆肌群</h2>
@@ -1232,7 +1236,7 @@
     </div>
   </div>
 
-  <!-- Modal 2: 運動後 RPE 評估與白話轉譯臨床成績表 -->
+  <!-- Modal 2: 運動後 RPE 評估與白話轉譯成績表 -->
   <div class="modal-overlay" id="rpeModal">
     <div class="modal-card">
       <div class="modal-title">👏 運動完成！</div>
@@ -1489,7 +1493,7 @@
     </div>
   </div>
 
-  <!-- 致命傷 2 實裝：取代阻塞型 alert() 的 In-App 提示 Modal -->
+  <!-- 非阻塞型 In-App 提示 Modal -->
   <div class="modal-overlay" id="appAlertModal" style="z-index: 2500;">
     <div class="in-app-dialog-card">
       <div class="in-app-dialog-title" id="appAlertTitle">提示</div>
@@ -1498,7 +1502,7 @@
     </div>
   </div>
 
-  <!-- 致命傷 2 實裝：取代阻塞型 confirm() 的 In-App 確認 Modal -->
+  <!-- 非阻塞型 In-App 確認 Modal -->
   <div class="modal-overlay" id="appConfirmModal" style="z-index: 2500;">
     <div class="in-app-dialog-card">
       <div class="in-app-dialog-title" id="appConfirmTitle">確認</div>
@@ -1695,9 +1699,6 @@
 
   <!-- 業務邏輯、iOS 語音與音訊解鎖、適老化彈窗與全模態 FSM 引擎 -->
   <script>
-    /* ======================================================== */
-    /* 致命傷 2 實裝：取代阻塞型 alert() / confirm() 的函數     */
-    /* ======================================================== */
     let appAlertCallback = null;
     function showAppAlert(title, message, callback = null) {
       document.getElementById("appAlertTitle").innerText = title;
@@ -1736,9 +1737,6 @@
       cancelBtn.onclick = () => { cleanup(); if (onCancel) onCancel(); };
     }
 
-    /* ======================================================== */
-    /* 致命傷 3 實裝：iOS AudioContext 解鎖與來電暫停中斷保護  */
-    /* ======================================================== */
     let audioCtx = null;
     function unlockAudioContextOnGesture() {
       try {
@@ -1748,11 +1746,9 @@
         }
       } catch (e) {}
     }
-    // 監聽首次長者觸控螢幕，瞬間解鎖 iOS 靜音機制
     document.addEventListener("touchstart", unlockAudioContextOnGesture, { once: true, passive: true });
     document.addEventListener("click", unlockAudioContextOnGesture, { once: true, passive: true });
 
-    // 來電、跳出 App 或分頁切換時自動暫停，防止崩潰與計時混亂
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         if (document.getElementById("microWorkoutRoomModal").style.display === "flex") {
@@ -1839,18 +1835,12 @@
       return adviceLines.join(" ");
     }
 
-    /* ======================================================== */
-    /* 致命傷 1 實裝：語音識別容錯 + 痛感斷路器                  */
-    /* ======================================================== */
     let painRecognitionInstance = null;
     let isPainListeningActive = false;
 
     function startPainListening() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) {
-        // iOS Safari 若不支援語音辨識，安全返回，長者可直接按畫面上大紅掣「🚨 好痛」
-        return;
-      }
+      if (!SR) return;
 
       try {
         if (!painRecognitionInstance) {
@@ -1908,7 +1898,6 @@
 
       setTimeout(() => {
         exitMicroWorkout();
-        // 致命傷 2 解決：使用適老化 In-App Modal，告別原生阻塞型 alert()
         showAppAlert(
           "痛感保護終止",
           `⚠️ 系統已即時記錄痛點（「${heardWord}」），並已自動為下次運動調輕目標。\n若關節持續刺痛，請尋求物理治療師協助！`
@@ -2111,15 +2100,17 @@
       }
     };
 
+    /* 影片清單：自建 MP4 直播 + 公開 YouTube 雙模備援 */
     const EMBEDDED_SEED_VIDEOS = [
       {
         id: "knee_leung_1",
         title: "坐姿膝關節強化運動（改善菠蘿蓋痛）",
         category: "KNEE",
-        duration: "5 分鐘",
-        level: "梁教練親授",
-        youtubeId: "S2EAkhB4XEk",
-        badge: "👨‍⚕️ 專業教練認證",
+        duration: "1 分鐘",
+        level: "臨床認證",
+        // 直連 Firebase Storage 雲端 MP4，徹底杜絕模擬器與 iOS 153 錯誤
+        videoUrl: "https://firebasestorage.googleapis.com/v0/b/lohascare-wellnesstv.firebasestorage.app/o/video%2Fsquat_proper_form_01.mp4?alt=media",
+        badge: "⚡ 雲端秒開 / 零廣告",
         desc: "坐在穩陣椅子上伸展大腿四頭肌，免受膝關節刺痛折磨，強化下肢力量。"
       },
       {
@@ -2191,9 +2182,11 @@
         const isDoneToday = doneList.includes(w.id);
         const card = document.createElement("div");
         card.className = "workout-card";
+        const thumbSrc = w.youtubeId ? `https://img.youtube.com/vi/${w.youtubeId}/hqdefault.jpg` : `https://img.icons8.com/color/480/exercise.png`;
+
         card.innerHTML = `
           <div class="workout-thumb-wrapper" onclick="startScreening('${w.id}')">
-            <img class="workout-thumb-img" src="https://img.youtube.com/vi/${w.youtubeId}/hqdefault.jpg" alt="${w.title}">
+            <img class="workout-thumb-img" src="${thumbSrc}" alt="${w.title}">
             <div class="verified-pill">${w.badge}</div>
             <div class="done-today-badge" style="display:${isDoneToday ? 'block' : 'none'};">✅ 今日已完成</div>
             <div class="play-badge">▶</div>
@@ -2250,7 +2243,6 @@
       screeningHistoryAnswers[screeningStep] = hasSymptom;
       if (hasSymptom) {
         document.getElementById("screeningModal").style.display = "none";
-        // 致命傷 2 解決：使用適老化 In-App Modal，告別原生阻塞型 alert()
         showAppAlert("健康提示", "⚠️ 今日身體稍有不適，建議先坐低休息飲杯溫水，切勿勉強運動！");
         return;
       }
@@ -2271,578 +2263,8 @@
       launchDualScreenExercise(currentWorkout);
     };
 
-    function calculateAngle(a, b, c) {
-      if (!a || !b || !c) return 0;
-      const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
-      let angle = Math.abs((radians * 180.0) / Math.PI);
-      if (angle > 180.0) angle = 360.0 - angle;
-      return Math.round(angle);
-    }
-
     /* ========================================================================= */
-    /* TUG 姿態序列自動偵測 FSM                                                  */
-    /* ========================================================================= */
-    let tugCameraStream = null;
-    let tugPoseInstance = null;
-    let tugAnimId = null;
-
-    const TUG_STATES = {
-      CALIBRATING: "CALIBRATING",
-      WAITING_STAND: "WAITING_STAND",
-      TIMING: "TIMING",
-      SITTING_DOWN: "SITTING_DOWN",
-      COMPLETE: "COMPLETE"
-    };
-
-    let tugCurrentState = TUG_STATES.CALIBRATING;
-    let tugStartTime = 0;
-    let tugCalibrationFrames = 0;
-    let baselineSittingHipY = 0;
-    let finalTugElapsed = 0;
-
-    window.launchAutoTugSession = async function() {
-      document.getElementById("tugAutoTestModal").style.display = "flex";
-      tugCurrentState = TUG_STATES.CALIBRATING;
-      tugCalibrationFrames = 0;
-      baselineSittingHipY = 0;
-      finalTugElapsed = 0;
-      updateTugPhaseUI(1);
-
-      document.getElementById("tugTimerDisplay").innerText = "00.00";
-      document.getElementById("tugPromptText").innerText = "請穩坐椅子上，鏡頭正校準坐姿基準...";
-      speak("TUG 跌倒臨床自測：請穩坐椅子上，系統正校準全身。");
-
-      const videoEl = document.getElementById("tugCameraFeed");
-      const canvasEl = document.getElementById("tugPoseCanvas");
-      const ctx = canvasEl.getContext("2d");
-
-      try {
-        tugCameraStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: { ideal: 480 }, height: { ideal: 360 } },
-          audio: false
-        });
-        videoEl.srcObject = tugCameraStream;
-        await videoEl.play();
-
-        tugPoseInstance = new Pose({
-          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-        });
-        tugPoseInstance.setOptions({
-          modelComplexity: 0,
-          smoothLandmarks: true,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5
-        });
-
-        tugPoseInstance.onResults((results) => {
-          ctx.save();
-          ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-          canvasEl.width = videoEl.videoWidth || 480;
-          canvasEl.height = videoEl.videoHeight || 360;
-
-          if (results.poseLandmarks) {
-            const lm = results.poseLandmarks;
-            const now = performance.now();
-
-            const hipY = (lm[23].y + lm[24].y) / 2;
-            const leftKneeAngle = calculateAngle(lm[23], lm[25], lm[27]);
-            const rightKneeAngle = calculateAngle(lm[24], lm[26], lm[28]);
-            const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
-
-            drawBone(ctx, lm[11], lm[23], canvasEl.width, canvasEl.height, "#10B981");
-            drawBone(ctx, lm[12], lm[24], canvasEl.width, canvasEl.height, "#10B981");
-            drawBone(ctx, lm[23], lm[25], canvasEl.width, canvasEl.height, "#38BDF8");
-            drawBone(ctx, lm[24], lm[26], canvasEl.width, canvasEl.height, "#38BDF8");
-            drawBone(ctx, lm[25], lm[27], canvasEl.width, canvasEl.height, "#38BDF8");
-            drawBone(ctx, lm[26], lm[28], canvasEl.width, canvasEl.height, "#38BDF8");
-
-            switch (tugCurrentState) {
-              case TUG_STATES.CALIBRATING:
-                if (avgKneeAngle < 115) {
-                  baselineSittingHipY += hipY;
-                  tugCalibrationFrames++;
-                  if (tugCalibrationFrames >= 20) {
-                    baselineSittingHipY /= 20;
-                    tugCurrentState = TUG_STATES.WAITING_STAND;
-                    updateTugPhaseUI(2);
-                    document.getElementById("tugPromptText").innerText = "🔔 準備起步！請站起身向前行 3 米！";
-                    playMetronomeTick(true);
-                    speak("校準完成，請站起身向前行三米！");
-                  }
-                }
-                break;
-
-              case TUG_STATES.WAITING_STAND:
-                if (avgKneeAngle > 145 && (baselineSittingHipY - hipY) > 0.08) {
-                  tugStartTime = performance.now();
-                  tugCurrentState = TUG_STATES.TIMING;
-                  updateTugPhaseUI(3);
-                  playDingChime();
-                  document.getElementById("tugPromptText").innerText = "⏱️ 自動計時中！向前行 3 米，轉身返回坐下！";
-                }
-                break;
-
-              case TUG_STATES.TIMING:
-                finalTugElapsed = (now - tugStartTime) / 1000;
-                document.getElementById("tugTimerDisplay").innerText = finalTugElapsed.toFixed(2);
-
-                if (finalTugElapsed > 2.5 && avgKneeAngle < 115 && Math.abs(hipY - baselineSittingHipY) < 0.09) {
-                  tugCurrentState = TUG_STATES.COMPLETE;
-                  updateTugPhaseUI(4);
-                  finishAutoTugSession(finalTugElapsed);
-                }
-                break;
-            }
-          }
-          ctx.restore();
-        });
-
-        async function processTugFrame() {
-          if (videoEl.readyState >= 2 && tugPoseInstance && tugCurrentState !== TUG_STATES.COMPLETE) {
-            await tugPoseInstance.send({ image: videoEl });
-          }
-          tugAnimId = requestAnimationFrame(processTugFrame);
-        }
-        processTugFrame();
-
-      } catch (err) {
-        console.warn("TUG 相機啟動失敗:", err);
-      }
-    };
-
-    function updateTugPhaseUI(stepNumber) {
-      for (let i = 1; i <= 4; i++) {
-        const el = document.getElementById(`tugStep${i}`);
-        if (el) {
-          if (i === stepNumber) el.classList.add("active");
-          else el.classList.remove("active");
-        }
-      }
-    }
-
-    function finishAutoTugSession(finalSec) {
-      if (tugAnimId) cancelAnimationFrame(tugAnimId);
-      if (tugCameraStream) {
-        tugCameraStream.getTracks().forEach(t => t.stop());
-        tugCameraStream = null;
-      }
-      playDingChime();
-
-      let riskLevel = "LOW";
-      let msg = "";
-      if (finalSec < 12.0) {
-        riskLevel = "LOW";
-        msg = `用時 ${finalSec.toFixed(2)} 秒，TUG 評定為【低跌倒風險】，動作敏捷！`;
-      } else if (finalSec <= 15.0) {
-        riskLevel = "MODERATE";
-        msg = `用時 ${finalSec.toFixed(2)} 秒，TUG 評定為【中度風險】，轉身起坐請加倍小心。`;
-      } else {
-        riskLevel = "HIGH";
-        msg = `用時 ${finalSec.toFixed(2)} 秒，TUG 評定為【高跌倒風險】，建議物理治療師諮詢！`;
-      }
-
-      localStorage.setItem("lohas_last_tug_sec", finalSec.toFixed(2));
-      localStorage.setItem("lohas_last_tug_risk", riskLevel);
-
-      const today = new Date().toISOString().split("T")[0];
-      const tugPayload = {
-        workoutType: "TUG_TEST",
-        workoutTitle: "CDC STEADI TUG 姿態自動自測",
-        tugSeconds: parseFloat(finalSec.toFixed(2)),
-        riskLevel: riskLevel,
-        date: today
-      };
-
-      saveLocalWorkoutHistory(tugPayload);
-      if (window.saveSessionToFirestore) window.saveSessionToFirestore(tugPayload);
-
-      document.getElementById("tugPromptText").innerText = `✅ 測試完成！${msg}`;
-      speak(msg);
-
-      setTimeout(() => {
-        exitAutoTugSession();
-        showAppAlert("TUG 臨床測試結果", `⏱️ 測試完成！\n${msg}`);
-      }, 1500);
-    }
-
-    window.forceManualTugStop = function() {
-      if (tugCurrentState === TUG_STATES.TIMING) {
-        const sec = (performance.now() - tugStartTime) / 1000;
-        finishAutoTugSession(sec);
-      } else {
-        exitAutoTugSession();
-      }
-    };
-
-    window.exitAutoTugSession = function() {
-      if (tugAnimId) cancelAnimationFrame(tugAnimId);
-      if (tugCameraStream) {
-        tugCameraStream.getTracks().forEach(t => t.stop());
-        tugCameraStream = null;
-      }
-      document.getElementById("tugAutoTestModal").style.display = "none";
-    };
-
-    /* ========================================================================= */
-    /* 一分鐘微運動                                                              */
-    /* ========================================================================= */
-    let microCameraStream = null;
-    let microPoseInstance = null;
-    let microAnimFrameId = null;
-    let microMetronomeInterval = null;
-    let microCountdownInterval = null;
-    let microTimeRemaining = 60;
-    let microBpmInterval = 1000;
-
-    let microRepsDone = 0;
-    let microTargetReps = 6;
-    let microTargetSide = "RIGHT";
-    let microLastAngle = 90;
-    let microLastAngleTime = 0;
-    let microPeakVelocity = 0;
-    let microSideVelocities = { LEFT: [], RIGHT: [] };
-    let microSideMaxAngles = { LEFT: [], RIGHT: [] };
-    let microTrajectoryPoints = [];
-    let recentRepDurations = [];
-    let repCycleStartTime = 0;
-
-    window.startSelectedMicroWorkout = function() {
-      const prog = getMicroWorkoutProgression();
-      microTargetReps = prog.reps;
-      document.getElementById("microProgressionSub").innerText = prog.desc;
-      document.getElementById("microActiveActionTitle").innerText = `⚡ 1分鐘微運動 • ${selectedMicroAction.name}`;
-      startMicroWorkoutSession();
-    };
-
-    async function startMicroWorkoutSession() {
-      document.getElementById("microWorkoutRoomModal").style.display = "flex";
-      microRepsDone = 0;
-      microTargetSide = "RIGHT";
-      microPeakVelocity = 0;
-      microSideVelocities = { LEFT: [], RIGHT: [] };
-      microSideMaxAngles = { LEFT: [], RIGHT: [] };
-      microTrajectoryPoints = [];
-      recentRepDurations = [];
-      microTimeRemaining = 60;
-      microBpmInterval = 1000;
-
-      document.getElementById("microWorkoutTimer").innerText = `剩餘: ${microTimeRemaining} 秒`;
-      document.getElementById("microHudReps").innerText = `0 / ${microTargetReps}`;
-      document.getElementById("microHudVelocity").innerText = `0 °/s`;
-      document.getElementById("microHudSymmetry").innerText = `0%`;
-
-      const guideEl = document.getElementById("microVoiceGuide");
-      guideEl.innerText = `準備開始：${selectedMicroAction.name}！`;
-      speak(`坐穩，我哋依家開始${selectedMicroAction.name}，跟隨節奏進行！`);
-
-      startPainListening();
-
-      const videoEl = document.getElementById("microCameraFeed");
-      const canvasEl = document.getElementById("microPoseCanvas");
-      const ctx = canvasEl.getContext("2d");
-
-      try {
-        microCameraStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: { ideal: 360 }, height: { ideal: 270 } },
-          audio: false
-        });
-        videoEl.srcObject = microCameraStream;
-        await videoEl.play();
-
-        microPoseInstance = new Pose({
-          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-        });
-        microPoseInstance.setOptions({
-          modelComplexity: 0,
-          smoothLandmarks: true,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5
-        });
-
-        microPoseInstance.onResults((results) => {
-          ctx.save();
-          ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-          canvasEl.width = videoEl.videoWidth || 360;
-          canvasEl.height = videoEl.videoHeight || 270;
-
-          if (results.poseLandmarks) {
-            const lm = results.poseLandmarks;
-            const now = Date.now();
-
-            if (selectedMicroAction.type === "angle") {
-              const jl = selectedMicroAction.jointLeft;
-              const jr = selectedMicroAction.jointRight;
-              const angleL = calculateAngle(lm[jl[0]], lm[jl[1]], lm[jl[2]]);
-              const angleR = calculateAngle(lm[jr[0]], lm[jr[1]], lm[jr[2]]);
-
-              const currentSI = calculateSymmetryIndex(angleL, angleR);
-              document.getElementById("microHudSymmetry").innerText = `${currentSI}%`;
-
-              document.getElementById("legLeftText").innerText = `左: ${angleL}°`;
-              document.getElementById("legRightText").innerText = `右: ${angleR}°`;
-              document.getElementById("legLeftBar").style.width = `${Math.min(100, (angleL / 180) * 100)}%`;
-              document.getElementById("legRightBar").style.width = `${Math.min(100, (angleR / 180) * 100)}%`;
-
-              const activeAngle = microTargetSide === "RIGHT" ? angleR : angleL;
-              const activeJoint = microTargetSide === "RIGHT" ? lm[jr[1]] : lm[jl[1]];
-
-              if (activeJoint) {
-                microTrajectoryPoints.push({ x: activeJoint.x * canvasEl.width, y: activeJoint.y * canvasEl.height });
-                if (microTrajectoryPoints.length > 20) microTrajectoryPoints.shift();
-
-                for (let i = 1; i < microTrajectoryPoints.length; i++) {
-                  ctx.beginPath();
-                  ctx.moveTo(microTrajectoryPoints[i - 1].x, microTrajectoryPoints[i - 1].y);
-                  ctx.lineTo(microTrajectoryPoints[i].x, microTrajectoryPoints[i].y);
-                  const alpha = (i / microTrajectoryPoints.length).toFixed(2);
-                  ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
-                  ctx.lineWidth = 3;
-                  ctx.stroke();
-                }
-              }
-
-              if (microLastAngleTime > 0) {
-                const dt = (now - microLastAngleTime) / 1000;
-                if (dt > 0.05) {
-                  const omega = Math.round(Math.abs(activeAngle - microLastAngle) / dt);
-                  if (omega < 600) {
-                    document.getElementById("microHudVelocity").innerText = `${omega} °/s`;
-                    if (omega > microPeakVelocity) microPeakVelocity = omega;
-                  }
-                  microLastAngle = activeAngle;
-                  microLastAngleTime = now;
-                }
-              } else {
-                microLastAngle = activeAngle;
-                microLastAngleTime = now;
-              }
-
-              const joints = microTargetSide === "RIGHT" ? jr : jl;
-              drawBone(ctx, lm[joints[0]], lm[joints[1]], canvasEl.width, canvasEl.height, "#38BDF8");
-              drawBone(ctx, lm[joints[1]], lm[joints[2]], canvasEl.width, canvasEl.height, "#38BDF8");
-              drawJoint(ctx, lm[joints[1]], canvasEl.width, canvasEl.height, "#F59E0B");
-
-              if (activeAngle > 60) microSideMaxAngles[microTargetSide].push(activeAngle);
-            } else if (selectedMicroAction.type === "chest_expand") {
-              const shoulderDist = Math.hypot(lm[11].x - lm[12].x, lm[11].y - lm[12].y);
-              const wristDist = Math.hypot(lm[15].x - lm[16].x, lm[15].y - lm[16].y);
-              const expansionRatio = Math.round((wristDist / (shoulderDist + 0.001)) * 100);
-
-              document.getElementById("legLeftText").innerText = `擴胸度: ${expansionRatio}%`;
-              document.getElementById("legRightText").innerText = `對標: 140%`;
-              document.getElementById("legLeftBar").style.width = `${Math.min(100, (expansionRatio / 140) * 100)}%`;
-              document.getElementById("legRightBar").style.width = "100%";
-
-              drawBone(ctx, lm[11], lm[12], canvasEl.width, canvasEl.height, "#10B981");
-              drawBone(ctx, lm[11], lm[15], canvasEl.width, canvasEl.height, "#38BDF8");
-              drawBone(ctx, lm[12], lm[16], canvasEl.width, canvasEl.height, "#38BDF8");
-            } else if (selectedMicroAction.type === "wrist_flex") {
-              const wristSpread = Math.hypot(lm[19].x - lm[21].x, lm[19].y - lm[21].y);
-              const palmSize = Math.hypot(lm[15].x - lm[19].x, lm[15].y - lm[19].y);
-              const stretchRatio = Math.round((wristSpread / (palmSize + 0.001)) * 100);
-
-              document.getElementById("legLeftText").innerText = `手掌張開度: ${stretchRatio}%`;
-              document.getElementById("legRightText").innerText = `對標: 85%`;
-              document.getElementById("legLeftBar").style.width = `${Math.min(100, (stretchRatio / 85) * 100)}%`;
-              document.getElementById("legRightBar").style.width = "100%";
-
-              drawJoint(ctx, lm[15], canvasEl.width, canvasEl.height, "#10B981");
-              drawJoint(ctx, lm[19], canvasEl.width, canvasEl.height, "#38BDF8");
-              drawJoint(ctx, lm[21], canvasEl.width, canvasEl.height, "#F59E0B");
-            }
-          }
-          ctx.restore();
-        });
-
-        async function processMicroFrame() {
-          if (videoEl.readyState >= 2 && microPoseInstance) {
-            await microPoseInstance.send({ image: videoEl });
-          }
-          microAnimFrameId = requestAnimationFrame(processMicroFrame);
-        }
-        processMicroFrame();
-
-        startAdaptiveMetronomeFsm();
-
-      } catch (err) {
-        console.warn("微運動相機啟動略過:", err);
-      }
-    }
-
-    function startAdaptiveMetronomeFsm() {
-      let beatCounter = 0;
-      let phase = "READY_WAIT";
-      const guideEl = document.getElementById("microVoiceGuide");
-      repCycleStartTime = Date.now();
-
-      microCountdownInterval = setInterval(() => {
-        microTimeRemaining--;
-        document.getElementById("microWorkoutTimer").innerText = `剩餘: ${microTimeRemaining} 秒`;
-        if (microTimeRemaining <= 0) {
-          completeMicroWorkoutSession();
-        }
-      }, 1000);
-
-      function runBeatLoop() {
-        beatCounter = (beatCounter % 4) + 1;
-
-        for (let i = 1; i <= 4; i++) {
-          const dot = document.getElementById(`metroDot${i}`);
-          if (dot) {
-            dot.className = "metronome-dot";
-            if (i === beatCounter) {
-              dot.classList.add(i === 1 ? "active-accent" : "active-tick");
-            }
-          }
-        }
-
-        if (beatCounter === 1) {
-          playMetronomeTick(true);
-        } else {
-          playMetronomeTick(false);
-        }
-
-        if (beatCounter === 1) {
-          if (microRepsDone >= microTargetReps) {
-            completeMicroWorkoutSession();
-            return;
-          }
-
-          const sideText = microTargetSide === "RIGHT" ? "右側" : "左側";
-
-          if (phase === "READY_WAIT" || phase === "LOWER") {
-            phase = "ACTION";
-            repCycleStartTime = Date.now();
-            guideEl.innerText = `準備……三、二、一，${selectedMicroAction.voiceAction}${sideText}！`;
-            speak(`${selectedMicroAction.voiceAction}！`);
-          } else if (phase === "ACTION") {
-            phase = "HOLD";
-            guideEl.innerText = `停住……維持！一、二！`;
-            speak(`停住，維持！`);
-          } else if (phase === "HOLD") {
-            phase = "LOWER";
-            playDingChime();
-            microRepsDone++;
-            document.getElementById("microHudReps").innerText = `${microRepsDone} / ${microTargetReps}`;
-
-            const cycleDuration = Date.now() - repCycleStartTime;
-            recentRepDurations.push(cycleDuration);
-            if (recentRepDurations.length >= 3) {
-              const avgD = recentRepDurations.slice(-3).reduce((a, b) => a + b, 0) / 3;
-              if (avgD > microBpmInterval * 4 * 1.35 && microBpmInterval === 1000) {
-                microBpmInterval = 1200;
-                speak("唔使急，動作放慢少少，量力而為。");
-              }
-            }
-
-            microSideVelocities[microTargetSide].push(microPeakVelocity);
-            microPeakVelocity = 0;
-
-            guideEl.innerText = `好！慢慢放低休息。`;
-            speak(`好，放低休息。`);
-
-            microTargetSide = microTargetSide === "RIGHT" ? "LEFT" : "RIGHT";
-          }
-        }
-
-        microMetronomeInterval = setTimeout(runBeatLoop, microBpmInterval);
-      }
-
-      runBeatLoop();
-    }
-
-    function completeMicroWorkoutSession() {
-      exitMicroWorkout();
-
-      const cheer = document.createElement("div");
-      cheer.innerHTML = "🎉 微運動完成！做得好棒！";
-      cheer.style.cssText = "position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(6,78,59,0.92); color:#FEF08A; font-size:2rem; font-weight:900; z-index:2500;";
-      document.body.appendChild(cheer);
-      setTimeout(() => cheer.remove(), 1600);
-
-      const avgMaxL = microSideMaxAngles.LEFT.length > 0 
-        ? microSideMaxAngles.LEFT.reduce((a, b) => a + b, 0) / microSideMaxAngles.LEFT.length 
-        : 140;
-      const avgMaxR = microSideMaxAngles.RIGHT.length > 0 
-        ? microSideMaxAngles.RIGHT.reduce((a, b) => a + b, 0) / microSideMaxAngles.RIGHT.length 
-        : 140;
-      const finalSI = calculateSymmetryIndex(avgMaxL, avgMaxR);
-
-      if (Math.abs(avgMaxL - avgMaxR) > 18) {
-        speak(`留意到${avgMaxL < avgMaxR ? '左邊' : '右邊'}稍有肌力不對稱，稍後可加強單側鍛鍊。`);
-      }
-
-      const allV = [...microSideVelocities.LEFT, ...microSideVelocities.RIGHT];
-      const avgOmega = allV.length > 0 ? Math.round(allV.reduce((a, b) => a + b, 0) / allV.length) : 115;
-      const peakOmega = allV.length > 0 ? Math.max(...allV) : 140;
-
-      const lastTugSec = parseFloat(localStorage.getItem("lohas_last_tug_sec") || "0");
-      let tugAdjustment = 0;
-      if (lastTugSec > 0) {
-        tugAdjustment = lastTugSec < 12.0 ? 5 : lastTugSec <= 15.0 ? 0 : -10;
-      }
-
-      const baseScore = Math.max(15, Math.min(100, Math.round(100 - (finalSI * 1.5) + tugAdjustment)));
-      const cfrsMeta = getCFRSClassification(baseScore);
-
-      sessionTelemetry = {
-        workoutType: "MICRO",
-        workoutId: `micro_${selectedMicroAction.id}`,
-        workoutTitle: `一分鐘微運動（${selectedMicroAction.name}）`,
-        category: "FALL",
-        targetReps: microTargetReps,
-        successReps: microRepsDone,
-        accuracyScore: 100,
-        avgHoldSec: 2.0,
-        asymmetry: finalSI,
-        weakerSide: avgMaxL < avgMaxR ? "LEFT" : "RIGHT",
-        avgOmega: avgOmega,
-        peakOmega: peakOmega,
-        fallRiskIndex: baseScore,
-        tugSeconds: lastTugSec > 0 ? lastTugSec : null,
-        isFatigued: false,
-        isAdaptiveReduced: false,
-        screeningAnswers: [false, false, false],
-        date: new Date().toISOString().split("T")[0]
-      };
-
-      const vernacularAdvice = translateKinematicsToVernacular({
-        si: finalSI,
-        weakerSide: sessionTelemetry.weakerSide,
-        omega: avgOmega,
-        fallRiskIndex: baseScore
-      });
-
-      document.getElementById("poseScoreText").innerText = `🎯 微運動完成！達標 ${microRepsDone} 次`;
-      document.getElementById("poseSubDetails").innerText = `雙側平衡良好 ｜ 動作節奏敏捷`;
-      document.getElementById("poseCfrsValue").innerText = baseScore;
-      
-      const badgeEl = document.getElementById("poseCfrsBadge");
-      badgeEl.innerText = cfrsMeta.label;
-      badgeEl.style.color = cfrsMeta.color;
-      badgeEl.style.background = cfrsMeta.bg;
-
-      document.getElementById("vernacularReportText").innerText = vernacularAdvice;
-      document.getElementById("poseLongitudinalCompare").innerText = "📈 碎片時間運動已同步至雲端與家人關懷端。";
-
-      document.getElementById("rpeModal").style.display = "flex";
-      speak(`微運動完成！${vernacularAdvice}`);
-    }
-
-    window.exitMicroWorkout = function() {
-      stopPainListening();
-      if (microMetronomeInterval) clearTimeout(microMetronomeInterval);
-      if (microCountdownInterval) clearInterval(microCountdownInterval);
-      if (microAnimFrameId) cancelAnimationFrame(microAnimFrameId);
-      if (microCameraStream) {
-        microCameraStream.getTracks().forEach(t => t.stop());
-        microCameraStream = null;
-      }
-      document.getElementById("microWorkoutRoomModal").style.display = "none";
-    };
-
-    /* ========================================================================= */
-    /* 常規跟練模式                                                              */
+    /* 常規跟練模式：雙模播放器 (YouTube / MP4) 自動分流與姿態 FSM              */
     /* ========================================================================= */
     let cameraStream = null;
     let poseInstance = null;
@@ -2894,7 +2316,23 @@
       updatePipHud("準備就緒", 0, activeFsmConfig.targetReps);
 
       const iframe = document.getElementById("trainerVideoFrame");
-      iframe.src = `https://www.youtube.com/embed/${workout.youtubeId}?autoplay=1&playsinline=1&rel=0`;
+      const localVideo = document.getElementById("trainerLocalVideo");
+
+      // 雙模播放分流：徹底消滅錯誤 153
+      if (workout.videoUrl) {
+        iframe.style.display = "none";
+        iframe.src = "";
+        localVideo.style.display = "block";
+        localVideo.src = workout.videoUrl;
+        localVideo.currentTime = 0;
+        localVideo.play().catch(e => console.warn("MP4 自動播放被攔截:", e));
+      } else if (workout.youtubeId) {
+        localVideo.style.display = "none";
+        localVideo.pause();
+        iframe.style.display = "block";
+        const originUrl = window.location.origin.startsWith("http") ? window.location.origin : "https://lohascare-wellnesstv.firebaseapp.com";
+        iframe.src = `https://www.youtube.com/embed/${workout.youtubeId}?enablejsapi=1&origin=${encodeURIComponent(originUrl)}&autoplay=1&playsinline=1&rel=0`;
+      }
 
       speak("坐穩椅子，挺直腰背，跟隨教練動作。");
       startPainListening();
@@ -3126,6 +2564,9 @@
     function initiateWorkoutCompletion() {
       stopPainListening();
       document.getElementById("trainerVideoFrame").src = "";
+      const localVid = document.getElementById("trainerLocalVideo");
+      localVideoPause(localVid);
+
       if (animFrameId) cancelAnimationFrame(animFrameId);
       if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
@@ -3148,6 +2589,13 @@
           skipCooldownToRpe();
         }
       }, 1000);
+    }
+
+    function localVideoPause(vid) {
+      if (vid) {
+        vid.pause();
+        vid.src = "";
+      }
     }
 
     function skipCooldownToRpe() {
@@ -3306,7 +2754,6 @@
       const streak = localStorage.getItem("lohas_streak") || "1";
       const message = `仔女你好！我啱啱喺「樂活健康電視」做完【${sessionTelemetry?.workoutTitle}】！今日成功達標 ${sessionTelemetry?.successReps} 次，防跌指數 ${sessionTelemetry?.fallRiskIndex} 分，連續打卡第 ${streak} 日，同你報個平安！❤️`;
       
-      // 致命傷 2 解決：使用適老化 In-App Confirm 代替原生 confirm()
       showAppConfirm(
         "運動記錄成功",
         `🎉 今日運動已成功記錄！\n想唔想順便發送 WhatsApp 話畀仔女知？`,
